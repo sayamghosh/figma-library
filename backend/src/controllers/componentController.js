@@ -1,0 +1,127 @@
+const { asyncHandler } = require("../utils/asyncHandler");
+const { Component } = require("../models/Component");
+
+const listComponents = asyncHandler(async (req, res) => {
+  const { q = "", tag = "", page = 1, limit = 20 } = req.query;
+  const pageNumber = Math.max(Number(page) || 1, 1);
+  const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
+
+  const query = {};
+  if (q) {
+    query.$or = [
+      { name: { $regex: q, $options: "i" } },
+      { tags: { $regex: q, $options: "i" } },
+    ];
+  }
+  if (tag) {
+    query.tags = { $regex: `^${tag}$`, $options: "i" };
+  }
+
+  const [items, total] = await Promise.all([
+    Component.find(query)
+      .sort({ createdAt: -1 })
+      .skip((pageNumber - 1) * perPage)
+      .limit(perPage)
+      .populate("createdBy", "name email"),
+    Component.countDocuments(query),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      items,
+      pagination: {
+        page: pageNumber,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+    },
+  });
+});
+
+const createComponent = asyncHandler(async (req, res) => {
+  const { name, description = "", tags = [], previewImageUrl, figmaDataBase64 } = req.body;
+
+  if (!name || !previewImageUrl || !figmaDataBase64) {
+    res.status(400);
+    throw new Error("name, previewImageUrl, and figmaDataBase64 are required");
+  }
+
+  const component = await Component.create({
+    name,
+    description,
+    tags: Array.isArray(tags) ? tags : [],
+    previewImageUrl,
+    figmaDataBase64,
+    createdBy: req.user.userId,
+  });
+
+  res.status(201).json({
+    success: true,
+    data: component,
+  });
+});
+
+const getComponent = asyncHandler(async (req, res) => {
+  const component = await Component.findById(req.params.id).populate("createdBy", "name email");
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  res.json({ success: true, data: component });
+});
+
+const updateComponent = asyncHandler(async (req, res) => {
+  const component = await Component.findById(req.params.id);
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  if (component.createdBy.toString() !== req.user.userId) {
+    res.status(403);
+    throw new Error("You can only edit your own components");
+  }
+
+  const updates = {
+    name: req.body.name ?? component.name,
+    description: req.body.description ?? component.description,
+    tags: Array.isArray(req.body.tags) ? req.body.tags : component.tags,
+    previewImageUrl: req.body.previewImageUrl ?? component.previewImageUrl,
+    figmaDataBase64: req.body.figmaDataBase64 ?? component.figmaDataBase64,
+  };
+
+  const updated = await Component.findByIdAndUpdate(req.params.id, updates, { new: true });
+
+  res.json({ success: true, data: updated });
+});
+
+const deleteComponent = asyncHandler(async (req, res) => {
+  const component = await Component.findById(req.params.id);
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  if (component.createdBy.toString() !== req.user.userId) {
+    res.status(403);
+    throw new Error("You can only delete your own components");
+  }
+
+  await component.deleteOne();
+
+  res.json({
+    success: true,
+    message: "Component deleted",
+  });
+});
+
+module.exports = {
+  listComponents,
+  createComponent,
+  getComponent,
+  updateComponent,
+  deleteComponent,
+};

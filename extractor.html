@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Figma Binary Extractor</title>
+  <style>
+    :root {
+      --bg: #101522;
+      --panel: #171f33;
+      --ink: #e8eefb;
+      --muted: #8ea0c8;
+      --accent: #4bc7a9;
+      --warn: #ffca80;
+      --line: #273459;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 10%, rgba(75, 199, 169, 0.22), transparent 34%),
+        radial-gradient(circle at 85% 8%, rgba(255, 202, 128, 0.2), transparent 30%),
+        var(--bg);
+      padding: 20px;
+    }
+
+    .panel {
+      max-width: 960px;
+      margin: 0 auto;
+      background: linear-gradient(160deg, #1a243d, #161f35 50%, #1f2d4e);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 22px 42px rgba(0, 0, 0, 0.38);
+      overflow: hidden;
+    }
+
+    .head {
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .head h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.4rem, 2.8vw, 2rem);
+    }
+
+    .head p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .body {
+      padding: 16px 18px 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .notice {
+      border: 1px solid #2d3f68;
+      background: rgba(13, 23, 48, 0.7);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #c9d6f5;
+      font-size: 0.93rem;
+    }
+
+    .notice strong {
+      color: var(--warn);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #06211a;
+      background: linear-gradient(180deg, #5fe2c0, #43bea1);
+      cursor: pointer;
+    }
+
+    button.secondary {
+      color: #dce8ff;
+      background: linear-gradient(180deg, #2f3f68, #25355b);
+      border: 1px solid #364a7a;
+    }
+
+    button:focus-visible {
+      outline: 3px solid #ffd79f;
+      outline-offset: 2px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      border-radius: 10px;
+      border: 1px solid #334a79;
+      background: #0f1630;
+      color: #ecf3ff;
+      padding: 12px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      resize: vertical;
+      font-family: "Consolas", "Courier New", monospace;
+    }
+
+    textarea:focus {
+      outline: 3px solid rgba(95, 226, 192, 0.3);
+      border-color: #5fe2c0;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.86rem;
+      min-height: 1.2em;
+    }
+
+    .debug {
+      border: 1px dashed #3a4d79;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(9, 14, 30, 0.65);
+      color: #b5c6e9;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 60px;
+    }
+
+    .preview {
+      border: 1px solid #314974;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(10, 17, 35, 0.8);
+      color: #bed0f6;
+      font-size: 0.78rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 56px;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    .ok {
+      color: #7eeed0;
+    }
+
+    .bad {
+      color: #ff9e93;
+    }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <header class="head">
+      <h1>Figma Clipboard Extractor</h1>
+      <p>
+        Copy a component in Figma, click this page, then press Ctrl+V. This page listens to the
+        paste event and extracts application/x-figma payload as base64.
+      </p>
+    </header>
+
+    <section class="body">
+      <div class="notice">
+        <strong>Flow:</strong> 1) Copy in Figma 2) Focus this tab 3) Press Ctrl+V 4) Copy output and paste into components.json.
+      </div>
+
+      <div class="actions">
+        <button id="copyOutBtn" type="button">Copy Base64 Output</button>
+        <button id="clearBtn" class="secondary" type="button">Clear</button>
+      </div>
+
+      <textarea id="output" placeholder="Base64 output appears here after paste..." spellcheck="false"></textarea>
+      <div id="meta" class="meta">Waiting for a paste event.</div>
+      <pre id="debug" class="debug">Clipboard diagnostics will appear here after paste.</pre>
+      <pre id="textPreview" class="preview">Plain text / HTML preview will appear here after paste.</pre>
+    </section>
+  </div>
+
+  <script>
+    const output = document.getElementById("output");
+    const meta = document.getElementById("meta");
+    const debug = document.getElementById("debug");
+    const textPreview = document.getElementById("textPreview");
+    const copyOutBtn = document.getElementById("copyOutBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    function setMeta(message, isError = false) {
+      meta.textContent = message;
+      meta.className = `meta ${isError ? "bad" : "ok"}`;
+    }
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const slice = bytes.subarray(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, slice);
+      }
+      return btoa(binary);
+    }
+
+    function normalizeType(type) {
+      return (type || "").toLowerCase().trim();
+    }
+
+    function renderDiagnostics(clipboard) {
+      const types = Array.from(clipboard.types || []);
+      const items = Array.from(clipboard.items || []);
+      const lines = [
+        `types: ${types.length ? types.join(", ") : "(none)"}`,
+        "items:",
+        ...items.map((item, index) => `  [${index}] kind=${item.kind || "?"}, type=${item.type || "(empty)"}`)
+      ];
+      debug.textContent = lines.join("\n");
+    }
+
+    function renderTextPreview(clipboard) {
+      const plain = (clipboard.getData("text/plain") || "").trim();
+      const html = (clipboard.getData("text/html") || "").trim();
+      const htmlPreview = html.length > 1200 ? `${html.slice(0, 1200)}\n... [truncated]` : html;
+      const plainPreview = plain.length > 600 ? `${plain.slice(0, 600)}\n... [truncated]` : plain;
+
+      const lines = [
+        `text/plain (${plain.length} chars):`,
+        plainPreview || "(empty)",
+        "",
+        `text/html (${html.length} chars):`,
+        htmlPreview || "(empty)"
+      ];
+
+      textPreview.textContent = lines.join("\n");
+    }
+
+    function pickBestClipboardItem(clipboard) {
+      const items = Array.from(clipboard.items || []);
+
+      const exact = items.find((item) => normalizeType(item.type) === "application/x-figma");
+      if (exact) {
+        return { item: exact, usedFallback: false };
+      }
+
+      const containsFigma = items.find((item) => normalizeType(item.type).includes("figma"));
+      if (containsFigma) {
+        return { item: containsFigma, usedFallback: true };
+      }
+
+      const anyBinaryFile = items.find((item) => item.kind === "file");
+      if (anyBinaryFile) {
+        return { item: anyBinaryFile, usedFallback: true };
+      }
+
+      return { item: null, usedFallback: false };
+    }
+
+    function extractFigmaBase64FromHtml(html) {
+      if (!html) {
+        return null;
+      }
+
+      const markerRegex = new RegExp("<!--\\(figma\\)([\\s\\S]*?)\\(\\/figma\\)-->", "i");
+      const markerMatch = html.match(markerRegex);
+      if (!markerMatch || !markerMatch[1]) {
+        return null;
+      }
+
+      const candidate = markerMatch[1].replace(/\s+/g, "").trim();
+      if (!candidate) {
+        return null;
+      }
+
+      if (!/^[A-Za-z0-9+/=]+$/.test(candidate)) {
+        return null;
+      }
+
+      return candidate;
+    }
+
+    async function extractFromPasteEvent(event) {
+      const clipboard = event.clipboardData;
+      if (!clipboard) {
+        setMeta("No clipboardData found on paste event.", true);
+        return;
+      }
+
+      // Never let the browser paste plain text/html into focused elements on this page.
+      event.preventDefault();
+
+      renderDiagnostics(clipboard);
+      renderTextPreview(clipboard);
+
+      const { item, usedFallback } = pickBestClipboardItem(clipboard);
+      if (!item) {
+        const html = clipboard.getData("text/html") || "";
+        const extractedBase64 = extractFigmaBase64FromHtml(html);
+
+        if (extractedBase64) {
+          output.value = extractedBase64;
+          setMeta(
+            `Recovered Figma payload from text/html marker (${extractedBase64.length} base64 chars).`,
+            false
+          );
+          output.focus();
+          output.select();
+          return;
+        }
+
+        setMeta(
+          "No binary item and no (figma) marker found in text/html. Copy a component/frame in Figma and retry.",
+          true
+        );
+        return;
+      }
+
+      const file = item.getAsFile();
+      if (!file) {
+        setMeta("Could not read binary data from clipboard item.", true);
+        return;
+      }
+
+      const buffer = await file.arrayBuffer();
+      const base64 = arrayBufferToBase64(buffer);
+      output.value = base64;
+      if (usedFallback) {
+        setMeta(
+          `Captured ${buffer.byteLength} bytes using fallback type '${item.type || "(empty)"}'.`,
+          false
+        );
+      } else {
+        setMeta(`Captured ${buffer.byteLength} bytes as application/x-figma.`);
+      }
+      output.focus();
+      output.select();
+    }
+
+    document.addEventListener("paste", (event) => {
+      extractFromPasteEvent(event).catch((err) => {
+        setMeta(err.message || "Failed while extracting from paste event.", true);
+      });
+    });
+
+    copyOutBtn.addEventListener("click", async () => {
+      if (!output.value.trim()) {
+        setMeta("No base64 value to copy yet.", true);
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(output.value.trim());
+        setMeta("Base64 output copied to clipboard.");
+      } catch (err) {
+        setMeta(err.message || "Could not copy output.", true);
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      output.value = "";
+      meta.className = "meta";
+      meta.textContent = "Waiting for a paste event.";
+      debug.textContent = "Clipboard diagnostics will appear here after paste.";
+      textPreview.textContent = "Plain text / HTML preview will appear here after paste.";
+    });
+  </script>
+</body>
+</html>
