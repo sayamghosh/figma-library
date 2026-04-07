@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "../api/auth";
 import type { User } from "../lib/types";
 
@@ -21,60 +22,36 @@ function normalizeUser(user: User): User {
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    let mounted = true;
+  const hasToken = Boolean(localStorage.getItem("accessToken"));
+  const authQuery = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: async () => normalizeUser(await authApi.me()),
+    enabled: hasToken,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 
-    async function bootstrap() {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        if (mounted) {
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const me = await authApi.me();
-        if (mounted) {
-          setUser(normalizeUser(me));
-        }
-      } catch {
-        localStorage.removeItem("accessToken");
-        if (mounted) {
-          setUser(null);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    bootstrap();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const user = authQuery.data ?? null;
+  const loading = hasToken ? authQuery.isLoading : false;
 
   async function login(input: { email: string; password: string }) {
     const payload = await authApi.login(input);
     localStorage.setItem("accessToken", payload.token);
-    setUser(normalizeUser(payload.user));
+    queryClient.setQueryData(["auth", "me"], normalizeUser(payload.user));
   }
 
   async function register(input: { name: string; email: string; password: string }) {
     const payload = await authApi.register(input);
     localStorage.setItem("accessToken", payload.token);
-    setUser(normalizeUser(payload.user));
+    queryClient.setQueryData(["auth", "me"], normalizeUser(payload.user));
   }
 
   function logout() {
     localStorage.removeItem("accessToken");
-    setUser(null);
+    queryClient.setQueryData(["auth", "me"], null);
+    queryClient.removeQueries({ queryKey: ["components"] });
   }
 
   const value = useMemo(

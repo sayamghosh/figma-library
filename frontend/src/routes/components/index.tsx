@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { componentsApi } from "../../api/components";
 import { copyToFigma } from "../../lib/clipboard";
 
@@ -9,13 +9,15 @@ export const Route = createFileRoute("/components/")({
 });
 
 function ComponentsPage() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["components", search],
+    queryKey: ["components", "list", search],
     queryFn: () => componentsApi.list(search),
+    staleTime: 2 * 60 * 1000,
   });
 
   const items = useMemo(() => data?.items ?? [], [data]);
@@ -24,7 +26,15 @@ function ComponentsPage() {
     setStatus("");
     setActiveId(id);
     try {
-      const payload = figmaDataBase64 || (await componentsApi.getById(id)).figmaDataBase64;
+      const payload =
+        figmaDataBase64 ||
+        (
+          await queryClient.fetchQuery({
+            queryKey: ["components", "detail", id],
+            queryFn: () => componentsApi.getById(id),
+            staleTime: 10 * 60 * 1000,
+          })
+        ).figmaDataBase64;
       if (!payload) {
         throw new Error("Component payload is missing.");
       }
