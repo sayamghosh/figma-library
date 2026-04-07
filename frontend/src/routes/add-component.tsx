@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { componentsApi } from "../api/components";
 import { uploadApi } from "../api/upload";
 import { extractFigmaBase64FromPaste } from "../lib/clipboard";
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/add-component")({
 
 function AddComponentPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   const [name, setName] = useState("");
@@ -20,7 +22,28 @@ function AddComponentPage() {
   const [figmaDataBase64, setFigmaDataBase64] = useState("");
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [status, setStatus] = useState("Paste from Figma into the extractor field below.");
-  const [submitting, setSubmitting] = useState(false);
+
+  const addComponentMutation = useMutation({
+    mutationFn: async (input: {
+      name: string;
+      description: string;
+      tags: string[];
+      figmaDataBase64: string;
+      previewFile: File;
+    }) => {
+      const previewImageUrl = await uploadApi.uploadImage(input.previewFile);
+      return componentsApi.create({
+        name: input.name,
+        description: input.description,
+        tags: input.tags,
+        previewImageUrl,
+        figmaDataBase64: input.figmaDataBase64,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["components"] });
+    },
+  });
 
   async function onPaste(event: React.ClipboardEvent<HTMLTextAreaElement>) {
     try {
@@ -45,28 +68,23 @@ function AddComponentPage() {
       return;
     }
 
-    setSubmitting(true);
     setStatus("Uploading image to Cloudinary...");
 
     try {
-      const previewImageUrl = await uploadApi.uploadImage(previewFile);
-      setStatus("Saving component...");
-      await componentsApi.create({
+      await addComponentMutation.mutateAsync({
         name,
         description,
         tags: tagsInput
           .split(",")
           .map((value) => value.trim())
           .filter(Boolean),
-        previewImageUrl,
         figmaDataBase64,
+        previewFile,
       });
       setStatus("Component added successfully.");
       navigate({ to: "/components" });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not add component.");
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -127,8 +145,8 @@ function AddComponentPage() {
           required
         />
 
-        <button className="primary-btn" type="submit" disabled={submitting}>
-          {submitting ? "Saving..." : "Save Component"}
+        <button className="primary-btn" type="submit" disabled={addComponentMutation.isPending}>
+          {addComponentMutation.isPending ? "Saving..." : "Save Component"}
         </button>
       </form>
     </section>

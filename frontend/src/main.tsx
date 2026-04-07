@@ -6,7 +6,16 @@ import { routeTree } from "./routeTree.gen";
 import { AuthProvider } from "./context/AuthContext.tsx";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const router = createRouter({ routeTree });
 
