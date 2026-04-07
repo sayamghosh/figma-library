@@ -1,28 +1,38 @@
 const { asyncHandler } = require("../utils/asyncHandler");
 const { Component } = require("../models/Component");
 
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const listComponents = asyncHandler(async (req, res) => {
-  const { q = "", tag = "", page = 1, limit = 20 } = req.query;
+  const { q = "", tag = "", page = 1, limit = 20, includeData = "false" } = req.query;
   const pageNumber = Math.max(Number(page) || 1, 1);
   const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const shouldIncludeData = String(includeData).toLowerCase() === "true";
 
   const query = {};
   if (q) {
+    const safeSearch = escapeRegex(q);
     query.$or = [
-      { name: { $regex: q, $options: "i" } },
-      { tags: { $regex: q, $options: "i" } },
+      { name: { $regex: safeSearch, $options: "i" } },
+      { tags: { $regex: safeSearch, $options: "i" } },
     ];
   }
   if (tag) {
-    query.tags = { $regex: `^${tag}$`, $options: "i" };
+    query.tags = { $regex: `^${escapeRegex(tag)}$`, $options: "i" };
   }
+
+  const select = shouldIncludeData ? "" : "-figmaDataBase64";
 
   const [items, total] = await Promise.all([
     Component.find(query)
       .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * perPage)
       .limit(perPage)
-      .populate("createdBy", "name email"),
+      .select(select)
+      .populate({ path: "createdBy", select: "name email" })
+      .lean(),
     Component.countDocuments(query),
   ]);
 
@@ -64,7 +74,9 @@ const createComponent = asyncHandler(async (req, res) => {
 });
 
 const getComponent = asyncHandler(async (req, res) => {
-  const component = await Component.findById(req.params.id).populate("createdBy", "name email");
+  const component = await Component.findById(req.params.id)
+    .populate("createdBy", "name email")
+    .lean();
   if (!component) {
     res.status(404);
     throw new Error("Component not found");

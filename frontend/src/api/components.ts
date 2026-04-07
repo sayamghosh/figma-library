@@ -12,6 +12,11 @@ export const componentsApi = {
     return response.data.data;
   },
 
+  async getById(id: string): Promise<ComponentItem> {
+    const response = await apiClient.get(`/components/${id}`);
+    return response.data.data;
+  },
+
   async create(input: {
     name: string;
     description: string;

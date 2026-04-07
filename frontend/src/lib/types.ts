@@ -10,7 +10,7 @@ export interface ComponentItem {
   description: string;
   tags: string[];
   previewImageUrl: string;
-  figmaDataBase64: string;
+  figmaDataBase64?: string;
   createdBy?: {
     _id?: string;
     name?: string;

@@ -20,11 +20,15 @@ function ComponentsPage() {
 
   const items = useMemo(() => data?.items ?? [], [data]);
 
-  async function onCopy(id: string, name: string, figmaDataBase64: string) {
+  async function onCopy(id: string, name: string, figmaDataBase64?: string) {
     setStatus("");
     setActiveId(id);
     try {
-      const mode = await copyToFigma(figmaDataBase64, name);
+      const payload = figmaDataBase64 || (await componentsApi.getById(id)).figmaDataBase64;
+      if (!payload) {
+        throw new Error("Component payload is missing.");
+      }
+      const mode = await copyToFigma(payload, name);
       setStatus(
         mode === "copied-binary"
           ? `Copied ${name} with binary payload.`

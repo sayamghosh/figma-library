@@ -40,6 +40,8 @@ const componentSchema = new mongoose.Schema(
 );
 
 componentSchema.index({ createdAt: -1 });
+componentSchema.index({ tags: 1, createdAt: -1 });
+componentSchema.index({ name: 1, createdAt: -1 });
 
 const Component = mongoose.model("Component", componentSchema);
 
