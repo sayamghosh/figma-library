@@ -9,7 +9,7 @@ function RootLayout() {
   const { user, logout, loading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200">
+    <div className="min-h-screen bg-[#F3F3F6] font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200">
       <header className="flex items-center justify-between px-6 lg:px-12 py-5 mx-auto max-w-[1400px]">
         {/* Logo */}
         <div className="flex items-center gap-3">
