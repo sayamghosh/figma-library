@@ -22,7 +22,7 @@ export function HowItWorksSection() {
       
       {/* Header */}
       <div className="flex flex-col mb-10 w-full">
-        <h2 className="text-[#111827] font-semibold text-[2.5rem] md:text-[3rem] tracking-tight mb-2 leading-tight">
+        <h2 className="text-[#111827] font-syne font-extrabold text-[2.5rem] md:text-[3.2rem] tracking-tight mb-3 leading-[1.1]">
           How it Works
         </h2>
         <p className="text-[#4B5563] text-[0.95rem]">

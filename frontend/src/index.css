@@ -10,6 +10,10 @@
 	--accent-ink: #0f1a00;
 }
 
+.font-syne {
+	font-family: "Syne", sans-serif !important;
+}
+
 * {
 	box-sizing: border-box;
 }
