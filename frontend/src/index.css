@@ -10,6 +10,10 @@
 	--accent-ink: #0f1a00;
 }
 
+.font-syne {
+	font-family: "Syne", sans-serif !important;
+}
+
 * {
 	box-sizing: border-box;
 }
@@ -48,9 +52,7 @@ samp {
 	font-family: "DM Mono", "Consolas", "Courier New", monospace;
 }
 
-a {
-	color: #b7ff72;
-}
+
 
 .app-shell {
 	min-height: 100vh;
