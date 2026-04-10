@@ -43,7 +43,7 @@ export function HowItWorksSection() {
             </div>
             
             {/* Title */}
-            <h3 className="text-[#111827] font-extrabold text-[1.4rem] tracking-tight mb-2">
+            <h3 className="text-[#111827] font-sans font-bold text-[1.4rem] tracking-tight mb-2">
               {step.title}
             </h3>
             
