@@ -38,6 +38,7 @@ export function NewsletterSection() {
               <button 
                 type="submit" 
                 className="bg-[#E81CFF] hover:bg-[#D510EB] text-white font-semibold text-[0.95rem] px-8 py-3.5 rounded-full transition-colors shadow-sm"
+                style={{ color: "#ffffff" }}
               >
                 Subscribe
               </button>

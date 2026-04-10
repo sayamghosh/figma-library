@@ -47,7 +47,7 @@ function RootLayout() {
               <Link to="/auth/login" className="text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors">
                 Login
               </Link>
-              <Link to="/auth/register" className="bg-[#8A2BE2] hover:bg-[#7b22cc] text-white px-6 py-2.5 rounded-lg text-[0.95rem] font-medium transition-all shadow-sm hover:shadow-md transform hover:-translate-y-[1px]">
+              <Link to="/auth/register" className="bg-[#8A2BE2] hover:bg-[#7b22cc] text-white px-6 py-2.5 rounded-lg text-[0.95rem] font-medium transition-all shadow-sm hover:shadow-md transform hover:-translate-y-[1px]" style={{ color: "#ffffff" }}>
                 Start for free
               </Link>
             </>

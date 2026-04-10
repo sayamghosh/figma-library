@@ -48,10 +48,7 @@ samp {
 	font-family: "DM Mono", "Consolas", "Courier New", monospace;
 }
 
-a {
-	color: inherit;
-	text-decoration: none;
-}
+
 
 .app-shell {
 	min-height: 100vh;

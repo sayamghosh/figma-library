@@ -18,6 +18,7 @@ export function HeroSection() {
         <Link 
           to="/components" 
           className="inline-block bg-gradient-to-r from-[#8A2BE2] to-[#A020F0] hover:from-[#7B24C5] hover:to-[#911CD9] text-white font-semibold text-[1.05rem] px-8 py-3.5 rounded-[12px] shadow-[0_12px_24px_-8px_rgba(138,43,226,0.6)] transition-all transform hover:-translate-y-0.5"
+          style={{ color: "#ffffff" }}
         >
           Explore Library
         </Link>

@@ -44,7 +44,7 @@ export function BuildFasterSection() {
           </div>
 
           {/* Connecting SVG Arrow */}
-          <div className="absolute -right-[46px] sm:-right-[55px] top-[50px] w-[55px] sm:w-[70px] h-[90px] pointer-events-none z-0 hidden lg:block">
+          <div className="absolute -right-[46px] sm:-right-[55px] top-[67px] w-[55px] sm:w-[70px] h-[90px] pointer-events-none z-0 hidden lg:block">
             <svg width="100%" height="100%" viewBox="0 0 70 96" fill="none" xmlns="http://www.w3.org/2000/svg" className="overflow-visible">
               {/* Bezier curve from dot (0, 0) to bottom edge (5, 86) */}
               <path d="M 0 0 C 60 5, 80 86, 8 86" stroke="#111827" strokeWidth="2.5" fill="transparent" strokeLinecap="round" />
