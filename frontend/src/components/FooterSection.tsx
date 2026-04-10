@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import logoImg from "../assets/logo.svg";
 
 export function FooterSection() {
   return (
@@ -13,23 +14,10 @@ export function FooterSection() {
         
         {/* Col 1: Brand Info (Takes up 5 columns on large screens) */}
         <div className="col-span-2 md:col-span-4 lg:col-span-5 flex flex-col items-start pr-4">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 flex">
-              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                <path d="M4 16L16 4l12 12-12 12L4 16z" fill="url(#paint_logo_ft)" />
-                <path d="M8 16L16 8l8 8-8 8-8-8z" fill="#fff" opacity="0.3" />
-                <defs>
-                  <linearGradient id="paint_logo_ft" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#4F46E5" />
-                    <stop offset="0.5" stopColor="#9333EA" />
-                    <stop offset="1" stopColor="#06B6D4" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <span className="font-extrabold text-[1rem] tracking-tighter text-black uppercase">
-              FIGCOMPONENTS
-            </span>
+          <div className="flex items-center mb-6">
+            <Link to="/">
+              <img src={logoImg} alt="FigComponents Logo" className="h-[1.75rem] w-auto object-contain" />
+            </Link>
           </div>
           
           <p className="text-[#4B5563] text-[0.85rem] leading-relaxed mb-10 max-w-[400px]">

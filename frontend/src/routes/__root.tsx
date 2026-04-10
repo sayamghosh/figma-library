@@ -1,6 +1,8 @@
 import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
 
+import logoImg from "../assets/logo.svg";
+
 export const Route = createRootRoute({
   component: RootLayout,
 });
@@ -12,23 +14,10 @@ function RootLayout() {
     <div className="min-h-screen bg-[#F3F3F6] font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200">
       <header className="flex items-center justify-between px-6 lg:px-12 py-5 mx-auto max-w-[1400px]">
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex">
-            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-              <path d="M4 16L16 4l12 12-12 12L4 16z" fill="url(#paint_logo)" />
-              <path d="M8 16L16 8l8 8-8 8-8-8z" fill="#fff" opacity="0.3" />
-              <defs>
-                <linearGradient id="paint_logo" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#4F46E5" />
-                  <stop offset="0.5" stopColor="#9333EA" />
-                  <stop offset="1" stopColor="#06B6D4" />
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <span className="font-extrabold text-[1.15rem] tracking-tighter text-black uppercase">
-            FIGCOMPONENTS
-          </span>
+        <div className="flex items-center">
+          <Link to="/">
+            <img src={logoImg} alt="FigComponents Logo" className="h-8 w-auto object-contain" />
+          </Link>
         </div>
 
         {/* Nav Links */}
