@@ -1,3 +1,5 @@
+import mailImg from "../assets/mail.png";
+
 export function NewsletterSection() {
   return (
     <section className="relative w-full">
@@ -9,20 +11,12 @@ export function NewsletterSection() {
           
           {/* Left Side: Graphic */}
           <div className="shrink-0 relative hidden sm:flex items-center justify-center w-[200px] md:w-[300px]">
-             {/* Custom SVG Illustration imitating the overlapping cards & envelope */}
-             <svg width="220" height="220" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Card 1 (Left) */}
-                <rect x="40" y="50" width="90" height="120" rx="12" transform="rotate(-25 40 50)" stroke="#A1A1AA" strokeWidth="7" fill="none" strokeOpacity="0.8" />
-                <path d="M 50 70 Q 70 50, 90 70 T 120 60" stroke="#A1A1AA" strokeWidth="7" fill="none" transform="rotate(-25 40 50)" strokeOpacity="0.8" />
-                
-                {/* Card 2 (Right) */}
-                <rect x="100" y="40" width="90" height="120" rx="12" transform="rotate(15 100 40)" stroke="#D4D4D8" strokeWidth="7" fill="none" strokeOpacity="0.8" />
-                <text x="130" y="105" transform="rotate(15 100 40)" fill="#D4D4D8" fontSize="42" fontWeight="bold" fontFamily="sans-serif" opacity="0.8">@</text>
-
-                {/* Envelope (Front) */}
-                <rect x="75" y="110" width="110" height="75" stroke="#FF8A00" strokeWidth="8" fill="#8b5cf6" />
-                <path d="M75 110 L130 150 L185 110" stroke="#FF8A00" strokeWidth="8" fill="none" strokeLinejoin="round" />
-             </svg>
+             {/* Render the actual mail graphic provided by the user */}
+             <img 
+               src={mailImg} 
+               alt="Newsletter Mail Graphic" 
+               className="w-full max-w-[240px] h-auto object-contain"
+             />
           </div>
 
           {/* Right Side: Content */}
