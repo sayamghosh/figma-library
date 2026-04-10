@@ -2,7 +2,7 @@ import hero2Img from "../assets/Hero2.png";
 
 export function PremiumDesignsSection() {
   return (
-    <section className="w-full max-w-[1240px] mx-auto flex flex-col md:flex-row items-center justify-between py-24 px-4 md:px-8 gap-12 lg:gap-20 relative z-20">
+    <section className="w-full max-w-[1240px] mx-auto flex flex-col md:flex-row items-center justify-between py-16 lg:py-24 px-4 md:px-8 gap-12 lg:gap-20 relative z-20">
       
       {/* Left Column: Text Content */}
       <div className="w-full md:w-[45%] flex flex-col items-start shrink-0">

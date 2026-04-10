@@ -37,7 +37,7 @@ export function FAQSection() {
   };
 
   return (
-    <section className="w-full max-w-[900px] mx-auto flex flex-col items-center py-24 px-4 md:px-8 relative z-20">
+    <section className="w-full max-w-[900px] mx-auto flex flex-col items-center py-16 lg:py-24 px-4 md:px-8 relative z-20">
       
       {/* Pill Badge */}
       <div className="bg-[#ebd5ff] text-[#9b41ee] font-semibold text-[0.75rem] px-5 py-1.5 rounded-full mb-8 tracking-wider">

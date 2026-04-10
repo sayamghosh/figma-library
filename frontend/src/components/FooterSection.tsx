@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 export function FooterSection() {
   return (
-    <footer className="w-full bg-gradient-to-br from-[#FEF7F3] to-[#FDF4EE] pt-8 pb-16 relative z-0">
+    <footer className="w-full bg-gradient-to-br from-[#FEF7F3] to-[#FDF4EE] pt-8 lg:pt-12 pb-16 lg:pb-24 relative z-0">
       
       {/* Divider Line */}
       <div className="w-full max-w-[1240px] mx-auto px-4 md:px-8 mb-12">

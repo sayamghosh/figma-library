@@ -1,6 +1,6 @@
 export function BuildFasterSection() {
   return (
-    <section className="w-full max-w-[1200px] mx-auto flex flex-col items-center pt-8 pb-32 px-4 relative z-20">
+    <section className="w-full max-w-[1200px] mx-auto flex flex-col items-center py-16 lg:py-24 px-4 relative z-20">
       
       {/* Title & Toggle */}
       <h2 className="text-center text-[#111827] font-extrabold text-[2.2rem] md:text-[3rem] tracking-tight leading-[1.2] mb-16 flex flex-col items-center">

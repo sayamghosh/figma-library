@@ -18,7 +18,7 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <section className="w-full max-w-[1100px] mx-auto flex flex-col pt-4 pb-24 px-4 md:px-8 relative z-20">
+    <section className="w-full max-w-[1100px] mx-auto flex flex-col py-16 lg:py-24 px-4 md:px-8 relative z-20">
       
       {/* Header */}
       <div className="flex flex-col mb-10 w-full">

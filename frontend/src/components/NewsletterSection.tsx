@@ -6,7 +6,7 @@ export function NewsletterSection() {
       {/* Background split: Top is transparent, Bottom is peach to match footer */}
       <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-b from-[#FEF7F3] to-[#FDF4EE] z-0"></div>
 
-      <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 relative z-10 pt-16 pb-8">
+      <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 relative z-10 py-16 lg:py-24">
         <div className="w-full rounded-[30px] bg-gradient-to-r from-[#6b21a8] to-[#c084fc] shadow-2xl overflow-hidden flex flex-col md:flex-row items-center justify-between py-12 md:py-16 px-8 md:px-20 gap-10">
           
           {/* Left Side: Graphic */}
