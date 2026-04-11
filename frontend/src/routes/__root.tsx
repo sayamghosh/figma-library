@@ -1,11 +1,73 @@
 import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
+import { useEffect, useRef, useState } from "react";
 
 import logoImg from "../assets/logo.svg";
 
 export const Route = createRootRoute({
   component: RootLayout,
 });
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function UserAvatar({ name, email, onLogout }: { name: string; email: string; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#8A2BE2] to-[#A020F0] text-white text-[0.8rem] font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white focus:outline-none focus:ring-purple-300"
+        aria-label="User menu"
+        aria-expanded={open}
+      >
+        {getInitials(name)}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2.5 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+          {/* User info */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <p className="text-[0.85rem] font-semibold text-gray-900 truncate">{name}</p>
+            <p className="text-[0.75rem] text-gray-400 truncate mt-0.5">{email}</p>
+          </div>
+
+          {/* Menu items */}
+          <div className="py-1.5">
+            <button
+              type="button"
+              onClick={() => { setOpen(false); onLogout(); }}
+              className="w-full text-left flex items-center gap-2.5 px-4 py-2 text-[0.83rem] font-medium text-red-500 hover:bg-red-50 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function RootLayout() {
   const { user, logout, loading } = useAuth();
@@ -41,9 +103,7 @@ function RootLayout() {
               </Link>
             </>
           ) : user ? (
-            <button type="button" className="text-[0.95rem] font-bold text-gray-800 hover:text-black" onClick={logout}>
-              Logout ({user.name})
-            </button>
+            <UserAvatar name={user.name} email={user.email} onLogout={logout} />
           ) : null}
         </div>
       </header>
