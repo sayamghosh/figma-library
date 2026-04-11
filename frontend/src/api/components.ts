@@ -12,6 +12,15 @@ export const componentsApi = {
     return response.data.data;
   },
 
+  async listMine(search = ""): Promise<PaginatedComponentResponse> {
+    const response = await apiClient.get("/components/my", {
+      params: {
+        q: search || undefined,
+      },
+    });
+    return response.data.data;
+  },
+
   async getById(id: string): Promise<ComponentItem> {
     const response = await apiClient.get(`/components/${id}`);
     return response.data.data;
@@ -26,5 +35,9 @@ export const componentsApi = {
   }): Promise<ComponentItem> {
     const response = await apiClient.post("/components", input);
     return response.data.data;
+  },
+
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/components/${id}`);
   },
 };

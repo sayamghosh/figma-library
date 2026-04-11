@@ -52,6 +52,20 @@ function UserAvatar({ name, email, onLogout }: { name: string; email: string; on
 
           {/* Menu items */}
           <div className="py-1.5">
+            <Link
+              to="/my-components"
+              onClick={() => setOpen(false)}
+              className="w-full text-left flex items-center gap-2.5 px-4 py-2 text-[0.83rem] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
+                <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+              My Components
+            </Link>
+            <div className="mx-3 border-t border-gray-100 my-1" />
             <button
               type="button"
               onClick={() => { setOpen(false); onLogout(); }}

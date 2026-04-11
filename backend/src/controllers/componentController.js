@@ -50,6 +50,47 @@ const listComponents = asyncHandler(async (req, res) => {
   });
 });
 
+const listMyComponents = asyncHandler(async (req, res) => {
+  const { q = "", tag = "", page = 1, limit = 20 } = req.query;
+  const pageNumber = Math.max(Number(page) || 1, 1);
+  const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
+
+  const query = { createdBy: req.user.userId };
+  if (q) {
+    const safeSearch = escapeRegex(q);
+    query.$or = [
+      { name: { $regex: safeSearch, $options: "i" } },
+      { tags: { $regex: safeSearch, $options: "i" } },
+    ];
+  }
+  if (tag) {
+    query.tags = { $regex: `^${escapeRegex(tag)}$`, $options: "i" };
+  }
+
+  const [items, total] = await Promise.all([
+    Component.find(query)
+      .sort({ createdAt: -1 })
+      .skip((pageNumber - 1) * perPage)
+      .limit(perPage)
+      .select("-figmaDataBase64")
+      .lean(),
+    Component.countDocuments(query),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      items,
+      pagination: {
+        page: pageNumber,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+    },
+  });
+});
+
 const createComponent = asyncHandler(async (req, res) => {
   const { name, description = "", tags = [], previewImageUrl, figmaDataBase64 } = req.body;
 
@@ -132,6 +173,7 @@ const deleteComponent = asyncHandler(async (req, res) => {
 
 module.exports = {
   listComponents,
+  listMyComponents,
   createComponent,
   getComponent,
   updateComponent,
