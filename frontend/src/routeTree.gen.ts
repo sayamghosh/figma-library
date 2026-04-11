@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MyComponentsRouteImport } from './routes/my-components'
 import { Route as AddComponentRouteImport } from './routes/add-component'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComponentsIndexRouteImport } from './routes/components/index'
 import { Route as AuthRegisterRouteImport } from './routes/auth/register'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
+const MyComponentsRoute = MyComponentsRouteImport.update({
+  id: '/my-components',
+  path: '/my-components',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AddComponentRoute = AddComponentRouteImport.update({
   id: '/add-component',
   path: '/add-component',
@@ -44,6 +50,7 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
+  '/my-components': typeof MyComponentsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/components/': typeof ComponentsIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
+  '/my-components': typeof MyComponentsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/components': typeof ComponentsIndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
+  '/my-components': typeof MyComponentsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/components/': typeof ComponentsIndexRoute
@@ -68,15 +77,23 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/add-component'
+    | '/my-components'
     | '/auth/login'
     | '/auth/register'
     | '/components/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add-component' | '/auth/login' | '/auth/register' | '/components'
+  to:
+    | '/'
+    | '/add-component'
+    | '/my-components'
+    | '/auth/login'
+    | '/auth/register'
+    | '/components'
   id:
     | '__root__'
     | '/'
     | '/add-component'
+    | '/my-components'
     | '/auth/login'
     | '/auth/register'
     | '/components/'
@@ -85,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddComponentRoute: typeof AddComponentRoute
+  MyComponentsRoute: typeof MyComponentsRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
@@ -92,6 +110,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/my-components': {
+      id: '/my-components'
+      path: '/my-components'
+      fullPath: '/my-components'
+      preLoaderRoute: typeof MyComponentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/add-component': {
       id: '/add-component'
       path: '/add-component'
@@ -133,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddComponentRoute: AddComponentRoute,
+  MyComponentsRoute: MyComponentsRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
