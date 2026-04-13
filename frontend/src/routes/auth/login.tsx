@@ -9,7 +9,7 @@ export const Route = createFileRoute("/auth/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, setRegisterModalOpen } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -53,7 +53,7 @@ function LoginPage() {
         </button>
       </form>
       <p>
-        No account? <Link to="/auth/register">Create one</Link>
+        No account? <button type="button" onClick={() => { navigate({ to: "/" }); setRegisterModalOpen(true); }} className="text-[#8A2BE2] bg-transparent border-none p-0 cursor-pointer hover:underline font-bold">Create one</button>
       </p>
     </section>
   );

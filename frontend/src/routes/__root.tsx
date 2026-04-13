@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useEffect, useRef, useState } from "react";
 
 import logoImg from "../assets/logo.svg";
+import { RegisterModal } from "../components/RegisterModal";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -119,7 +120,7 @@ function HamburgerIcon({ open }: { open: boolean }) {
 
 // ── RootLayout ────────────────────────────────────────────────────────────────
 function RootLayout() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, setRegisterModalOpen, registerModalOpen } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 
@@ -178,13 +179,13 @@ function RootLayout() {
                 >
                   Login
                 </Link>
-                <Link
-                  to="/auth/register"
+                <button
+                  onClick={() => setRegisterModalOpen(true)}
                   className="bg-[#8A2BE2] hover:bg-[#7b22cc] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[0.88rem] sm:text-[0.95rem] font-medium transition-all shadow-sm"
                   style={{ color: "#ffffff" }}
                 >
                   Start for free
-                </Link>
+                </button>
               </>
             ) : user ? (
               <UserAvatar name={user.name} email={user.email} onLogout={logout} />
@@ -249,14 +250,13 @@ function RootLayout() {
                     >
                       Login
                     </Link>
-                    <Link
-                      to="/auth/register"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-center px-3 py-3 rounded-xl text-[0.95rem] font-semibold bg-[#8A2BE2] text-white hover:bg-[#7b22cc] transition-colors"
+                    <button
+                      onClick={() => { setMobileOpen(false); setRegisterModalOpen(true); }}
+                      className="flex items-center justify-center px-3 py-3 rounded-xl text-[0.95rem] font-semibold bg-[#8A2BE2] text-white hover:bg-[#7b22cc] transition-colors w-full"
                       style={{ color: "#ffffff" }}
                     >
                       Start for free
-                    </Link>
+                    </button>
                   </>
                 )}
 
@@ -304,6 +304,8 @@ function RootLayout() {
       <main className="w-full">
         <Outlet />
       </main>
+      
+      {registerModalOpen && <RegisterModal />}
     </div>
   );
 }

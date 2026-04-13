@@ -2,6 +2,10 @@ const bcrypt = require("bcryptjs");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { createAccessToken } = require("../utils/token");
 const { User } = require("../models/User");
+const { OAuth2Client } = require("google-auth-library");
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -87,4 +91,57 @@ const me = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, me };
+const googleAuth = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    res.status(400);
+    throw new Error("No ID token provided");
+  }
+
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+
+  const { sub: googleId, email, name, picture } = payload;
+  const lowercaseEmail = email.toLowerCase().trim();
+
+  let user = await User.findOne({ email: lowercaseEmail });
+  
+  if (user) {
+    // If user exists but used local auth, we can just link accounts or log them in.
+    if (!user.googleId) {
+      user.googleId = googleId;
+      user.authProvider = "google";
+      await user.save();
+    }
+  } else {
+    // Create new Google user
+    user = await User.create({
+      name: name,
+      email: lowercaseEmail,
+      googleId: googleId,
+      authProvider: "google",
+      // Optional password could be left empty or undefined since it's not required for 'google' auth provider
+    });
+  }
+
+  const token = createAccessToken({ userId: user._id.toString(), email: user.email });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        picture: picture, // We don't save picture yet, but we can pass it
+      },
+    },
+  });
+});
+
+module.exports = { register, login, me, googleAuth };
