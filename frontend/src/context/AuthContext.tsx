@@ -12,6 +12,8 @@ interface AuthContextValue {
   logout: () => void;
   registerModalOpen: boolean;
   setRegisterModalOpen: (open: boolean) => void;
+  loginModalOpen: boolean;
+  setLoginModalOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -27,6 +29,7 @@ function normalizeUser(user: User): User {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   const hasToken = Boolean(localStorage.getItem("accessToken"));
   const authQuery = useQuery({
@@ -65,8 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo(
-    () => ({ user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen }),
-    [user, loading, registerModalOpen]
+    () => ({ user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen }),
+    [user, loading, registerModalOpen, loginModalOpen]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -3,12 +3,11 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
-import registerImg from "../assets/registerimg.png";
+import loginImg from "../assets/loginimg.png";
 
-export function RegisterModal() {
+export function LoginModal() {
   const navigate = useNavigate();
-  const { register, loginWithGoogle, setRegisterModalOpen, setLoginModalOpen } = useAuth();
-  const [name, setName] = useState("");
+  const { login, loginWithGoogle, setLoginModalOpen, setRegisterModalOpen } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,11 +18,11 @@ export function RegisterModal() {
     setError("");
     setSubmitting(true);
     try {
-      await register({ name, email, password });
-      setRegisterModalOpen(false);
+      await login({ email, password });
+      setLoginModalOpen(false);
       navigate({ to: "/components" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed.");
+      setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
       setSubmitting(false);
     }
@@ -33,7 +32,7 @@ export function RegisterModal() {
     try {
       if (credentialResponse.credential) {
         await loginWithGoogle(credentialResponse.credential);
-        setRegisterModalOpen(false);
+        setLoginModalOpen(false);
         navigate({ to: "/components" });
       }
     } catch (err) {
@@ -44,7 +43,7 @@ export function RegisterModal() {
   // Close modal when clicking the backdrop
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
-      setRegisterModalOpen(false);
+      setLoginModalOpen(false);
     }
   };
 
@@ -57,7 +56,7 @@ export function RegisterModal() {
         
         {/* Close Button */}
         <button 
-          onClick={() => setRegisterModalOpen(false)}
+          onClick={() => setLoginModalOpen(false)}
           className="absolute right-3 top-3 z-10 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
           aria-label="Close modal"
         >
@@ -69,31 +68,19 @@ export function RegisterModal() {
         {/* Left Pane - Graphics */}
         <div className="hidden md:flex w-[45%] justify-center items-center bg-[#f8f9fa] border-r border-[#E5E7EB] p-6">
           <div className="w-full max-w-[280px]">
-            <img src={registerImg} alt="Welcome graphic" className="w-full h-auto object-contain drop-shadow-sm mix-blend-multiply" />
+            <img src={loginImg} alt="Welcome back graphic" className="w-full h-auto object-contain drop-shadow-sm mix-blend-multiply" />
           </div>
         </div>
 
         {/* Right Pane - Form */}
         <div className="flex-1 flex flex-col p-6 sm:p-8 bg-white">
-          <div className="w-full max-w-[340px] mx-auto flex flex-col justify-center h-full">
+          <div className="w-full max-w-[340px] mx-auto flex flex-col justify-center h-full mt-4">
             <div className="text-center mb-5">
-              <h2 className="text-2xl font-extrabold font-syne text-[#10131A] mb-1">Create Account</h2>
-              <p className="text-gray-500 text-[0.8rem] font-medium">Sign up and get 365 days free trial</p>
+              <h2 className="text-2xl font-extrabold font-syne text-[#10131A] mb-1">Welcome Back</h2>
+              <p className="text-gray-500 text-[0.8rem] font-medium">Log in to your account</p>
             </div>
 
-            <form onSubmit={onSubmit} className="flex flex-col gap-3 text-left">
-              <div>
-                <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Full Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Alex Filmora"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-900 bg-gray-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent transition-all shadow-sm text-sm"
-                />
-              </div>
-
+            <form onSubmit={onSubmit} className="flex flex-col gap-4 text-left">
               <div>
                 <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Email Address</label>
                 <input
@@ -110,11 +97,10 @@ export function RegisterModal() {
                 <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Password</label>
                 <input
                   type="password"
-                  placeholder="Create a strong password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
-                  minLength={6}
                   className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-900 bg-gray-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent transition-all shadow-sm text-sm"
                 />
               </div>
@@ -122,15 +108,15 @@ export function RegisterModal() {
               {error ? <p className="text-red-500 text-xs font-medium bg-red-50 p-2 rounded">{error}</p> : null}
               
               <button 
-                className="w-full bg-[#8A2BE2] text-white rounded-lg py-2 font-bold mt-1 shadow-sm shadow-purple-500/20 hover:bg-[#7b22cc] hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 font-syne text-sm" 
+                className="w-full bg-[#8A2BE2] text-white rounded-lg py-2 font-bold mt-2 shadow-sm shadow-purple-500/20 hover:bg-[#7b22cc] hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 font-syne text-sm" 
                 type="submit" 
                 disabled={submitting}
               >
-                {submitting ? "Processing..." : "Create Account"}
+                {submitting ? "Processing..." : "Sign In"}
               </button>
             </form>
 
-            <div className="flex items-center gap-3 my-4">
+            <div className="flex items-center gap-3 my-5">
               <div className="h-[1px] flex-1 bg-gray-100"></div>
               <span className="text-gray-400 text-[0.7rem] font-medium uppercase tracking-wider">Or continue with</span>
               <div className="h-[1px] flex-1 bg-gray-100"></div>
@@ -144,18 +130,18 @@ export function RegisterModal() {
                 theme="outline"
                 size="large"
                 width="340"
-                text="signup_with"
+                text="signin_with"
               />
             </div>
 
-            <p className="text-center text-gray-500 text-[0.8rem] mt-5 pb-2">
-              Already have an account?{" "}
+            <p className="text-center text-gray-500 text-[0.8rem] mt-6 pb-2">
+              Don't have an account?{" "}
               <button 
                 type="button"
-                onClick={() => { setRegisterModalOpen(false); setLoginModalOpen(true); }}
+                onClick={() => { setLoginModalOpen(false); setRegisterModalOpen(true); }}
                 className="text-[#8A2BE2] hover:text-[#7b22cc] font-bold hover:underline bg-transparent border-none p-0 cursor-pointer"
               >
-                Sign in
+                Create one
               </button>
             </p>
           </div>

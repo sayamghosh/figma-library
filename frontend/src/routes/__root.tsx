@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import logoImg from "../assets/logo.svg";
 import { RegisterModal } from "../components/RegisterModal";
+import { LoginModal } from "../components/LoginModal";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -120,7 +121,7 @@ function HamburgerIcon({ open }: { open: boolean }) {
 
 // ── RootLayout ────────────────────────────────────────────────────────────────
 function RootLayout() {
-  const { user, logout, loading, setRegisterModalOpen, registerModalOpen } = useAuth();
+  const { user, logout, loading, setRegisterModalOpen, registerModalOpen, setLoginModalOpen, loginModalOpen } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
 
@@ -173,12 +174,12 @@ function RootLayout() {
             {/* Auth — always visible */}
             {!loading && !user ? (
               <>
-                <Link
-                  to="/auth/login"
-                  className="hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors"
+                <button
+                  onClick={() => setLoginModalOpen(true)}
+                  className="hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0 cursor-pointer"
                 >
                   Login
-                </Link>
+                </button>
                 <button
                   onClick={() => setRegisterModalOpen(true)}
                   className="bg-[#8A2BE2] hover:bg-[#7b22cc] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[0.88rem] sm:text-[0.95rem] font-medium transition-all shadow-sm"
@@ -243,13 +244,12 @@ function RootLayout() {
                 {!loading && !user && (
                   <>
                     <div className="border-t border-gray-100 my-2" />
-                    <Link
-                      to="/auth/login"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center px-3 py-3 rounded-xl text-[0.95rem] font-bold text-gray-900 hover:bg-gray-50 transition-colors"
+                    <button
+                      onClick={() => { setMobileOpen(false); setLoginModalOpen(true); }}
+                      className="flex items-center px-3 py-3 rounded-xl text-[0.95rem] font-bold text-gray-900 hover:bg-gray-50 transition-colors w-full text-left bg-transparent border-none cursor-pointer"
                     >
                       Login
-                    </Link>
+                    </button>
                     <button
                       onClick={() => { setMobileOpen(false); setRegisterModalOpen(true); }}
                       className="flex items-center justify-center px-3 py-3 rounded-xl text-[0.95rem] font-semibold bg-[#8A2BE2] text-white hover:bg-[#7b22cc] transition-colors w-full"
@@ -306,6 +306,7 @@ function RootLayout() {
       </main>
       
       {registerModalOpen && <RegisterModal />}
+      {loginModalOpen && <LoginModal />}
     </div>
   );
 }
