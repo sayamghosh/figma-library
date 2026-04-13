@@ -12,6 +12,12 @@ export const authApi = {
     return response.data.data;
   },
 
+  async googleLogin(idToken: string): Promise<AuthPayload> {
+    const response = await apiClient.post("/auth/google", { idToken });
+    return response.data.data;
+  },
+
+
   async me(): Promise<User> {
     const response = await apiClient.get("/auth/me");
     const user = response.data.data;

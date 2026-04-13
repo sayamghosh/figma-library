@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { componentsApi } from "../api/components";
 import { uploadApi } from "../api/upload";
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/add-component")({
 function AddComponentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, setLoginModalOpen } = useAuth();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -93,9 +93,9 @@ function AddComponentPage() {
       <section className="auth-card">
         <h2>Authentication Required</h2>
         <p>You must sign in to add components.</p>
-        <Link to="/auth/login" className="primary-btn">
+        <button type="button" onClick={() => setLoginModalOpen(true)} className="primary-btn">
           Go to Login
-        </Link>
+        </button>
       </section>
     );
   }

@@ -13,8 +13,6 @@ import { Route as MyComponentsRouteImport } from './routes/my-components'
 import { Route as AddComponentRouteImport } from './routes/add-component'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComponentsIndexRouteImport } from './routes/components/index'
-import { Route as AuthRegisterRouteImport } from './routes/auth/register'
-import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
 const MyComponentsRoute = MyComponentsRouteImport.update({
   id: '/my-components',
@@ -36,31 +34,17 @@ const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
   path: '/components/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRegisterRoute = AuthRegisterRouteImport.update({
-  id: '/auth/register',
-  path: '/auth/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/auth/login',
-  path: '/auth/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
   '/my-components': typeof MyComponentsRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
   '/components/': typeof ComponentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
   '/my-components': typeof MyComponentsRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
   '/components': typeof ComponentsIndexRoute
 }
 export interface FileRoutesById {
@@ -68,43 +52,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
   '/my-components': typeof MyComponentsRoute
-  '/auth/login': typeof AuthLoginRoute
-  '/auth/register': typeof AuthRegisterRoute
   '/components/': typeof ComponentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/add-component'
-    | '/my-components'
-    | '/auth/login'
-    | '/auth/register'
-    | '/components/'
+  fullPaths: '/' | '/add-component' | '/my-components' | '/components/'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/add-component'
-    | '/my-components'
-    | '/auth/login'
-    | '/auth/register'
-    | '/components'
-  id:
-    | '__root__'
-    | '/'
-    | '/add-component'
-    | '/my-components'
-    | '/auth/login'
-    | '/auth/register'
-    | '/components/'
+  to: '/' | '/add-component' | '/my-components' | '/components'
+  id: '__root__' | '/' | '/add-component' | '/my-components' | '/components/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddComponentRoute: typeof AddComponentRoute
   MyComponentsRoute: typeof MyComponentsRoute
-  AuthLoginRoute: typeof AuthLoginRoute
-  AuthRegisterRoute: typeof AuthRegisterRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
 }
 
@@ -138,20 +99,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComponentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/register': {
-      id: '/auth/register'
-      path: '/auth/register'
-      fullPath: '/auth/register'
-      preLoaderRoute: typeof AuthRegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/auth/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -159,8 +106,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddComponentRoute: AddComponentRoute,
   MyComponentsRoute: MyComponentsRoute,
-  AuthLoginRoute: AuthLoginRoute,
-  AuthRegisterRoute: AuthRegisterRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
 }
 export const routeTree = rootRouteImport

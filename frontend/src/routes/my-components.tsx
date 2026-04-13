@@ -99,7 +99,7 @@ function DeleteConfirmModal({
 
 // ── MyComponentsPage ───────────────────────────────────────────────────────────
 function MyComponentsPage() {
-  const { user } = useAuth();
+  const { user, setLoginModalOpen } = useAuth();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -152,13 +152,14 @@ function MyComponentsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <p className="text-gray-500 font-medium">Please log in to view your components.</p>
-        <Link
-          to="/auth/login"
+        <button
+          type="button"
+          onClick={() => setLoginModalOpen(true)}
           className="bg-[#8A2BE2] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#7b22cc] transition-colors"
           style={{ color: "#fff" }}
         >
           Log in
-        </Link>
+        </button>
       </div>
     );
   }
