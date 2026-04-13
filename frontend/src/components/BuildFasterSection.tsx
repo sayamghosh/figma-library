@@ -3,9 +3,9 @@ export function BuildFasterSection() {
     <section className="w-full max-w-[1200px] mx-auto flex flex-col items-center py-12 sm:py-16 lg:py-24 px-4 relative z-20">
 
       {/* Title */}
-      <h2 className="text-center text-[#111827] font-extrabold text-[1.7rem] sm:text-[2.2rem] md:text-[2.8rem] lg:text-[3rem] tracking-tight leading-[1.2] mb-10 sm:mb-14 flex flex-col items-center">
+      <h2 className="text-center font-outfit text-[#111827] font-extrabold text-[1.7rem] sm:text-[2.2rem] md:text-[2.8rem] lg:text-[3rem] leading-[1.2] mb-10 sm:mb-14 flex flex-col items-center">
         <span>Build Faster with</span>
-        <span className="flex items-center gap-3 mt-2 flex-wrap justify-center">
+        <span className="flex font-manrope font-extrabold items-center gap-3 mt-2 flex-wrap justify-center">
           <span className="relative flex items-center justify-center mr-2">
             {/* Toggle track */}
             <div className="w-[3.2rem] sm:w-[3.6rem] h-[1.8rem] sm:h-[2rem] bg-[#b1b5c3] rounded-full flex items-center px-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] opacity-90">
