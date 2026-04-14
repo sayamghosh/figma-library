@@ -243,7 +243,7 @@ function MyComponentsPage() {
             >
               {/* Preview */}
               <div
-                className="h-[170px] bg-[#F3F3F6] bg-center bg-cover"
+                className="h-[170px] bg-[#F3F3F6] bg-center bg-contain bg-no-repeat"
                 style={item.previewImageUrl ? { backgroundImage: `url(${item.previewImageUrl})` } : {}}
                 aria-label={item.name}
               >

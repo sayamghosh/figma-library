@@ -172,7 +172,7 @@ function PreviewModal({
             <img
               src={item.previewImageUrl}
               alt={item.name}
-              className="w-full rounded-xl object-cover max-h-[60vh]"
+              className="w-full rounded-xl object-contain max-h-[60vh] bg-white"
             />
           ) : (
             <div className="w-full h-64 bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
@@ -214,7 +214,7 @@ function ComponentCard({
       {/* Preview */}
       <div className="relative">
         <div
-          className="h-[185px] bg-[#F3F3F6] bg-center bg-cover"
+          className="h-[185px] bg-[#F3F3F6] bg-center bg-contain bg-no-repeat"
           style={item.previewImageUrl ? { backgroundImage: `url(${item.previewImageUrl})` } : {}}
           aria-label={item.name}
         >
