@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
-import loginImg from "../assets/loginimg.png";
+import loginImg from "../assets/login_illustration.png";
 
 export function LoginModal() {
   const navigate = useNavigate();
@@ -66,10 +66,8 @@ export function LoginModal() {
         </button>
 
         {/* Left Pane - Graphics */}
-        <div className="hidden md:flex w-[45%] justify-center items-center bg-[#f8f9fa] border-r border-[#E5E7EB] p-6">
-          <div className="w-full max-w-[280px]">
-            <img src={loginImg} alt="Welcome back graphic" className="w-full h-auto object-contain drop-shadow-sm mix-blend-multiply" />
-          </div>
+        <div className="hidden md:block w-[45%] relative border-r border-[#E5E7EB] bg-[#f8f9fa] overflow-hidden">
+          <img src={loginImg} alt="Welcome back graphic" className="absolute inset-0 w-full h-full object-cover" />
         </div>
 
         {/* Right Pane - Form */}
