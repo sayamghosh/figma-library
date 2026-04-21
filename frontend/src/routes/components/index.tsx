@@ -212,9 +212,13 @@ function ComponentCard({
   return (
     <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
       {/* Preview */}
-      <div className="relative">
+      <div 
+        className="relative cursor-pointer group/preview overflow-hidden" 
+        onClick={onPreview}
+        title="Click to preview"
+      >
         <div
-          className="h-[185px] bg-[#F3F3F6] bg-center bg-contain bg-no-repeat"
+          className="h-[185px] bg-[#F3F3F6] bg-center bg-contain bg-no-repeat transition-transform duration-300 group-hover/preview:scale-[1.02]"
           style={item.previewImageUrl ? { backgroundImage: `url(${item.previewImageUrl})` } : {}}
           aria-label={item.name}
         >
