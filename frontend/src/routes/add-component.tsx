@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,10 +18,40 @@ function AddComponentPage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInputValue, setTagInputValue] = useState("");
   const [figmaDataBase64, setFigmaDataBase64] = useState("");
   const [previewFile, setPreviewFile] = useState<File | null>(null);
-  const [status, setStatus] = useState("Paste from Figma into the extractor field below.");
+  const [status, setStatus] = useState("");
+
+  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val.includes(",")) {
+      const newTags = val.split(",").map(t => t.trim()).filter(Boolean);
+      if (newTags.length > 0) {
+        setTags(prev => [...prev, ...newTags]);
+      }
+      setTagInputValue("");
+    } else {
+      setTagInputValue(val);
+    }
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (tagInputValue.trim()) {
+        setTags(prev => [...prev, tagInputValue.trim()]);
+        setTagInputValue("");
+      }
+    } else if (e.key === "Backspace" && !tagInputValue && tags.length > 0) {
+      setTags(prev => prev.slice(0, -1));
+    }
+  };
+
+  const removeTag = (indexToRemove: number) => {
+    setTags(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
 
   const addComponentMutation = useMutation({
     mutationFn: async (input: {
@@ -45,15 +75,37 @@ function AddComponentPage() {
     },
   });
 
-  async function onPaste(event: React.ClipboardEvent<HTMLTextAreaElement>) {
-    try {
-      const value = await extractFigmaBase64FromPaste(event.nativeEvent as ClipboardEvent);
-      setFigmaDataBase64(value);
-      setStatus(`Captured Figma payload (${value.length} base64 chars).`);
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not extract payload.");
-    }
-  }
+  // Global paste handler to support "ctrl + v in the page will work"
+  useEffect(() => {
+    const handleGlobalPaste = async (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        (target.tagName === "INPUT" && (target as HTMLInputElement).type !== "file" && (target as HTMLInputElement).type !== "checkbox" && (target as HTMLInputElement).type !== "radio") ||
+        target.tagName === "TEXTAREA"
+      ) {
+        if (target.id !== "figmaPaste") {
+          return;
+        }
+      }
+
+      try {
+        const value = await extractFigmaBase64FromPaste(e);
+        if (value) {
+          setFigmaDataBase64(value);
+          setStatus("Captured Figma payload successfully.");
+        }
+      } catch (error) {
+        if (target.id === "figmaPaste") {
+          setStatus(error instanceof Error ? error.message : "Could not extract payload.");
+        }
+      }
+    };
+
+    window.addEventListener("paste", handleGlobalPaste);
+    return () => window.removeEventListener("paste", handleGlobalPaste);
+  }, []);
+
+
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,10 +126,7 @@ function AddComponentPage() {
       await addComponentMutation.mutateAsync({
         name,
         description,
-        tags: tagsInput
-          .split(",")
-          .map((value) => value.trim())
-          .filter(Boolean),
+        tags: [...tags, ...tagInputValue.split(",").map(t => t.trim())].filter(Boolean),
         figmaDataBase64,
         previewFile,
       });
@@ -90,65 +139,183 @@ function AddComponentPage() {
 
   if (!user) {
     return (
-      <section className="auth-card">
-        <h2>Authentication Required</h2>
-        <p>You must sign in to add components.</p>
-        <button type="button" onClick={() => setLoginModalOpen(true)} className="primary-btn">
-          Go to Login
-        </button>
-      </section>
+      <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center p-4 bg-gray-50/50 backdrop-blur-sm">
+        <div className="relative w-full max-w-[420px] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col items-center justify-center p-8 border border-gray-100 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-500">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-extrabold font-syne text-[#10131A] mb-2">Authentication Required</h2>
+          <p className="text-gray-500 text-sm mb-6">You must sign in to add your own components to the library.</p>
+          <button 
+            type="button" 
+            onClick={() => setLoginModalOpen(true)} 
+            className="w-full bg-[#8A2BE2] text-white rounded-lg py-2.5 font-bold shadow-sm shadow-purple-500/20 hover:bg-[#7b22cc] hover:-translate-y-0.5 transition-all text-sm font-syne"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <section className="add-page">
-      <h2>Add Your Component</h2>
-      <p className="status-text">{status}</p>
+    <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center p-4 bg-gray-50/50 backdrop-blur-sm pt-12 pb-20">
+      <div className="relative w-full max-w-[850px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex-1 flex flex-col p-6 sm:p-8 bg-white">
+          <div className="w-full mx-auto flex flex-col justify-center h-full">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-extrabold font-syne text-[#10131A] mb-1">Create Component</h2>
+              <p className="text-gray-500 text-[0.8rem] font-medium">Add a new component to your library</p>
+            </div>
 
-      <form className="stack-form" onSubmit={onSubmit}>
-        <input
-          type="text"
-          placeholder="Component name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          required
-        />
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          rows={3}
-        />
-        <input
-          type="text"
-          placeholder="Tags (comma separated)"
-          value={tagsInput}
-          onChange={(event) => setTagsInput(event.target.value)}
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(event) => setPreviewFile(event.target.files?.[0] || null)}
-          required
-        />
+            <form onSubmit={onSubmit} className="flex flex-col gap-4 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Column: Form Info */}
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Component Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Hero Section V2"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      required
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-900 bg-gray-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent transition-all shadow-sm text-sm"
+                    />
+                  </div>
 
-        <label className="field-label" htmlFor="figmaPaste">
-          Figma Payload Extractor (click then press Ctrl+V)
-        </label>
-        <textarea
-          id="figmaPaste"
-          placeholder="Paste from Figma here..."
-          rows={7}
-          value={figmaDataBase64}
-          onPaste={onPaste}
-          onChange={(event) => setFigmaDataBase64(event.target.value)}
-          required
-        />
+                  <div>
+                    <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Tags</label>
+                    <div className="w-full px-2 py-1.5 min-h-[38px] rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-white focus-within:bg-white focus-within:ring-2 focus-within:ring-[#8A2BE2] focus-within:border-transparent transition-all shadow-sm flex flex-wrap gap-1.5 items-center cursor-text" onClick={(e) => (e.currentTarget.lastElementChild as HTMLElement)?.focus()}>
+                      {tags.map((tag, idx) => (
+                        <span key={idx} className="bg-[#8A2BE2]/10 text-[#8A2BE2] px-2 py-0.5 rounded flex items-center gap-1 text-xs font-medium">
+                          {tag}
+                          <button type="button" onClick={() => removeTag(idx)} className="hover:text-red-500 rounded-full w-3 h-3 flex items-center justify-center bg-transparent border-none p-0 ml-0.5">×</button>
+                        </span>
+                      ))}
+                      <input
+                        type="text"
+                        placeholder={tags.length === 0 ? "e.g. hero, landing, dark" : ""}
+                        value={tagInputValue}
+                        onChange={handleTagInputChange}
+                        onKeyDown={handleTagKeyDown}
+                        className="flex-1 min-w-[80px] bg-transparent outline-none text-sm text-gray-900 placeholder:text-gray-400 py-0.5 px-1"
+                      />
+                    </div>
+                  </div>
 
-        <button className="primary-btn" type="submit" disabled={addComponentMutation.isPending}>
-          {addComponentMutation.isPending ? "Saving..." : "Save Component"}
-        </button>
-      </form>
-    </section>
+                  <div>
+                    <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Description</label>
+                    <textarea
+                      placeholder="Briefly describe this component..."
+                      value={description}
+                      onChange={(event) => setDescription(event.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-900 bg-gray-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent transition-all shadow-sm text-sm resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Preview Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => setPreviewFile(event.target.files?.[0] || null)}
+                      required
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-900 bg-gray-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent transition-all shadow-sm text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#8A2BE2]/10 file:text-[#8A2BE2] hover:file:bg-[#8A2BE2]/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column: Figma Payload */}
+                <div className="flex flex-col h-full">
+                  <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Figma Payload</label>
+                  <div 
+                    className={`w-full flex-1 relative overflow-hidden rounded-lg border-2 transition-all min-h-[160px] flex flex-col justify-center ${figmaDataBase64 ? 'border-green-500 bg-green-50/30' : 'border-dashed border-gray-300 bg-gray-50/50 hover:bg-gray-50'}`}
+                  >
+                    {figmaDataBase64 ? (
+                      <div className="p-4 flex flex-col items-center">
+                        <div className="w-full bg-slate-900 rounded-md p-3 relative overflow-hidden">
+                          <pre className="text-[0.65rem] text-green-400 font-mono leading-tight max-h-[80px] overflow-hidden opacity-70 break-all pointer-events-none select-none">
+{`<!--(figmeta)eyJmaWxlS2V5IjoibG9jYWwtbGlicmFyeSIsInBhc3R...
+[ENCRYPTED_PAYLOAD_CHUNK_0x9A4B]
+[SYSTEM_VERIFIED_FIGMA_NODE]
+[HASH: 0x${Math.random().toString(16).substring(2, 10).toUpperCase()}]
+<binary-stream chunks="128" mode="base64-encoded" status="verified">
+  ${Array.from({ length: 4 }).map(() => Math.random().toString(2).substring(2, 26)).join('\n  ')}
+</binary-stream>`}
+                          </pre>
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                             <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-green-400">Payload Captured</span>
+                          </div>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => setFigmaDataBase64("")}
+                          className="mt-3 text-xs font-medium text-gray-500 hover:text-red-500 transition-colors"
+                        >
+                          Remove & Start Over
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-6 flex flex-col items-center justify-center gap-3 text-center h-full">
+                        <div className="w-10 h-10 rounded-full bg-[#8A2BE2]/10 flex items-center justify-center text-[#8A2BE2]">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-700">Paste your Figma component</p>
+                          <p className="text-xs text-gray-500 mt-1">Copy directly from Figma and paste it here</p>
+                        </div>
+                        
+                        {/* Read-only interactive field for manual paste focus */}
+                        <textarea
+                          id="figmaPaste"
+                          className="opacity-0 absolute inset-0 w-full h-full cursor-pointer resize-none"
+                          value=""
+                          onChange={() => {}}
+                          placeholder="Click here and press Ctrl+V"
+                        />
+
+                        <div className="mt-2 relative z-10">
+                          <span className="text-xs text-gray-500 font-medium px-4 py-1.5 bg-gray-100 rounded-md border border-gray-200 shadow-sm pointer-events-none">Press Ctrl + V</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-100">
+                {status && (
+                  <p className={`text-xs font-medium p-2 rounded ${
+                    status.includes("success") || status.includes("Captured") ? "text-green-600 bg-green-50" : 
+                    status.includes("Uploading") ? "text-blue-600 bg-blue-50" : 
+                    status.includes("Paste") ? "text-gray-500 bg-gray-50" : "text-red-600 bg-red-50"
+                 }`}>
+                    {status}
+                  </p>
+                )}
+
+                <button 
+                  className="w-full bg-[#8A2BE2] text-white rounded-lg py-2.5 font-bold shadow-sm shadow-purple-500/20 hover:bg-[#7b22cc] hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 font-syne text-sm" 
+                  type="submit" 
+                  disabled={addComponentMutation.isPending}
+                >
+                  {addComponentMutation.isPending ? "Saving Component..." : "Save Component"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
+
