@@ -145,10 +145,10 @@ function RootLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F3F3F6] font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200">
+    <div className="min-h-screen bg-white font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200">
       {/* ── Header ── */}
-      <header className="relative z-30 bg-[#F3F3F6]">
-        <div className="flex items-center justify-between px-5 lg:px-12 py-4 mx-auto max-w-[1400px]">
+      <header className="relative z-30 bg-white">
+        <div className="flex items-center justify-between px-5 lg:px-12 py-4 mx-auto w-full 2xl:max-w-[1536px]">
           {/* Logo */}
           <Link to="/" onClick={() => setMobileOpen(false)}>
             <img src={logoImg} alt="FigComponents Logo" className="h-8 w-auto object-contain" />
@@ -301,7 +301,7 @@ function RootLayout() {
         )}
       </header>
 
-      <main className="w-full">
+      <main className="w-full 2xl:max-w-[1536px] mx-auto flex-1">
         <Outlet />
       </main>
       
