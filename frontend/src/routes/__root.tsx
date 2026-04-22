@@ -1,4 +1,4 @@
-import { Link, Outlet, createRootRoute, useRouter } from "@tanstack/react-router";
+import { Link, Outlet, createRootRoute, useRouter, useLocation } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useRef, useState } from "react";
 
@@ -124,6 +124,10 @@ function RootLayout() {
   const { user, logout, loading, setRegisterModalOpen, registerModalOpen, setLoginModalOpen, loginModalOpen } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const location = useLocation();
+
+  const isLandingPage = location.pathname === "/";
+  const bgClass = isLandingPage ? "bg-[#F3F3F6]" : "bg-white";
 
   // Close drawer on route change
   useEffect(() => {
@@ -145,9 +149,9 @@ function RootLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F3F3F6] font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200">
+    <div className={`min-h-screen ${bgClass} font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200`}>
       {/* ── Header ── */}
-      <header className="relative z-30 bg-[#F3F3F6]">
+      <header className={`relative z-30 ${bgClass}`}>
         <div className="flex items-center justify-between px-5 lg:px-12 py-4 mx-auto w-full 2xl:max-w-[1536px]">
           {/* Logo */}
           <Link to="/" onClick={() => setMobileOpen(false)}>

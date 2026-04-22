@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
-import loginImg from "../assets/login_illustration.png";
+import loginBg from "../assets/loginbg.png";
 
 export function LoginModal() {
   const navigate = useNavigate();
@@ -52,7 +52,7 @@ export function LoginModal() {
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-[720px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-[850px] min-h-[550px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row animate-in fade-in zoom-in-95 duration-200">
         
         {/* Close Button */}
         <button 
@@ -65,9 +65,39 @@ export function LoginModal() {
           </svg>
         </button>
 
-        {/* Left Pane - Graphics */}
-        <div className="hidden md:block w-[45%] relative border-r border-[#E5E7EB] bg-[#f8f9fa] overflow-hidden">
-          <img src={loginImg} alt="Welcome back graphic" className="absolute inset-0 w-full h-full object-cover" />
+        {/* Left Pane - Figma Layout with loginbg.png */}
+        <div className="hidden md:flex w-[50%] relative border-r border-[#E5E7EB] overflow-hidden flex-col items-center justify-end text-white pb-12 pt-8">
+          <img src={loginBg} alt="Background layout" className="absolute inset-0 w-full h-full object-cover" />
+          
+          {/* Logo at Top Left */}
+          <div className="absolute top-8 left-10 z-10 flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full border-[2px] border-white"></div>
+            <span className="font-semibold tracking-wide text-[14px]">Figcomponents</span>
+          </div>
+          
+          <div className="relative z-10 w-full max-w-[280px] px-4 self-center mt-auto">
+            <div className="text-center mb-6">
+              <h2 className="text-[22px] font-semibold mb-2 tracking-tight text-white">Your space is waiting</h2>
+              <p className="text-gray-300 text-[12px] leading-relaxed max-w-[240px] mx-auto opacity-90">
+                One step away from your workspace
+              </p>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-3 bg-white text-black p-3 rounded-xl font-semibold shadow-lg">
+                <div className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold">1</div>
+                <span className="text-[12px]">Login to your account</span>
+              </div>
+              <div className="flex items-center gap-3 bg-[#111111]/80 backdrop-blur-sm text-white p-3 rounded-xl font-medium border border-white/5">
+                <div className="w-5 h-5 rounded-full bg-[#333333] flex items-center justify-center text-[10px] text-gray-300 font-bold">2</div>
+                <span className="text-gray-400 text-[12px]">Copy the component</span>
+              </div>
+              <div className="flex items-center gap-3 bg-[#111111]/80 backdrop-blur-sm text-white p-3 rounded-xl font-medium border border-white/5">
+                <div className="w-5 h-5 rounded-full bg-[#333333] flex items-center justify-center text-[10px] text-gray-300 font-bold">3</div>
+                <span className="text-gray-400 text-[12px]">Paste in your figma</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right Pane - Form */}
