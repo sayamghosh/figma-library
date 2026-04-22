@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import heroImg from "../assets/heroimg.png";
+import { FlipWords } from "./ui/flip-words";
+import { HoverBorderGradient } from "./ui/hover-border-gradient";
 
 export function HeroSection() {
   return (
@@ -7,8 +9,11 @@ export function HeroSection() {
 
       {/* Text & CTA */}
       <div className="relative z-20 flex flex-col items-center pt-10 sm:pt-16 md:pt-28 px-4 w-full">
-        <h1 className="text-center text-[#111827] font-extrabold font-outfit text-[2rem] sm:text-[2.8rem] md:text-[3.8rem] lg:text-[3.7rem] leading-[1.08] mb-4 sm:mb-6  max-w-[850px]">
-          The ultimate Figma UI kit
+        <h1 className="text-center text-[#111827] font-extrabold font-outfit text-[2.2rem] sm:text-[2.6rem] md:text-[3.2rem] lg:text-[3.6rem] xl:text-[4rem] leading-[1.1] mb-6 sm:mb-8 w-full max-w-full px-2">
+          The ultimate <FlipWords 
+            words={["Figma UI kit", "developer toolkit", "design system", "component library"]} 
+            className="text-[#8A2BE2]"
+          />
         </h1>
 
         <p className="text-center font-manrope  text-gray-500 font-medium text-[0.92rem] sm:text-[1rem] md:text-[1.1rem] mb-8 sm:mb-10 max-w-[700px] leading-relaxed tracking-wider px-2">
@@ -16,13 +21,19 @@ export function HeroSection() {
           multiple ideas in no time. No code Required
         </p>
 
-        <Link
-          to="/components"
-          className="inline-block bg-gradient-to-r from-[#8A2BE2] to-[#A020F0] hover:from-[#7B24C5] hover:to-[#911CD9] text-white font-semibold text-[0.95rem] sm:text-[1.05rem] px-6 sm:px-8 py-3 sm:py-3.5 rounded-[12px] shadow-[0_12px_24px_-8px_rgba(138,43,226,0.6)] transition-all"
-          style={{ color: "#ffffff" }}
+        <HoverBorderGradient
+          containerClassName="rounded-full shadow-[0_12px_24px_-8px_rgba(138,43,226,0.6)]"
+          as="button"
+          className="bg-black text-white flex items-center space-x-2"
         >
-          Explore Library
-        </Link>
+          <Link
+            to="/components"
+            className="font-semibold text-[0.95rem] sm:text-[1.05rem] px-4 sm:px-6 py-1.5 sm:py-2 transition-all block"
+            style={{ color: "#ffffff" }}
+          >
+            Explore Library
+          </Link>
+        </HoverBorderGradient>
       </div>
 
       {/* Hero image */}
