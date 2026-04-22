@@ -164,7 +164,7 @@ export function RegisterModal() {
               <div className="h-[1px] flex-1 bg-gray-100"></div>
             </div>
 
-            <div className="w-full flex justify-center [&_iframe]:!w-full [&>div]:w-full [&>div]:flex [&>div]:justify-center">
+            <div className="w-full flex justify-center items-center overflow-visible">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => setError("Google login failed.")}
