@@ -69,12 +69,13 @@ export function LoginModal() {
         <div className="hidden md:flex w-[50%] relative border-r border-[#E5E7EB] overflow-hidden flex-col items-center justify-end text-white pb-12 pt-8">
           <img src={loginBg} alt="Background layout" className="absolute inset-0 w-full h-full object-cover" />
           
+          {/* Logo at Top Left */}
+          <div className="absolute top-8 left-10 z-10 flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full border-[2px] border-white"></div>
+            <span className="font-semibold tracking-wide text-[14px]">Figcomponents</span>
+          </div>
+          
           <div className="relative z-10 w-full max-w-[280px] px-4 self-center mt-auto">
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="w-2 h-2 rounded-full border-[2px] border-white"></div>
-              <span className="font-semibold tracking-wide text-[13px]">Figcomponents</span>
-            </div>
-
             <div className="text-center mb-6">
               <h2 className="text-[22px] font-semibold mb-2 tracking-tight text-white">Your space is waiting</h2>
               <p className="text-gray-300 text-[12px] leading-relaxed max-w-[240px] mx-auto opacity-90">
