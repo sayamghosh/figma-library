@@ -23,6 +23,16 @@ const componentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    designType: {
+      type: String,
+      enum: ["Wireframe", "UI Design"],
+      default: "UI Design",
+    },
+    pricingType: {
+      type: String,
+      enum: ["Free", "Pro"],
+      default: "Free",
+    },
     figmaDataBase64: {
       type: String,
       required: true,

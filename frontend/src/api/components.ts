@@ -32,8 +32,23 @@ export const componentsApi = {
     tags: string[];
     previewImageUrl: string;
     figmaDataBase64: string;
+    designType?: "Wireframe" | "UI Design";
+    pricingType?: "Free" | "Pro";
   }): Promise<ComponentItem> {
     const response = await apiClient.post("/components", input);
+    return response.data.data;
+  },
+
+  async update(id: string, input: {
+    name?: string;
+    description?: string;
+    tags?: string[];
+    previewImageUrl?: string;
+    figmaDataBase64?: string;
+    designType?: "Wireframe" | "UI Design";
+    pricingType?: "Free" | "Pro";
+  }): Promise<ComponentItem> {
+    const response = await apiClient.patch(`/components/${id}`, input);
     return response.data.data;
   },
 
