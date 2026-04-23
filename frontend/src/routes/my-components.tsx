@@ -25,6 +25,13 @@ function IconTrash() {
     </svg>
   );
 }
+function IconEdit() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path d="M11.5 2.5a2.121 2.121 0 0 1 3 3L5 15H2v-3l9.5-9.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 function IconSearch() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -285,6 +292,14 @@ function MyComponentsPage() {
                   <IconCopy />
                   {copyingId === item._id ? "Copying…" : "Copy"}
                 </button>
+                <Link
+                  to="/edit-component/$id"
+                  params={{ id: item._id }}
+                  className="flex items-center justify-center gap-1.5 px-3 text-[0.78rem] font-semibold text-blue-500 bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl py-2 transition-colors"
+                  aria-label="Edit component"
+                >
+                  <IconEdit />
+                </Link>
                 <button
                   type="button"
                   onClick={() => setDeleteTarget({ id: item._id, name: item.name })}

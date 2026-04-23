@@ -92,7 +92,7 @@ const listMyComponents = asyncHandler(async (req, res) => {
 });
 
 const createComponent = asyncHandler(async (req, res) => {
-  const { name, description = "", tags = [], previewImageUrl, figmaDataBase64 } = req.body;
+  const { name, description = "", tags = [], previewImageUrl, figmaDataBase64, designType, pricingType } = req.body;
 
   if (!name || !previewImageUrl || !figmaDataBase64) {
     res.status(400);
@@ -105,6 +105,8 @@ const createComponent = asyncHandler(async (req, res) => {
     tags: Array.isArray(tags) ? tags : [],
     previewImageUrl,
     figmaDataBase64,
+    designType,
+    pricingType,
     createdBy: req.user.userId,
   });
 
@@ -144,6 +146,8 @@ const updateComponent = asyncHandler(async (req, res) => {
     tags: Array.isArray(req.body.tags) ? req.body.tags : component.tags,
     previewImageUrl: req.body.previewImageUrl ?? component.previewImageUrl,
     figmaDataBase64: req.body.figmaDataBase64 ?? component.figmaDataBase64,
+    designType: req.body.designType ?? component.designType,
+    pricingType: req.body.pricingType ?? component.pricingType,
   };
 
   const updated = await Component.findByIdAndUpdate(req.params.id, updates, { new: true });

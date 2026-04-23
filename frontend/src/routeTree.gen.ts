@@ -13,6 +13,7 @@ import { Route as MyComponentsRouteImport } from './routes/my-components'
 import { Route as AddComponentRouteImport } from './routes/add-component'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ComponentsIndexRouteImport } from './routes/components/index'
+import { Route as EditComponentIdRouteImport } from './routes/edit-component.$id'
 
 const MyComponentsRoute = MyComponentsRouteImport.update({
   id: '/my-components',
@@ -34,17 +35,24 @@ const ComponentsIndexRoute = ComponentsIndexRouteImport.update({
   path: '/components/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditComponentIdRoute = EditComponentIdRouteImport.update({
+  id: '/edit-component/$id',
+  path: '/edit-component/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
   '/my-components': typeof MyComponentsRoute
+  '/edit-component/$id': typeof EditComponentIdRoute
   '/components/': typeof ComponentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
   '/my-components': typeof MyComponentsRoute
+  '/edit-component/$id': typeof EditComponentIdRoute
   '/components': typeof ComponentsIndexRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,38 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/add-component': typeof AddComponentRoute
   '/my-components': typeof MyComponentsRoute
+  '/edit-component/$id': typeof EditComponentIdRoute
   '/components/': typeof ComponentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/add-component' | '/my-components' | '/components/'
+  fullPaths:
+    | '/'
+    | '/add-component'
+    | '/my-components'
+    | '/edit-component/$id'
+    | '/components/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add-component' | '/my-components' | '/components'
-  id: '__root__' | '/' | '/add-component' | '/my-components' | '/components/'
+  to:
+    | '/'
+    | '/add-component'
+    | '/my-components'
+    | '/edit-component/$id'
+    | '/components'
+  id:
+    | '__root__'
+    | '/'
+    | '/add-component'
+    | '/my-components'
+    | '/edit-component/$id'
+    | '/components/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AddComponentRoute: typeof AddComponentRoute
   MyComponentsRoute: typeof MyComponentsRoute
+  EditComponentIdRoute: typeof EditComponentIdRoute
   ComponentsIndexRoute: typeof ComponentsIndexRoute
 }
 
@@ -99,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComponentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/edit-component/$id': {
+      id: '/edit-component/$id'
+      path: '/edit-component/$id'
+      fullPath: '/edit-component/$id'
+      preLoaderRoute: typeof EditComponentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -106,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AddComponentRoute: AddComponentRoute,
   MyComponentsRoute: MyComponentsRoute,
+  EditComponentIdRoute: EditComponentIdRoute,
   ComponentsIndexRoute: ComponentsIndexRoute,
 }
 export const routeTree = rootRouteImport

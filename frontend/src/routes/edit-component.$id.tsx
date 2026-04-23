@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { componentsApi } from "../api/components";
 import { uploadApi } from "../api/upload";
 import { extractFigmaBase64FromPaste } from "../lib/clipboard";
 import { useAuth } from "../context/AuthContext";
 
-export const Route = createFileRoute("/add-component")({
-  component: AddComponentPage,
+export const Route = createFileRoute("/edit-component/$id")({
+  component: EditComponentPage,
 });
 
-function AddComponentPage() {
+function EditComponentPage() {
+  const { id } = Route.useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, setLoginModalOpen } = useAuth();
@@ -25,6 +26,23 @@ function AddComponentPage() {
   const [designType, setDesignType] = useState<"Wireframe" | "UI Design">("UI Design");
   const [pricingType, setPricingType] = useState<"Free" | "Pro">("Free");
   const [status, setStatus] = useState("");
+
+  const { data: componentData, isLoading } = useQuery({
+    queryKey: ["components", id],
+    queryFn: () => componentsApi.getById(id),
+    enabled: !!id,
+  });
+
+  useEffect(() => {
+    if (componentData) {
+      setName(componentData.name || "");
+      setDescription(componentData.description || "");
+      setTags(componentData.tags || []);
+      setFigmaDataBase64(componentData.figmaDataBase64 || "");
+      setDesignType(componentData.designType || "UI Design");
+      setPricingType(componentData.pricingType || "Free");
+    }
+  }, [componentData]);
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -55,22 +73,25 @@ function AddComponentPage() {
     setTags(prev => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const addComponentMutation = useMutation({
+  const updateComponentMutation = useMutation({
     mutationFn: async (input: {
       name: string;
       description: string;
       tags: string[];
       figmaDataBase64: string;
-      previewFile: File;
+      previewFile: File | null;
       designType: "Wireframe" | "UI Design";
       pricingType: "Free" | "Pro";
     }) => {
-      const previewImageUrl = await uploadApi.uploadImage(input.previewFile);
-      return componentsApi.create({
+      let previewImageUrl;
+      if (input.previewFile) {
+        previewImageUrl = await uploadApi.uploadImage(input.previewFile);
+      }
+      return componentsApi.update(id, {
         name: input.name,
         description: input.description,
         tags: input.tags,
-        previewImageUrl,
+        ...(previewImageUrl ? { previewImageUrl } : {}),
         figmaDataBase64: input.figmaDataBase64,
         designType: input.designType,
         pricingType: input.pricingType,
@@ -78,10 +99,10 @@ function AddComponentPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["components"] });
+      queryClient.invalidateQueries({ queryKey: ["my-components"] });
     },
   });
 
-  // Global paste handler to support "ctrl + v in the page will work"
   useEffect(() => {
     const handleGlobalPaste = async (e: ClipboardEvent) => {
       const target = e.target as HTMLElement;
@@ -111,25 +132,22 @@ function AddComponentPage() {
     return () => window.removeEventListener("paste", handleGlobalPaste);
   }, []);
 
-
-
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!previewFile) {
-      setStatus("Please select a preview image file.");
-      return;
-    }
 
     if (!figmaDataBase64.trim()) {
       setStatus("Paste a Figma component in the extractor field first.");
       return;
     }
 
-    setStatus("Uploading image to Cloudinary...");
+    if (previewFile) {
+      setStatus("Uploading new image to Cloudinary...");
+    } else {
+      setStatus("Updating component...");
+    }
 
     try {
-      await addComponentMutation.mutateAsync({
+      await updateComponentMutation.mutateAsync({
         name,
         description,
         tags: [...tags, ...tagInputValue.split(",").map(t => t.trim())].filter(Boolean),
@@ -138,10 +156,10 @@ function AddComponentPage() {
         designType,
         pricingType,
       });
-      setStatus("Component added successfully.");
-      navigate({ to: "/components" });
+      setStatus("Component updated successfully.");
+      navigate({ to: "/my-components" });
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Could not add component.");
+      setStatus(error instanceof Error ? error.message : "Could not update component.");
     }
   }
 
@@ -156,7 +174,7 @@ function AddComponentPage() {
             </svg>
           </div>
           <h2 className="text-2xl font-extrabold font-syne text-[#10131A] mb-2">Authentication Required</h2>
-          <p className="text-gray-500 text-sm mb-6">You must sign in to add your own components to the library.</p>
+          <p className="text-gray-500 text-sm mb-6">You must sign in to edit your components.</p>
           <button 
             type="button" 
             onClick={() => setLoginModalOpen(true)} 
@@ -169,19 +187,26 @@ function AddComponentPage() {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center">
+        <p className="text-gray-500 font-medium">Loading component details...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center p-4 bg-gray-50/50 backdrop-blur-sm pt-12 pb-20">
       <div className="relative w-full max-w-[850px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex-1 flex flex-col p-6 sm:p-8 bg-white">
           <div className="w-full mx-auto flex flex-col justify-center h-full">
             <div className="text-center mb-6">
-              <h2 className="text-2xl font-extrabold font-syne text-[#10131A] mb-1">Create Component</h2>
-              <p className="text-gray-500 text-[0.8rem] font-medium">Add a new component to your library</p>
+              <h2 className="text-2xl font-extrabold font-syne text-[#10131A] mb-1">Edit Component</h2>
+              <p className="text-gray-500 text-[0.8rem] font-medium">Update the details for this component</p>
             </div>
 
             <form onSubmit={onSubmit} className="flex flex-col gap-4 text-left">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column: Form Info */}
                 <div className="flex flex-col gap-4">
                   <div>
                     <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Component Name</label>
@@ -252,18 +277,17 @@ function AddComponentPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Preview Image</label>
+                    <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Preview Image (Optional)</label>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(event) => setPreviewFile(event.target.files?.[0] || null)}
-                      required
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-900 bg-gray-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent transition-all shadow-sm text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#8A2BE2]/10 file:text-[#8A2BE2] hover:file:bg-[#8A2BE2]/20"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Leave empty to keep the current preview image.</p>
                   </div>
                 </div>
 
-                {/* Right Column: Figma Payload */}
                 <div className="flex flex-col h-full">
                   <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Figma Payload</label>
                   <div 
@@ -276,7 +300,6 @@ function AddComponentPage() {
 {`<!--(figmeta)eyJmaWxlS2V5IjoibG9jYWwtbGlicmFyeSIsInBhc3R...
 [ENCRYPTED_PAYLOAD_CHUNK_0x9A4B]
 [SYSTEM_VERIFIED_FIGMA_NODE]
-[HASH: 0x${Math.random().toString(16).substring(2, 10).toUpperCase()}]
 <binary-stream chunks="128" mode="base64-encoded" status="verified">
   ${Array.from({ length: 4 }).map(() => Math.random().toString(2).substring(2, 26)).join('\n  ')}
 </binary-stream>`}
@@ -307,7 +330,6 @@ function AddComponentPage() {
                           <p className="text-xs text-gray-500 mt-1">Copy directly from Figma and paste it here</p>
                         </div>
                         
-                        {/* Read-only interactive field for manual paste focus */}
                         <textarea
                           id="figmaPaste"
                           className="opacity-0 absolute inset-0 w-full h-full cursor-pointer resize-none"
@@ -329,7 +351,7 @@ function AddComponentPage() {
                 {status && (
                   <p className={`text-xs font-medium p-2 rounded ${
                     status.includes("success") || status.includes("Captured") ? "text-green-600 bg-green-50" : 
-                    status.includes("Uploading") ? "text-blue-600 bg-blue-50" : 
+                    status.includes("Updating") || status.includes("Uploading") ? "text-blue-600 bg-blue-50" : 
                     status.includes("Paste") ? "text-gray-500 bg-gray-50" : "text-red-600 bg-red-50"
                  }`}>
                     {status}
@@ -339,9 +361,9 @@ function AddComponentPage() {
                 <button 
                   className="w-full bg-[#8A2BE2] text-white rounded-lg py-2.5 font-bold shadow-sm shadow-purple-500/20 hover:bg-[#7b22cc] hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 font-syne text-sm" 
                   type="submit" 
-                  disabled={addComponentMutation.isPending}
+                  disabled={updateComponentMutation.isPending}
                 >
-                  {addComponentMutation.isPending ? "Saving Component..." : "Save Component"}
+                  {updateComponentMutation.isPending ? "Saving Changes..." : "Save Changes"}
                 </button>
               </div>
             </form>
@@ -351,4 +373,3 @@ function AddComponentPage() {
     </div>
   );
 }
-

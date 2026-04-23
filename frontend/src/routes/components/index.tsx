@@ -202,12 +202,12 @@ function ComponentCard({
   onCopy,
   onPreview,
 }: {
-  item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string };
+  item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string; pricingType?: "Free" | "Pro"; designType?: "Wireframe" | "UI Design" };
   isCopying: boolean;
   onCopy: () => void;
   onPreview: () => void;
 }) {
-  const isPro = item.tags.some((t) => /pro/i.test(t));
+  const isPro = item.pricingType === "Pro" || item.tags.some((t) => /pro/i.test(t));
 
   return (
     <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
@@ -315,12 +315,19 @@ function ComponentsPage() {
       );
     }
     if (priceMode === "pro") {
-      out = out.filter((i) => i.tags.some((t) => /pro/i.test(t)));
+      out = out.filter((i) => i.pricingType === "Pro" || i.tags.some((t) => /pro/i.test(t)));
     } else if (priceMode === "free") {
-      out = out.filter((i) => !i.tags.some((t) => /pro/i.test(t)));
+      out = out.filter((i) => i.pricingType !== "Pro" && !i.tags.some((t) => /pro/i.test(t)));
     }
+
+    if (viewMode === "wireframe") {
+      out = out.filter((i) => i.designType === "Wireframe" || i.tags.some((t) => /wireframe/i.test(t)));
+    } else if (viewMode === "ui-design") {
+      out = out.filter((i) => i.designType === "UI Design" || !i.designType || i.tags.some((t) => /ui[\s-]*design/i.test(t)));
+    }
+
     return out;
-  }, [items, activeCategory, priceMode]);
+  }, [items, activeCategory, priceMode, viewMode]);
 
   async function onCopy(id: string, name: string, figmaDataBase64?: string) {
     setStatusMsg("");
