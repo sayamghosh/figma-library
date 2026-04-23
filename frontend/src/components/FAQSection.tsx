@@ -36,13 +36,13 @@ export function FAQSection() {
   return (
     <section className="w-full max-w-[900px] mx-auto flex flex-col items-center py-12 sm:py-16 lg:py-24 px-4 md:px-8 relative z-20">
 
-      {/* Badge */}
-      <div className="bg-[#ebd5ff] text-[#9b41ee] font-semibold text-[0.72rem] px-5 py-1.5 rounded-full mb-6 sm:mb-8 tracking-wider">
-        FAQ
-      </div>
+
 
       {/* Title */}
-      <h2 className="text-[#111827] font-extrabold text-[2rem] sm:text-[2.6rem] md:text-[3.2rem] lg:text-[3.8rem] leading-[1.1] tracking-tight mb-10 sm:mb-14 text-center">
+      <h2 
+        className="text-[#111827] font-bold leading-[1.1] tracking-tight mb-10 sm:mb-14 text-center"
+        style={{ fontFamily: "'Outfit', sans-serif", fontSize: '64px' }}
+      >
         Frequently Asked<br />Question
       </h2>
 
