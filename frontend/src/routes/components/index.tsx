@@ -85,41 +85,9 @@ function IconX() {
     </svg>
   );
 }
-function IconInfo() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4" />
-      <line x1="8" y1="7" x2="8" y2="11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="8" cy="5" r="0.8" fill="currentColor" />
-    </svg>
-  );
-}
-function IconVideo() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="3" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M11 6l4-2v8l-4-2V6z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    </svg>
-  );
-}
-function IconClone() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="1" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-      <rect x="6" y="6" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  );
-}
 
 
 // ── constants ─────────────────────────────────────────────────────────────────
-const SOURCE_UIS = ["All", "Root UI", "Maple UI", "Medifye", "Rallyfy"] as const;
-const SOURCE_UI_COLORS: Record<string, string> = {
-  "Root UI": "#22c55e",
-  "Maple UI": "#ef4444",
-  "Medifye": "#3b82f6",
-  "Rallyfy": "#f97316",
-};
 
 const CATEGORIES = [
   "All",
@@ -137,7 +105,6 @@ const CATEGORIES = [
 ] as const;
 
 type ViewMode = "wireframe" | "ui-design";
-type ColorMode = "light" | "gray" | "dark";
 type PriceMode = "free" | "pro" | "all";
 
 // ── PreviewModal ──────────────────────────────────────────────────────────────
@@ -235,7 +202,7 @@ function ComponentCard({
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-semibold text-gray-800 text-[0.88rem] truncate">{item.name}</span>
           {isPro ? (
-            <span className="flex items-center gap-1 bg-[#22c55e] text-white text-[0.68rem] font-bold px-1.5 py-0.5 rounded-md shrink-0">
+            <span className="flex items-center gap-1 bg-[#8A2BE2] text-white text-[0.68rem] font-bold px-1.5 py-0.5 rounded-md shrink-0">
               <IconStar />
               PRO
             </span>
@@ -284,18 +251,14 @@ function ComponentsPage() {
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [activeSource, setActiveSource] = useState<string>("All");
   const [viewMode, setViewMode] = useState<ViewMode>("ui-design");
-  const [colorMode, setColorMode] = useState<ColorMode>("light");
   const [priceMode, setPriceMode] = useState<PriceMode>("all");
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [statusMsg, setStatusMsg] = useState("");
   const [previewItem, setPreviewItem] = useState<null | {
     name: string;
     previewImageUrl: string;
     tags: string[];
   }>(null);
-  const [gettingStartedDismissed, setGettingStartedDismissed] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["components", "list", search],
@@ -330,7 +293,6 @@ function ComponentsPage() {
   }, [items, activeCategory, priceMode, viewMode]);
 
   async function onCopy(id: string, name: string, figmaDataBase64?: string) {
-    setStatusMsg("");
     setActiveId(id);
     try {
       const payload =
@@ -343,68 +305,23 @@ function ComponentsPage() {
           })
         ).figmaDataBase64;
       if (!payload) throw new Error("Component payload is missing.");
-      const mode = await copyToFigma(payload, name);
-      setStatusMsg(
-        mode === "copied-binary"
-          ? `✓ Copied "${name}" to clipboard.`
-          : `✓ Copied "${name}" (HTML fallback).`
-      );
+      await copyToFigma(payload, name);
     } catch (err) {
-      setStatusMsg(err instanceof Error ? err.message : "Copy failed.");
     } finally {
       setActiveId(null);
     }
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-80px)] bg-[#F3F3F6] relative">
+    <div className="flex h-[calc(100vh-80px)] bg-[#F3F3F6] relative">
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-gray-200 bg-white pt-4 pb-8 overflow-y-auto">
-        {/* UI Library header */}
-        <div className="px-4 flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5 text-[0.82rem] font-bold text-gray-800">
-            <span className="text-[#22c55e] text-base">✦</span>
-            UI Library
-          </div>
-          <button
-            type="button"
-            onClick={() => { setActiveCategory("All"); setActiveSource("All"); setPriceMode("all"); }}
-            className="text-[0.7rem] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full transition-colors"
-          >
-            Reset Filters
-          </button>
-        </div>
 
-        {/* Source UI pills */}
-        <div className="px-3 grid grid-cols-2 gap-1.5 mb-4">
-          {SOURCE_UIS.map((src) => (
-            <button
-              key={src}
-              type="button"
-              onClick={() => setActiveSource(src)}
-              className={`flex items-center gap-1.5 text-[0.74rem] font-semibold px-2.5 py-1.5 rounded-lg border transition-all ${
-                activeSource === src
-                  ? "bg-gray-900 text-white border-gray-900"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {src !== "All" && (
-                <span
-                  className="inline-block w-3 h-3 rounded-sm shrink-0"
-                  style={{ background: SOURCE_UI_COLORS[src] ?? "#888" }}
-                />
-              )}
-              {src}
-            </button>
-          ))}
-        </div>
-
-        <div className="mx-4 border-t border-gray-100 mb-3" />
 
         {/* Components section */}
         <div className="px-4 flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5 text-[0.8rem] font-bold text-gray-800">
-            <span className="text-[#22c55e]">✦</span>
+            <span className="text-[#8A2BE2]">✦</span>
             Components
           </div>
           <span className="text-[0.68rem] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
@@ -432,27 +349,30 @@ function ComponentsPage() {
       </aside>
 
       {/* ── Main Area ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Page header */}
-        <div className="px-6 pt-5 pb-3 bg-white border-b border-gray-200">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* Page title section (scrolls away) */}
+        <div className="px-6 pt-5 pb-2 bg-white">
           <h1 className="text-[1.35rem] font-bold text-gray-900 leading-tight">
             Browse Webflow, Figma, Framer &amp; Tailwind Components
           </h1>
           <p className="text-[0.82rem] text-gray-500 mt-0.5">
             {total > 0 ? `${total}+ Components` : "Components"}
           </p>
+        </div>
 
-          {/* Toolbar */}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+        {/* Sticky Toolbar section */}
+        <div className="sticky top-0 z-20 px-6 py-3 bg-white border-b border-gray-200">
+          <div className="flex flex-wrap items-center gap-4">
             {/* View mode */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 gap-0.5">
+            {/* View mode segmented control */}
+            <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
               <button
                 type="button"
                 onClick={() => setViewMode("wireframe")}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[0.78rem] font-semibold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded text-[0.82rem] font-bold transition-all ${
                   viewMode === "wireframe"
-                    ? "bg-white text-gray-800 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-[#8A2BE2] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <IconWireframe />
@@ -461,10 +381,10 @@ function ComponentsPage() {
               <button
                 type="button"
                 onClick={() => setViewMode("ui-design")}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[0.78rem] font-semibold transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 rounded text-[0.82rem] font-bold transition-all ${
                   viewMode === "ui-design"
-                    ? "bg-[#22c55e] text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-[#8A2BE2] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <IconPalette />
@@ -472,45 +392,17 @@ function ComponentsPage() {
               </button>
             </div>
 
-            <div className="w-px h-5 bg-gray-200" />
+            <div className="w-px h-6 bg-gray-200 mx-1" />
 
-            {/* Color mode */}
-            <div className="flex items-center gap-1">
-              {(["light", "gray", "dark"] as ColorMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => setColorMode(mode)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[0.78rem] font-semibold transition-all border ${
-                    colorMode === mode
-                      ? mode === "light"
-                        ? "bg-[#22c55e] text-white border-transparent"
-                        : "bg-gray-800 text-white border-transparent"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  {mode === "dark" && (
-                    <span className="inline-block w-3 h-3 rounded-full bg-gray-900 border border-gray-400" />
-                  )}
-                  {mode === "gray" && (
-                    <span className="inline-block w-3 h-3 rounded-full bg-gray-400" />
-                  )}
-                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </button>
-              ))}
-            </div>
-
-            <div className="w-px h-5 bg-gray-200" />
-
-            {/* Pricing */}
-            <div className="flex items-center gap-1">
+            {/* Pricing segmented control */}
+            <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
               <button
                 type="button"
                 onClick={() => setPriceMode("free")}
-                className={`px-2.5 py-1.5 rounded-full text-[0.78rem] font-semibold transition-all border ${
+                className={`px-5 py-2 rounded text-[0.82rem] font-bold transition-all ${
                   priceMode === "free"
-                    ? "bg-gray-800 text-white border-transparent"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    ? "bg-[#8A2BE2] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 Free
@@ -518,10 +410,10 @@ function ComponentsPage() {
               <button
                 type="button"
                 onClick={() => setPriceMode("pro")}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[0.78rem] font-semibold transition-all border ${
+                className={`flex items-center gap-2 px-5 py-2 rounded text-[0.82rem] font-bold transition-all ${
                   priceMode === "pro"
-                    ? "bg-[#22c55e] text-white border-transparent"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    ? "bg-[#8A2BE2] text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <IconStar />
@@ -531,103 +423,39 @@ function ComponentsPage() {
 
             <div className="flex-1" />
 
-            {/* Tutorial / Clone Style Guide */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[0.76rem] font-semibold text-gray-600 bg-white hover:bg-gray-50 transition-colors"
+            {/* Search Input Moved Here */}
+            <div className="relative w-full max-w-[450px]">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
               >
-                <IconVideo />
-                User Tutorial
-              </button>
-              <button
-                type="button"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-[0.76rem] font-semibold text-gray-600 bg-white hover:bg-gray-50 transition-colors"
-              >
-                <IconClone />
-                Clone Style Guide
-              </button>
+                <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4" />
+                <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              <input
+                className="w-full pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded text-[0.78rem] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition"
+                placeholder="Search components…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
             </div>
-          </div>
 
-          {/* Getting started bar */}
-          {!gettingStartedDismissed && (
-            <div className="mt-3 flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 overflow-x-auto">
-              <span className="text-[0.78rem] font-bold text-gray-700 shrink-0">Getting started</span>
-              {[
-                "Clone Style Guide",
-                "Add Extension",
-                "Copy Components",
-                "Paste into your project",
-              ].map((step, i) => (
-                <div key={step} className="flex items-center gap-2 shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-[0.68rem] font-bold flex items-center justify-center shrink-0">
-                      {i + 1}
-                    </span>
-                    <span className="text-[0.76rem] text-gray-600 font-medium">{step}</span>
-                    <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors">
-                      <IconInfo />
-                    </button>
-                  </div>
-                  {i < 3 && <div className="w-px h-4 bg-gray-200" />}
-                </div>
-              ))}
-              <div className="flex-1" />
-              <button
-                type="button"
-                onClick={() => setGettingStartedDismissed(true)}
-                className="text-gray-400 hover:text-gray-700 transition-colors shrink-0 ml-auto"
-              >
-                <IconX />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Search + status */}
-        <div className="px-6 py-3 bg-white border-b border-gray-100 flex items-center gap-3">
-          <div className="relative w-full max-w-sm">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              width="14"
-              height="14"
-              viewBox="0 0 16 16"
-              fill="none"
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="flex items-center gap-1.5 text-[0.76rem] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded transition-colors shrink-0"
             >
-              <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            <input
-              className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-[0.84rem] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition"
-              placeholder="Search components…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+              Refresh
+            </button>
           </div>
-          {statusMsg && (
-            <div className="flex items-center gap-2 text-[0.78rem] text-gray-600 bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5">
-              {statusMsg}
-              <button
-                type="button"
-                onClick={() => setStatusMsg("")}
-                className="text-gray-400 hover:text-gray-700"
-              >
-                <IconX />
-              </button>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="ml-auto flex items-center gap-1.5 text-[0.78rem] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-2 rounded-xl transition-colors shrink-0"
-          >
-            Refresh
-          </button>
         </div>
+
 
         {/* Grid area */}
-        <div className="flex-1 px-6 py-5 overflow-y-auto">
+        <div className="flex-1 px-6 py-5">
           {isLoading && (
             <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
               Loading components…
