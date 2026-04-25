@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { componentsApi } from "../../api/components";
 import { copyToFigma } from "../../lib/clipboard";
+import wireframeIcon from "../../assets/wireframe.png";
 
 export const Route = createFileRoute("/components/")({
   component: ComponentsPage,
@@ -51,26 +52,17 @@ function IconHeart() {
 }
 function IconStar() {
   return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor">
+    <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor">
       <path d="M8 1l1.8 4.5H15l-4 3 1.5 4.5L8 10.5l-4.5 2.5L5 8.5l-4-3h5.2z" />
     </svg>
   );
 }
 function IconWireframe() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.4" />
-      <rect x="3" y="3" width="4" height="4" rx="0.5" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="9" y1="4" x2="13" y2="4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="9" y1="6" x2="12" y2="6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="3" y1="10" x2="13" y2="10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="3" y1="12.5" x2="10" y2="12.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
+  return <img src={wireframeIcon} alt="Wireframe" className="w-[18px] h-[18px] object-contain" />;
 }
 function IconPalette() {
   return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
       <path d="M8 1a7 7 0 100 14c1 0 2-.8 2-2s-.8-2-2-2H6a1 1 0 010-2h3a5 5 0 10-1 9.9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
       <circle cx="4.5" cy="7" r="1" fill="currentColor" />
       <circle cx="7" cy="4" r="1" fill="currentColor" />
@@ -197,13 +189,21 @@ function ComponentCard({
 }: {
   item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string; pricingType?: "Free" | "Pro"; designType?: "Wireframe" | "UI Design" };
   isCopying: boolean;
-  onCopy: () => void;
+  onCopy: () => Promise<void>;
   onPreview: () => void;
 }) {
   const isPro = item.pricingType === "Pro" || item.tags.some((t) => /pro/i.test(t));
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  async function handleCopy() {
+    if (isCopying || isSuccess) return;
+    await onCopy();
+    setIsSuccess(true);
+    setTimeout(() => setIsSuccess(false), 2000);
+  }
 
   return (
-    <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
+    <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col font-manrope">
       {/* Preview */}
       <div
         className="relative cursor-pointer group/preview overflow-hidden"
@@ -242,7 +242,7 @@ function ComponentCard({
         </div>
         <button
           type="button"
-          className="text-gray-400 hover:text-red-400 transition-colors p-1"
+          className="text-gray-400 hover:text-red-400 transition-colors p-1 cursor-pointer"
           aria-label="Favourite"
         >
           <IconHeart />
@@ -253,17 +253,32 @@ function ComponentCard({
       <div className="px-2 pb-3 flex gap-1.5">
         <button
           type="button"
-          onClick={onCopy}
-          disabled={isCopying}
-          className="flex-1 flex items-center justify-center gap-1.5 text-[0.8rem] font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl py-2 transition-colors disabled:opacity-60"
+          onClick={handleCopy}
+          disabled={isCopying || isSuccess}
+          className={`flex-1 flex items-center justify-center gap-1.5 text-[0.8rem] font-semibold rounded-xl py-2 transition-all duration-300 cursor-pointer font-manrope border ${
+            isSuccess 
+              ? "bg-green-50 text-green-600 border-green-200" 
+              : "text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-200"
+          } disabled:opacity-100`}
         >
-          <IconCopy />
-          {isCopying ? "Copying…" : "Copy"}
+          {isSuccess ? (
+            <span className="flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="text-green-500">
+                <path d="M3 8.5L6 11.5L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Copied
+            </span>
+          ) : (
+            <>
+              <IconCopy />
+              {isCopying ? "Copying…" : "Copy"}
+            </>
+          )}
         </button>
         <button
           type="button"
           onClick={onPreview}
-          className="flex-1 flex items-center justify-center gap-1.5 text-[0.8rem] font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl py-2 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 text-[0.8rem] font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl py-2 transition-colors cursor-pointer font-manrope"
         >
           <IconEye />
           Preview
@@ -358,7 +373,8 @@ function ComponentsPage() {
         ).figmaDataBase64;
       if (!payload) throw new Error("Component payload is missing.");
       await copyToFigma(payload, name);
-    } catch (err) {
+    } catch (error) {
+      console.error("Copy failed:", error);
     } finally {
       setActiveId(null);
     }
@@ -373,11 +389,11 @@ function ComponentsPage() {
   return (
     <div className="flex h-[calc(100vh-80px)] bg-[#F3F3F6] relative">
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-gray-200 bg-white pt-4 pb-8 overflow-y-auto">
+      <aside className="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-gray-200 bg-white pt-2 pb-8 overflow-y-auto font-manrope">
 
         {/* Components section */}
         <div className="px-4 flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5 text-[0.8rem] font-bold text-gray-800">
+          <div className="flex items-center gap-1.5 text-[16px] font-bold text-gray-800">
             <span className="text-[#8A2BE2]">✦</span>
             Components
           </div>
@@ -394,7 +410,7 @@ function ComponentsPage() {
               onClick={() => setActiveCategory(cat)}
               onMouseEnter={() => prefetchCategory(cat)}
               onFocus={() => prefetchCategory(cat)}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-[0.82rem] font-medium transition-colors ${
+              className={`flex items-center justify-between px-3 py-2 rounded-lg text-[0.82rem] font-medium transition-colors cursor-pointer font-manrope ${
                 activeCategory === cat
                   ? "text-[#8A2BE2] bg-purple-50"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -410,24 +426,24 @@ function ComponentsPage() {
       {/* ── Main Area ─────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Page title section */}
-        <div className="px-6 pt-5 pb-2 bg-white">
-          <h1 className="text-[1.35rem] font-bold text-gray-900 leading-tight">
-            Browse Webflow, Figma, Framer &amp; Tailwind Components
+        <div className="px-6 pt-2 pb-2 bg-white">
+          <h1 className="font-outfit font-semibold text-[21px] text-[#161616] leading-tight">
+            Browse Figma Components, Wireframe &amp; UI Design
           </h1>
-          <p className="text-[0.82rem] text-gray-500 mt-0.5">
+          <p className="font-manrope font-normal text-[14px] text-gray-500 mt-0.5">
             {total > 0 ? `${total}+ Components` : "Components"}
           </p>
         </div>
 
         {/* Sticky Toolbar */}
-        <div className="sticky top-0 z-20 px-6 py-3 bg-white border-b border-gray-200">
+        <div className="sticky top-0 z-20 px-6 py-3 bg-white border-b border-gray-200 font-manrope">
           <div className="flex flex-wrap items-center gap-4">
             {/* View mode segmented control */}
             <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
               <button
                 type="button"
                 onClick={() => setViewMode("wireframe")}
-                className={`flex items-center gap-2 px-4 py-2 rounded text-[0.82rem] font-bold transition-all ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   viewMode === "wireframe"
                     ? "bg-[#8A2BE2] text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-50"
@@ -439,7 +455,7 @@ function ComponentsPage() {
               <button
                 type="button"
                 onClick={() => setViewMode("ui-design")}
-                className={`flex items-center gap-2 px-4 py-2 rounded text-[0.82rem] font-bold transition-all ${
+                className={`flex items-center gap-2 px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   viewMode === "ui-design"
                     ? "bg-[#8A2BE2] text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-50"
@@ -457,7 +473,7 @@ function ComponentsPage() {
               <button
                 type="button"
                 onClick={() => setPriceMode("free")}
-                className={`px-5 py-2 rounded text-[0.82rem] font-bold transition-all ${
+                className={`px-5 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   priceMode === "free"
                     ? "bg-[#8A2BE2] text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-50"
@@ -468,7 +484,7 @@ function ComponentsPage() {
               <button
                 type="button"
                 onClick={() => setPriceMode("pro")}
-                className={`flex items-center gap-2 px-5 py-2 rounded text-[0.82rem] font-bold transition-all ${
+                className={`flex items-center gap-2 px-5 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   priceMode === "pro"
                     ? "bg-[#8A2BE2] text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-50"
@@ -505,15 +521,16 @@ function ComponentsPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="flex items-center gap-1.5 text-[0.76rem] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded transition-colors shrink-0"
+              className="flex items-center justify-center min-w-[80px] text-[0.76rem] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded transition-colors shrink-0 cursor-pointer"
             >
               {showStaleIndicator ? (
-                <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
                   <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 </svg>
-              ) : null}
-              Refresh
+              ) : (
+                "Refresh"
+              )}
             </button>
           </div>
         </div>

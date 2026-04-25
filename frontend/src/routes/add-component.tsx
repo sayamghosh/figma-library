@@ -11,6 +11,11 @@ export const Route = createFileRoute("/add-component")({
   component: AddComponentPage,
 });
 
+const FAKE_SYSTEM_LOG = {
+  hash: Math.random().toString(16).substring(2, 10).toUpperCase(),
+  binary: Array.from({ length: 4 }).map(() => Math.random().toString(2).substring(2, 26)).join('\n  ')
+};
+
 function AddComponentPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -276,9 +281,9 @@ function AddComponentPage() {
 {`<!--(figmeta)eyJmaWxlS2V5IjoibG9jYWwtbGlicmFyeSIsInBhc3R...
 [ENCRYPTED_PAYLOAD_CHUNK_0x9A4B]
 [SYSTEM_VERIFIED_FIGMA_NODE]
-[HASH: 0x${Math.random().toString(16).substring(2, 10).toUpperCase()}]
+[HASH: 0x${FAKE_SYSTEM_LOG.hash}]
 <binary-stream chunks="128" mode="base64-encoded" status="verified">
-  ${Array.from({ length: 4 }).map(() => Math.random().toString(2).substring(2, 26)).join('\n  ')}
+  ${FAKE_SYSTEM_LOG.binary}
 </binary-stream>`}
                           </pre>
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>

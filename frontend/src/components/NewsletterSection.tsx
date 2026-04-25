@@ -4,7 +4,7 @@ export function NewsletterSection() {
   return (
     <section className="relative w-full">
       {/* Background split */}
-      <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-b from-[#FEF7F3] to-[#FDF4EE] z-0" />
+      <div className="absolute bottom-0 left-0 w-full h-1/2 z-0" />
 
       <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 relative z-10 py-12 sm:py-16 lg:py-24">
         <div className="w-full rounded-[20px] sm:rounded-[30px] bg-gradient-to-r from-[#6b21a8] to-[#c084fc] shadow-2xl overflow-hidden flex flex-col sm:flex-row items-center justify-between py-8 sm:py-12 md:py-16 px-6 sm:px-10 md:px-16 lg:px-20 gap-6 sm:gap-10">
