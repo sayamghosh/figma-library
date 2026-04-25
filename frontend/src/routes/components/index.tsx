@@ -216,7 +216,7 @@ function ComponentCard({
             alt={item.name}
             loading="lazy"
             decoding="async"
-            className="h-[185px] w-full object-cover bg-[#F3F3F6] transition-transform duration-300 group-hover/preview:scale-[1.02]"
+            className="h-[185px] w-full object-contain bg-[#F3F3F6] transition-transform duration-300 group-hover/preview:scale-[1.02]"
           />
         ) : (
           <div className="h-[185px] bg-[#F3F3F6] flex items-center justify-center text-gray-400 text-sm">
