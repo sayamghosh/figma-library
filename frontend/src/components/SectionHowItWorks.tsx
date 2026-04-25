@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+
 
 export function SectionHowItWorks() {
   const steps = [
