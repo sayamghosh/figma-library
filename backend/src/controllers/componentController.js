@@ -1,16 +1,40 @@
 const { asyncHandler } = require("../utils/asyncHandler");
 const { Component } = require("../models/Component");
+const {
+  cacheGet,
+  cacheSet,
+  cacheInvalidate,
+  bumpListVersion,
+  getListVersion,
+  listKey,
+  componentKey,
+  myListKey,
+  TTL_LIST,
+  TTL_SINGLE,
+  TTL_MY,
+} = require("../utils/cache");
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// ─── GET /api/components ──────────────────────────────────────────────────────
 const listComponents = asyncHandler(async (req, res) => {
   const { q = "", tag = "", page = 1, limit = 20, includeData = "false" } = req.query;
   const pageNumber = Math.max(Number(page) || 1, 1);
   const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
   const shouldIncludeData = String(includeData).toLowerCase() === "true";
 
+  // ── Cache read ──────────────────────────────────────────────────────────────
+  const version = await getListVersion();
+  const cacheKey = await listKey(version, q, tag, pageNumber, perPage, shouldIncludeData);
+  const cached = await cacheGet(cacheKey);
+  if (cached) {
+    res.set("X-Cache", "HIT");
+    return res.json(cached);
+  }
+
+  // ── MongoDB query ───────────────────────────────────────────────────────────
   const query = {};
   if (q) {
     const safeSearch = escapeRegex(q);
@@ -36,7 +60,7 @@ const listComponents = asyncHandler(async (req, res) => {
     Component.countDocuments(query),
   ]);
 
-  res.json({
+  const responseBody = {
     success: true,
     data: {
       items,
@@ -47,14 +71,30 @@ const listComponents = asyncHandler(async (req, res) => {
         totalPages: Math.ceil(total / perPage),
       },
     },
-  });
+  };
+
+  // ── Cache write ─────────────────────────────────────────────────────────────
+  await cacheSet(cacheKey, responseBody, TTL_LIST);
+  res.set("X-Cache", "MISS");
+  res.json(responseBody);
 });
 
+// ─── GET /api/components/my ───────────────────────────────────────────────────
 const listMyComponents = asyncHandler(async (req, res) => {
   const { q = "", tag = "", page = 1, limit = 20 } = req.query;
   const pageNumber = Math.max(Number(page) || 1, 1);
   const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
 
+  // ── Cache read ──────────────────────────────────────────────────────────────
+  const version = await getListVersion();
+  const cacheKey = await myListKey(version, req.user.userId, q, tag, pageNumber, perPage);
+  const cached = await cacheGet(cacheKey);
+  if (cached) {
+    res.set("X-Cache", "HIT");
+    return res.json(cached);
+  }
+
+  // ── MongoDB query ───────────────────────────────────────────────────────────
   const query = { createdBy: req.user.userId };
   if (q) {
     const safeSearch = escapeRegex(q);
@@ -77,7 +117,7 @@ const listMyComponents = asyncHandler(async (req, res) => {
     Component.countDocuments(query),
   ]);
 
-  res.json({
+  const responseBody = {
     success: true,
     data: {
       items,
@@ -88,9 +128,15 @@ const listMyComponents = asyncHandler(async (req, res) => {
         totalPages: Math.ceil(total / perPage),
       },
     },
-  });
+  };
+
+  // ── Cache write ─────────────────────────────────────────────────────────────
+  await cacheSet(cacheKey, responseBody, TTL_MY);
+  res.set("X-Cache", "MISS");
+  res.json(responseBody);
 });
 
+// ─── POST /api/components ─────────────────────────────────────────────────────
 const createComponent = asyncHandler(async (req, res) => {
   const { name, description = "", tags = [], previewImageUrl, figmaDataBase64, designType, pricingType } = req.body;
 
@@ -110,24 +156,45 @@ const createComponent = asyncHandler(async (req, res) => {
     createdBy: req.user.userId,
   });
 
+  // Invalidate all list caches (bump version)
+  await bumpListVersion();
+
   res.status(201).json({
     success: true,
     data: component,
   });
 });
 
+// ─── GET /api/components/:id ──────────────────────────────────────────────────
 const getComponent = asyncHandler(async (req, res) => {
+  const cacheKey = componentKey(req.params.id);
+
+  // ── Cache read ──────────────────────────────────────────────────────────────
+  const cached = await cacheGet(cacheKey);
+  if (cached) {
+    res.set("X-Cache", "HIT");
+    return res.json(cached);
+  }
+
+  // ── MongoDB query ───────────────────────────────────────────────────────────
   const component = await Component.findById(req.params.id)
     .populate("createdBy", "name email")
     .lean();
+
   if (!component) {
     res.status(404);
     throw new Error("Component not found");
   }
 
-  res.json({ success: true, data: component });
+  const responseBody = { success: true, data: component };
+
+  // ── Cache write ─────────────────────────────────────────────────────────────
+  await cacheSet(cacheKey, responseBody, TTL_SINGLE);
+  res.set("X-Cache", "MISS");
+  res.json(responseBody);
 });
 
+// ─── PATCH /api/components/:id ────────────────────────────────────────────────
 const updateComponent = asyncHandler(async (req, res) => {
   const component = await Component.findById(req.params.id);
   if (!component) {
@@ -152,9 +219,16 @@ const updateComponent = asyncHandler(async (req, res) => {
 
   const updated = await Component.findByIdAndUpdate(req.params.id, updates, { new: true });
 
+  // Invalidate this component's cache + all list caches
+  await Promise.all([
+    cacheInvalidate(componentKey(req.params.id)),
+    bumpListVersion(),
+  ]);
+
   res.json({ success: true, data: updated });
 });
 
+// ─── DELETE /api/components/:id ───────────────────────────────────────────────
 const deleteComponent = asyncHandler(async (req, res) => {
   const component = await Component.findById(req.params.id);
   if (!component) {
@@ -168,6 +242,12 @@ const deleteComponent = asyncHandler(async (req, res) => {
   }
 
   await component.deleteOne();
+
+  // Invalidate this component's cache + all list caches
+  await Promise.all([
+    cacheInvalidate(componentKey(req.params.id)),
+    bumpListVersion(),
+  ]);
 
   res.json({
     success: true,
