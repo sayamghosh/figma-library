@@ -3,6 +3,7 @@ const cors = require("cors");
 const compression = require("compression");
 const dotenv = require("dotenv");
 const { connectDatabase } = require("./config/database");
+const { getRedisClient } = require("./config/redis");
 const authRoutes = require("./routes/authRoutes");
 const componentRoutes = require("./routes/componentRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
@@ -47,6 +48,17 @@ const port = Number(process.env.PORT || 5000);
 
 async function startServer() {
   await connectDatabase();
+
+  // Log Redis connection status
+  const redis = getRedisClient();
+  if (redis) {
+    // eslint-disable-next-line no-console
+    console.log("✅ Redis connected (Upstash)");
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn("⚠️  Redis disabled – UPSTASH_REDIS_REST_URL not set. Running without cache.");
+  }
+
   app.listen(port, () => {
     // eslint-disable-next-line no-console
     console.log(`API listening on http://localhost:${port}`);
