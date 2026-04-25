@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { componentsApi } from "../../api/components";
 import { copyToFigma } from "../../lib/clipboard";
 
@@ -86,7 +86,6 @@ function IconX() {
   );
 }
 
-
 // ── constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
@@ -106,6 +105,31 @@ const CATEGORIES = [
 
 type ViewMode = "wireframe" | "ui-design";
 type PriceMode = "free" | "pro" | "all";
+
+// ── SkeletonCard ──────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex flex-col animate-pulse">
+      {/* Preview placeholder */}
+      <div className="h-[185px] bg-gray-200 rounded-none" />
+
+      {/* Footer row placeholder */}
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-3.5 w-28 bg-gray-200 rounded-full" />
+          <div className="h-3.5 w-10 bg-gray-100 rounded-md" />
+        </div>
+        <div className="h-4 w-4 bg-gray-200 rounded-full" />
+      </div>
+
+      {/* Actions placeholder */}
+      <div className="px-2 pb-3 flex gap-1.5">
+        <div className="flex-1 h-8 bg-gray-100 rounded-xl" />
+        <div className="flex-1 h-8 bg-gray-100 rounded-xl" />
+      </div>
+    </article>
+  );
+}
 
 // ── PreviewModal ──────────────────────────────────────────────────────────────
 function PreviewModal({
@@ -139,6 +163,8 @@ function PreviewModal({
             <img
               src={item.previewImageUrl}
               alt={item.name}
+              loading="lazy"
+              decoding="async"
               className="w-full rounded-xl object-contain max-h-[60vh] bg-white"
             />
           ) : (
@@ -179,22 +205,24 @@ function ComponentCard({
   return (
     <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col">
       {/* Preview */}
-      <div 
-        className="relative cursor-pointer group/preview overflow-hidden" 
+      <div
+        className="relative cursor-pointer group/preview overflow-hidden"
         onClick={onPreview}
         title="Click to preview"
       >
-        <div
-          className="h-[185px] bg-[#F3F3F6] bg-center bg-contain bg-no-repeat transition-transform duration-300 group-hover/preview:scale-[1.02]"
-          style={item.previewImageUrl ? { backgroundImage: `url(${item.previewImageUrl})` } : {}}
-          aria-label={item.name}
-        >
-          {!item.previewImageUrl && (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-              No preview
-            </div>
-          )}
-        </div>
+        {item.previewImageUrl ? (
+          <img
+            src={item.previewImageUrl}
+            alt={item.name}
+            loading="lazy"
+            decoding="async"
+            className="h-[185px] w-full object-cover bg-[#F3F3F6] transition-transform duration-300 group-hover/preview:scale-[1.02]"
+          />
+        ) : (
+          <div className="h-[185px] bg-[#F3F3F6] flex items-center justify-center text-gray-400 text-sm">
+            No preview
+          </div>
+        )}
       </div>
 
       {/* Footer row */}
@@ -245,6 +273,20 @@ function ComponentCard({
   );
 }
 
+// ── QUERY CONFIG (shared) ─────────────────────────────────────────────────────
+const STALE_TIME = 5 * 60 * 1000;  // 5 minutes — cached data treated as fresh
+const GC_TIME    = 10 * 60 * 1000; // 10 minutes — data kept in memory after unmount
+
+function buildQueryOptions(search: string, tag?: string) {
+  return {
+    queryKey: ["components", "list", search, tag ?? ""],
+    queryFn: () => componentsApi.list(search, tag ?? ""),
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
+    placeholderData: keepPreviousData, // keeps old data visible while re-fetching
+  } as const;
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 function ComponentsPage() {
   const queryClient = useQueryClient();
@@ -260,16 +302,27 @@ function ComponentsPage() {
     tags: string[];
   }>(null);
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["components", "list", search],
-    queryFn: () => componentsApi.list(search),
-    staleTime: 2 * 60 * 1000,
-  });
+  // ── Data fetching ──────────────────────────────────────────────────────────
+  const { data, isLoading, isFetching, isError, refetch } = useQuery(
+    buildQueryOptions(search)
+  );
 
   const items = useMemo(() => data?.items ?? [], [data]);
   const total = data?.pagination?.total ?? items.length;
 
-  // Client-side tag filter
+  // ── Prefetch a category on hover ───────────────────────────────────────────
+  const prefetchCategory = useCallback(
+    (cat: string) => {
+      const tag = cat === "All" ? "" : cat;
+      queryClient.prefetchQuery({
+        ...buildQueryOptions(search, tag),
+        // Only prefetch if data isn't already cached / fresh
+      });
+    },
+    [queryClient, search]
+  );
+
+  // ── Client-side filters ────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let out = items;
     if (activeCategory !== "All") {
@@ -282,16 +335,15 @@ function ComponentsPage() {
     } else if (priceMode === "free") {
       out = out.filter((i) => i.pricingType !== "Pro" && !i.tags.some((t) => /pro/i.test(t)));
     }
-
     if (viewMode === "wireframe") {
       out = out.filter((i) => i.designType === "Wireframe" || i.tags.some((t) => /wireframe/i.test(t)));
     } else if (viewMode === "ui-design") {
       out = out.filter((i) => i.designType === "UI Design" || !i.designType || i.tags.some((t) => /ui[\s-]*design/i.test(t)));
     }
-
     return out;
   }, [items, activeCategory, priceMode, viewMode]);
 
+  // ── Copy handler ───────────────────────────────────────────────────────────
   async function onCopy(id: string, name: string, figmaDataBase64?: string) {
     setActiveId(id);
     try {
@@ -312,11 +364,16 @@ function ComponentsPage() {
     }
   }
 
+  // How many skeleton cards to show
+  const SKELETON_COUNT = 12;
+  const showSkeletons = isLoading;
+  // isFetching (but not initial load) = stale re-fetch in background — keep old data, no skeleton
+  const showStaleIndicator = isFetching && !isLoading;
+
   return (
     <div className="flex h-[calc(100vh-80px)] bg-[#F3F3F6] relative">
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-gray-200 bg-white pt-4 pb-8 overflow-y-auto">
-
 
         {/* Components section */}
         <div className="px-4 flex items-center justify-between mb-2">
@@ -335,6 +392,8 @@ function ComponentsPage() {
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
+              onMouseEnter={() => prefetchCategory(cat)}
+              onFocus={() => prefetchCategory(cat)}
               className={`flex items-center justify-between px-3 py-2 rounded-lg text-[0.82rem] font-medium transition-colors ${
                 activeCategory === cat
                   ? "text-[#8A2BE2] bg-purple-50"
@@ -350,7 +409,7 @@ function ComponentsPage() {
 
       {/* ── Main Area ─────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Page title section (scrolls away) */}
+        {/* Page title section */}
         <div className="px-6 pt-5 pb-2 bg-white">
           <h1 className="text-[1.35rem] font-bold text-gray-900 leading-tight">
             Browse Webflow, Figma, Framer &amp; Tailwind Components
@@ -360,10 +419,9 @@ function ComponentsPage() {
           </p>
         </div>
 
-        {/* Sticky Toolbar section */}
+        {/* Sticky Toolbar */}
         <div className="sticky top-0 z-20 px-6 py-3 bg-white border-b border-gray-200">
           <div className="flex flex-wrap items-center gap-4">
-            {/* View mode */}
             {/* View mode segmented control */}
             <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
               <button
@@ -423,7 +481,7 @@ function ComponentsPage() {
 
             <div className="flex-1" />
 
-            {/* Search Input Moved Here */}
+            {/* Search */}
             <div className="relative w-full max-w-[450px]">
               <svg
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -443,24 +501,25 @@ function ComponentsPage() {
               />
             </div>
 
+            {/* Refresh button — shows subtle spinner when background re-fetch is happening */}
             <button
               type="button"
               onClick={() => refetch()}
               className="flex items-center gap-1.5 text-[0.76rem] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded transition-colors shrink-0"
             >
+              {showStaleIndicator ? (
+                <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                  <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              ) : null}
               Refresh
             </button>
           </div>
         </div>
 
-
         {/* Grid area */}
         <div className="flex-1 px-6 py-5">
-          {isLoading && (
-            <div className="flex items-center justify-center py-24 text-gray-400 text-sm">
-              Loading components…
-            </div>
-          )}
           {isError && (
             <div className="flex items-center justify-center py-24 text-red-400 text-sm">
               Could not load components from API.
@@ -475,26 +534,32 @@ function ComponentsPage() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-            {filtered.map((item) => (
-              <ComponentCard
-                key={item._id}
-                item={item}
-                isCopying={activeId === item._id}
-                onCopy={() => onCopy(item._id, item.name, item.figmaDataBase64)}
-                onPreview={() =>
-                  setPreviewItem({
-                    name: item.name,
-                    previewImageUrl: item.previewImageUrl,
-                    tags: item.tags,
-                  })
-                }
-              />
-            ))}
+            {/* Skeleton cards during initial load */}
+            {showSkeletons &&
+              Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                <SkeletonCard key={`sk-${i}`} />
+              ))}
+
+            {/* Real cards — shown as soon as data arrives (or placeholderData) */}
+            {!showSkeletons &&
+              filtered.map((item) => (
+                <ComponentCard
+                  key={item._id}
+                  item={item}
+                  isCopying={activeId === item._id}
+                  onCopy={() => onCopy(item._id, item.name, item.figmaDataBase64)}
+                  onPreview={() =>
+                    setPreviewItem({
+                      name: item.name,
+                      previewImageUrl: item.previewImageUrl,
+                      tags: item.tags,
+                    })
+                  }
+                />
+              ))}
           </div>
         </div>
       </div>
-
-
 
       {/* Preview Modal */}
       {previewItem && (
