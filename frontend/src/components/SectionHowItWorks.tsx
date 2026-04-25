@@ -20,72 +20,41 @@ export function SectionHowItWorks() {
   ];
 
   return (
-    <section className="w-full max-w-[1200px] mx-auto py-16 sm:py-24 px-4 md:px-8">
-      
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="mb-12 sm:mb-16"
-      >
-        <h2 className="text-[#111827] font-outfit font-extrabold text-[2.5rem] sm:text-[3.2rem] md:text-[3.8rem] lg:text-[4rem] leading-[1.1] tracking-tight mb-4">
-          How it <span className="text-[#805AF5]">Works</span>
-        </h2>
-        <p className="text-[#64748B] text-[0.95rem] sm:text-[1.05rem] font-medium">
-          Simple 3 step process to get you started
-        </p>
-      </motion.div>
+    <section className="w-full flex flex-col items-center justify-center py-20 bg-white">
+      <div className="w-[1280px] max-w-full px-4 h-[600px] flex flex-col items-center">
+        {/* Header Section */}
+        <div className="w-full mb-16">
+          <h2 className="font-outfit font-bold text-[48px] text-[#111827] mb-2">
+            How it <span className="text-[#A855F7]">Works</span>
+          </h2>
+          <p className="font-manrope font-normal text-[18px] text-[#4B5563]">
+            Simple 3 step process to get you started
+          </p>
+        </div>
 
-      {/* Steps Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-        {steps.map((step, idx) => (
-          <motion.div
-            key={step.number}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: idx * 0.1 }}
-            className="flex flex-col relative group"
-          >
-            {/* Card Background / Container */}
-            <div className="aspect-[4/3.5] bg-[#F8F7FF] rounded-[24px] p-4 sm:p-5 relative flex items-stretch overflow-hidden">
-              
-              {/* Abstract Background Grid Pattern (Matching the image) */}
-              <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 gap-0.5 p-0.5">
-                 {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="bg-[#F0EDFF] w-full h-full rounded-sm opacity-50" />
-                 ))}
-              </div>
-
+        {/* Card Section */}
+        <div className="w-[1102px] max-w-full flex justify-between gap-[56px]">
+          {steps.map((step) => (
+            <div key={step.number} className="w-[330px] h-[280px] bg-[#F5F3FF] rounded-[24px] p-4 flex flex-col">
               {/* Inner White Box */}
-              <div className="relative z-10 w-full bg-white rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 sm:p-8 flex flex-col justify-start">
-                
-                {/* Step Number */}
-                <div className="bg-[#F1F5F9] text-[#475569] w-12 h-12 rounded-xl flex items-center justify-center mb-6">
-                  <span className="font-extrabold text-[1.4rem] font-sans">{step.number}</span>
+              <div className="bg-white rounded-[16px] p-6 flex-1 flex flex-col justify-center mb-4">
+                {/* Number */}
+                <div className="w-[44px] h-[44px] bg-[#E2E8F0] rounded-[8px] flex items-center justify-center mb-2">
+                  <span className="font-outfit font-extrabold text-[36px] text-[#64748B]">{step.number}</span>
                 </div>
-                
-                {/* Step Title */}
-                <h3 
-                  className="font-extrabold tracking-tight mb-3"
-                  style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: '36px', lineHeight: '1.2', color: '#161616' }}
-                >
+                {/* Title */}
+                <h3 className="font-manrope font-extrabold text-[36px] text-[#111827]">
                   {step.title}
                 </h3>
-                
-                {/* Step Description */}
-                <p className="text-[#161616] text-[0.95rem] leading-[1.6] font-medium pr-4">
-                  {step.description}
-                </p>
-                
               </div>
+              {/* Sub Heading (below white box) */}
+              <p className="font-manrope font-normal text-[18px] text-[#4B5563] px-2 leading-[1.4]">
+                {step.description}
+              </p>
             </div>
-          </motion.div>
-        ))}
+          ))}
+        </div>
       </div>
-
     </section>
   );
 }

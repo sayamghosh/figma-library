@@ -2,6 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
 const dotenv = require("dotenv");
+const dns = require("dns");
+
+dns.setDefaultResultOrder("ipv4first");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 const { connectDatabase } = require("./config/database");
 const authRoutes = require("./routes/authRoutes");
 const componentRoutes = require("./routes/componentRoutes");
