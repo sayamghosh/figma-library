@@ -2,7 +2,7 @@
 
 export function OperationsSection() {
   return (
-    <section className="w-full flex flex-col items-center py-20 bg-[#F8F9FA]">
+    <section className="w-full flex flex-col items-center py-20 ">
       <div className="flex flex-col items-center w-[1280px] max-w-full px-4">
         {/* Heading */}
         <h2 className="text-center text-[#111827] font-outfit font-bold text-[48px] leading-[60px] max-w-[800px] mb-6">

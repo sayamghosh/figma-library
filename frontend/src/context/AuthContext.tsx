@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "../api/auth";
 import type { User } from "../lib/types";
@@ -43,33 +43,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const user = authQuery.data ?? null;
   const loading = hasToken ? authQuery.isLoading : false;
 
-  async function login(input: { email: string; password: string }) {
+  const login = useCallback(async (input: { email: string; password: string }) => {
     const payload = await authApi.login(input);
     localStorage.setItem("accessToken", payload.token);
     queryClient.setQueryData(["auth", "me"], normalizeUser(payload.user));
-  }
+  }, [queryClient]);
 
-  async function register(input: { name: string; email: string; password: string }) {
+  const register = useCallback(async (input: { name: string; email: string; password: string }) => {
     const payload = await authApi.register(input);
     localStorage.setItem("accessToken", payload.token);
     queryClient.setQueryData(["auth", "me"], normalizeUser(payload.user));
-  }
+  }, [queryClient]);
 
-  async function loginWithGoogle(idToken: string) {
+  const loginWithGoogle = useCallback(async (idToken: string) => {
     const payload = await authApi.googleLogin(idToken);
     localStorage.setItem("accessToken", payload.token);
     queryClient.setQueryData(["auth", "me"], normalizeUser(payload.user));
-  }
+  }, [queryClient]);
 
-  function logout() {
+  const logout = useCallback(() => {
     localStorage.removeItem("accessToken");
     queryClient.setQueryData(["auth", "me"], null);
     queryClient.removeQueries({ queryKey: ["components"] });
-  }
+  }, [queryClient]);
 
   const value = useMemo(
     () => ({ user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen }),
-    [user, loading, registerModalOpen, loginModalOpen]
+    [user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

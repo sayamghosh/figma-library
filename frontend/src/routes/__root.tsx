@@ -45,7 +45,7 @@ function UserAvatar({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#8A2BE2] to-[#A020F0] text-white text-[0.8rem] font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white focus:outline-none focus:ring-purple-300"
+        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#8A2BE2] to-[#A020F0] text-white text-[0.8rem] font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white focus:outline-none focus:ring-purple-300 cursor-pointer"
         aria-label="User menu"
         aria-expanded={open}
       >
@@ -127,6 +127,7 @@ function RootLayout() {
   const location = useLocation();
 
   const isLandingPage = location.pathname === "/";
+  const isComponentsPage = location.pathname.startsWith("/components");
   const bgClass = isLandingPage ? "bg-[#F3F3F6]" : "bg-white";
 
   // Close drawer on route change
@@ -151,26 +152,39 @@ function RootLayout() {
   return (
     <div className={`min-h-screen ${bgClass} font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200`}>
       {/* ── Header ── */}
-      <header className={`relative z-30 ${bgClass}`}>
+      <header className={`relative z-30 ${bgClass} ${isComponentsPage ? "border-b border-gray-200" : ""}`}>
         <div className="flex items-center justify-between px-5 lg:px-12 py-4 mx-auto w-full 2xl:max-w-[1536px]">
           {/* Logo */}
           <Link to="/" onClick={() => setMobileOpen(false)}>
             <img src={logoImg} alt="FigComponents Logo" className="h-8 w-auto object-contain" />
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-10 text-[0.95rem] font-medium text-gray-700">
-            {navLinks.map((l) =>
-              l.to ? (
-                <Link key={l.label} to={l.to} className="hover:text-black transition-colors">
-                  {l.label}
+          <nav className="hidden lg:flex items-center gap-10 font-manrope font-semibold text-[18px] text-gray-700">
+            {navLinks.map((l) => {
+              const content = (
+                <span className="flex flex-col items-center">
+                  <span className="font-extrabold invisible h-0 overflow-hidden" aria-hidden="true">{l.label}</span>
+                  <span className="transition-all duration-200">{l.label}</span>
+                </span>
+              );
+              return l.to ? (
+                <Link 
+                  key={l.label} 
+                  to={l.to} 
+                  className="hover:text-[#A855F7] hover:font-extrabold transition-all cursor-pointer"
+                >
+                  {content}
                 </Link>
               ) : (
-                <a key={l.label} href={l.href} className="hover:text-black transition-colors">
-                  {l.label}
+                <a 
+                  key={l.label} 
+                  href={l.href} 
+                  className="hover:text-[#A855F7] hover:font-extrabold transition-all cursor-pointer"
+                >
+                  {content}
                 </a>
-              )
-            )}
+              );
+            })}
           </nav>
 
           {/* Desktop actions + mobile right-side */}
@@ -228,7 +242,7 @@ function RootLayout() {
                       key={l.label}
                       to={l.to}
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center px-3 py-3 rounded-xl text-[0.95rem] font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                      className="flex items-center px-3 py-3 rounded-xl font-manrope font-normal text-[16px] text-gray-700 hover:bg-gray-50 hover:text-black hover:font-bold transition-all"
                     >
                       {l.label}
                     </Link>
@@ -237,7 +251,7 @@ function RootLayout() {
                       key={l.label}
                       href={l.href}
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center px-3 py-3 rounded-xl text-[0.95rem] font-medium text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                      className="flex items-center px-3 py-3 rounded-xl font-manrope font-normal text-[16px] text-gray-700 hover:bg-gray-50 hover:text-black hover:font-bold transition-all"
                     >
                       {l.label}
                     </a>

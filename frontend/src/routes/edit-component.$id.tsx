@@ -11,6 +11,10 @@ export const Route = createFileRoute("/edit-component/$id")({
   component: EditComponentPage,
 });
 
+const FAKE_SYSTEM_LOG = {
+  binary: Array.from({ length: 4 }).map(() => Math.random().toString(2).substring(2, 26)).join('\n  ')
+};
+
 function EditComponentPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
@@ -33,16 +37,20 @@ function EditComponentPage() {
     enabled: !!id,
   });
 
+  const [initialized, setInitialized] = useState(false);
+
   useEffect(() => {
-    if (componentData) {
+    if (componentData && !initialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(componentData.name || "");
       setDescription(componentData.description || "");
       setTags(componentData.tags || []);
       setFigmaDataBase64(componentData.figmaDataBase64 || "");
       setDesignType(componentData.designType || "UI Design");
       setPricingType(componentData.pricingType || "Free");
+      setInitialized(true);
     }
-  }, [componentData]);
+  }, [componentData, initialized]);
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -301,7 +309,7 @@ function EditComponentPage() {
 [ENCRYPTED_PAYLOAD_CHUNK_0x9A4B]
 [SYSTEM_VERIFIED_FIGMA_NODE]
 <binary-stream chunks="128" mode="base64-encoded" status="verified">
-  ${Array.from({ length: 4 }).map(() => Math.random().toString(2).substring(2, 26)).join('\n  ')}
+  ${FAKE_SYSTEM_LOG.binary}
 </binary-stream>`}
                           </pre>
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>

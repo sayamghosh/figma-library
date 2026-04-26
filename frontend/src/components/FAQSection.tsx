@@ -40,8 +40,8 @@ export function FAQSection() {
 
       {/* Title */}
       <h2 
-        className="text-[#111827] font-bold leading-[1.1] tracking-tight mb-10 sm:mb-14 text-center"
-        style={{ fontFamily: "'Outfit', sans-serif", fontSize: '64px' }}
+        className="text-[#111827] font-bold tracking-tight mb-10 sm:mb-14 text-center font-outfit"
+        style={{ fontSize: '48px', lineHeight: '60px' }}
       >
         Frequently Asked<br />Question
       </h2>

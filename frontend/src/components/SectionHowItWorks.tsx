@@ -20,7 +20,7 @@ export function SectionHowItWorks() {
   ];
 
   return (
-    <section className="w-full flex flex-col items-center justify-center py-20 bg-white">
+    <section className="w-full flex flex-col items-center justify-center py-20 ">
       <div className="w-[1280px] max-w-full px-4 h-[600px] flex flex-col items-center">
         {/* Header Section */}
         <div className="w-full mb-16">
