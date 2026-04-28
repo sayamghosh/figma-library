@@ -11,15 +11,68 @@
 }
 
 .font-syne {
-	font-family: "Syne", sans-serif !important;
+	font-family: "Plus Jakarta Sans", sans-serif !important;
 }
 
 .font-outfit {
-	font-family: "Outfit", sans-serif !important;
+	font-family: "Plus Jakarta Sans", sans-serif !important;
 }
 
 .font-manrope {
-	font-family: "Manrope", sans-serif !important;
+	font-family: "Plus Jakarta Sans", sans-serif !important;
+}
+
+.figma-hero::before,
+.figma-hero::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: -1;
+}
+
+.figma-hero::before {
+	background:
+		linear-gradient(135deg, transparent 0 47%, rgba(255, 255, 255, 0.54) 47.1% 61.8%, transparent 61.9%),
+		linear-gradient(135deg, transparent 0 71.5%, rgba(255, 255, 255, 0.42) 71.6% 86.7%, transparent 86.8%);
+}
+
+.figma-hero::after {
+	top: 50%;
+	left: 46%;
+	width: 51%;
+	height: 48%;
+	inset: auto auto auto 46%;
+	background: rgba(255, 255, 255, 0.36);
+	transform: skewX(-45deg);
+	transform-origin: top left;
+}
+
+@media (max-width: 1023px) {
+	.figma-hero::before {
+		background:
+			linear-gradient(135deg, transparent 0 45%, rgba(255, 255, 255, 0.48) 45.1% 63%, transparent 63.1%),
+			linear-gradient(135deg, transparent 0 74%, rgba(255, 255, 255, 0.34) 74.1% 91%, transparent 91.1%);
+	}
+
+	.figma-hero::after {
+		left: 34%;
+		width: 72%;
+	}
+}
+
+@media (max-width: 640px) {
+	.figma-hero {
+		min-height: 720px;
+		padding-top: 104px;
+	}
+
+	.hero-eyebrow {
+		max-width: 100%;
+		height: auto;
+		min-height: 28px;
+		white-space: normal;
+	}
 }
 
 * {
@@ -69,7 +122,7 @@ body {
 		radial-gradient(circle at 20% -10%, rgba(154, 255, 63, 0.16), transparent 30%),
 		var(--bg);
 	background-size: 32px 32px, 32px 32px, auto, auto;
-	font-family: "Syne", "Segoe UI", "Trebuchet MS", sans-serif;
+	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
 }
 
 h1,
@@ -83,7 +136,7 @@ input,
 textarea,
 select,
 label {
-	font-family: "Syne", "Segoe UI", "Trebuchet MS", sans-serif;
+	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
 }
 
 code,

@@ -1,50 +1,41 @@
 import { Link } from "@tanstack/react-router";
-import heroImg from "../assets/heroimg.png";
-import { FlipWords } from "./ui/flip-words";
-import { HoverBorderGradient } from "./ui/hover-border-gradient";
 
 export function HeroSection() {
   return (
-    <section className="relative w-full flex flex-col items-center pb-8 sm:pb-12 overflow-hidden">
+    <section className="figma-hero relative isolate min-h-[860px] w-full overflow-hidden bg-[#eef1f7] px-5 pt-[148px] sm:px-8 lg:min-h-[930px] xl:min-h-[984px]">
+      <div className="relative z-10 mx-auto w-full max-w-[1320px]">
+        <div className="hero-eyebrow mb-9 inline-flex h-[28px] items-center rounded-full bg-white px-[15px] font-manrope text-[15px] font-extrabold leading-none text-[#17191e] shadow-[inset_0_0_0_1px_rgba(16,24,40,0.10)] sm:text-[16px] lg:mb-[38px]">
+          CX PLATFORM GIVES YOUR TEAM SUPERPOWERS
+        </div>
 
-      {/* Text & CTA */}
-      <div className="relative z-20 flex flex-col items-center pt-10 sm:pt-16 md:pt-28 px-4 w-full">
-        <h1 className="text-center text-[#111827] font-extrabold font-outfit text-[2.2rem] sm:text-[2.6rem] md:text-[3.2rem] lg:text-[3.6rem] xl:text-[4rem] leading-[1.1] mb-6 sm:mb-8 w-full max-w-full px-2">
-          The ultimate <FlipWords 
-            words={["Figma UI kit", "developer toolkit", "design system", "component library"]} 
-            className="text-[#8A2BE2]"
-          />
+        <h1 className="max-w-[850px] font-outfit text-[clamp(3.25rem,5.05vw,5.95rem)] font-semibold leading-[1.035] tracking-normal text-[#141519] sm:max-w-[980px]">
+          Largest collection of
+          <br />
+          desktop and mobile
+          <br />
+          layout for <span className="text-[#9FE870]">figma</span>
         </h1>
 
-        <p className="text-center font-manrope  text-gray-500 font-medium text-[0.92rem] sm:text-[1rem] md:text-[1.1rem] mb-8 sm:mb-10 max-w-[700px] leading-relaxed tracking-wider px-2">
-          100+ components made for Developers, Designers &amp; Business Owners who want to test
-          multiple ideas in no time. No code Required
-        </p>
-
-        <HoverBorderGradient
-          containerClassName="rounded-full shadow-[0_12px_24px_-8px_rgba(138,43,226,0.6)]"
-          as="button"
-          className="bg-black text-white flex items-center space-x-2"
-        >
+        <div className="mt-[54px] flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-[34px]">
           <Link
             to="/components"
-            className="font-semibold text-[0.95rem] sm:text-[1.05rem] px-4 sm:px-6 py-1.5 sm:py-2 transition-all block"
-            style={{ color: "#ffffff" }}
+            className="inline-flex h-[54px] w-fit items-center gap-5 rounded-full bg-white py-2 pl-[26px] pr-2 font-manrope text-[15px] font-extrabold text-[#15171b] transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-[#98e967]/35 sm:text-[16px]"
           >
-            Explore Library
+            Components
+            <span className="grid h-[36px] w-[36px] place-items-center rounded-full bg-[#96e96a] text-[#15171b]">
+              <svg width="17" height="17" viewBox="0 0 17 17" fill="none" aria-hidden="true">
+                <path d="M3.2 8.5h10.1M9.1 4.3l4.2 4.2-4.2 4.2" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
           </Link>
-        </HoverBorderGradient>
-      </div>
 
-      {/* Hero image */}
-      <div className="relative z-10 w-full max-w-[1300px] mx-auto px-2 sm:px-6 md:px-12 flex justify-center -mt-12 sm:-mt-24 md:-mt-44 lg:-mt-[14rem]">
-        <img
-          src={heroImg}
-          alt="UI Kit Preview"
-          className="w-full h-auto mx-auto block object-contain pointer-events-none"
-        />
+          <p className="font-manrope text-[17px] font-medium leading-[1.4] text-[#9ca0aa] sm:text-[18px]">
+            365-day trial,
+            <br />
+            Copy and Paste for free
+          </p>
+        </div>
       </div>
-
     </section>
   );
 }
