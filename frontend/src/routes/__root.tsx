@@ -130,6 +130,19 @@ function RootLayout() {
   const isComponentsPage = location.pathname.startsWith("/components");
   const bgClass = isLandingPage ? "bg-[#eef1f7]" : "bg-white";
 
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 20;
+      setScrolled(isScrolled);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Initial check
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+
   // Close drawer on route change
   useEffect(() => {
     return router.subscribe("onBeforeLoad", () => setMobileOpen(false));
@@ -149,21 +162,35 @@ function RootLayout() {
   ];
 
   return (
-    <div className={`min-h-screen ${bgClass} font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200`}>
+    <div className={`min-h-screen ${bgClass} font-sans text-gray-900 selection:bg-purple-200`}>
       {/* ── Header ── */}
-      <header className={`relative z-30 ${isLandingPage ? "bg-transparent" : bgClass} ${isComponentsPage ? "border-b border-gray-200" : ""}`}>
-        <div className={isLandingPage ? "mx-auto w-full max-w-[1320px] px-5 pt-8 sm:px-8 2xl:px-0" : "flex items-center justify-between px-5 lg:px-12 py-4 mx-auto w-full 2xl:max-w-[1536px]"}>
-          <div className={isLandingPage ? "flex min-h-[68px] items-center justify-between rounded-full bg-white py-2 pl-5 pr-2.5 shadow-[0_1px_0_rgba(16,24,40,0.03)] lg:pl-6" : "contents"}>
+      <header 
+        className={`sticky top-0 z-50 transition-all duration-300 w-full ${
+          isLandingPage 
+            ? (scrolled ? "bg-white/80 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-0") 
+            : `${bgClass} py-3 ${isComponentsPage ? "border-b border-gray-200" : ""}`
+        }`}
+      >
+        <div className={`mx-auto w-full transition-all duration-300 ${
+          isLandingPage 
+            ? (scrolled ? "max-w-none px-0" : "max-w-[1320px] px-5 pt-8 sm:px-8 2xl:px-0") 
+            : "flex items-center justify-between px-5 lg:px-12 mx-auto w-full 2xl:max-w-[1536px]"
+        }`}>
+          <div className={isLandingPage ? `flex min-h-[56px] items-center justify-between transition-all duration-500 mx-auto w-full ${
+            scrolled 
+              ? "max-w-[1320px] px-5 sm:px-8 2xl:px-0 rounded-none bg-transparent shadow-none" 
+              : "rounded-full bg-white py-1.5 pl-5 pr-2 shadow-[0_1px_0_rgba(16,24,40,0.03)] lg:pl-6"
+          }` : "contents"}>
           {/* Logo */}
           <Link to="/" onClick={() => setMobileOpen(false)} className="shrink-0">
             <img src={logoImg} alt="FigComponents Logo" className="h-8 w-auto object-contain" />
           </Link>
 
-          <nav className={isLandingPage ? "hidden lg:flex items-center gap-[38px] font-manrope text-[15px] font-extrabold text-[#15171b]" : "hidden lg:flex items-center gap-10 font-manrope font-semibold text-[18px] text-gray-700"}>
+          <nav className={isLandingPage ? "hidden lg:flex items-center gap-[38px] font-manrope text-[15px] font-bold text-[#15171b]" : "hidden lg:flex items-center gap-10 font-manrope font-semibold text-[18px] text-gray-700"}>
             {navLinks.map((l) => {
               const content = (
                 <span className="flex flex-col items-center">
-                  <span className="font-extrabold invisible h-0 overflow-hidden" aria-hidden="true">{l.label}</span>
+                  <span className="font-bold invisible h-0 overflow-hidden" aria-hidden="true">{l.label}</span>
                   <span className="transition-all duration-200">{l.label}</span>
                 </span>
               );
@@ -171,7 +198,7 @@ function RootLayout() {
                 <Link 
                   key={l.label} 
                   to={l.to} 
-                  className={`${isLandingPage ? "hover:text-[#8c45d9]" : "hover:text-[#A855F7] hover:font-extrabold"} transition-all cursor-pointer`}
+                  className={`${isLandingPage ? "hover:text-[#8c45d9]" : "hover:text-[#A855F7] hover:font-bold"} transition-all cursor-pointer`}
                 >
                   {content}
                 </Link>
@@ -179,7 +206,7 @@ function RootLayout() {
                 <a 
                   key={l.label} 
                   href={l.href} 
-                  className={`${isLandingPage ? "hover:text-[#8c45d9]" : "hover:text-[#A855F7] hover:font-extrabold"} transition-all cursor-pointer`}
+                  className={`${isLandingPage ? "hover:text-[#8c45d9]" : "hover:text-[#A855F7] hover:font-bold"} transition-all cursor-pointer`}
                 >
                   {content}
                 </a>
@@ -194,7 +221,7 @@ function RootLayout() {
               <>
                 <button
                   onClick={() => setLoginModalOpen(true)}
-                  className={`${isLandingPage ? "hidden h-[54px] rounded-full bg-[#96e96a] px-7 font-manrope text-[15px] font-extrabold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
+                  className={`${isLandingPage ? "hidden h-[44px] rounded-full bg-[#96e96a] px-6 font-manrope text-[14px] font-bold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
                 >
                   {isLandingPage ? "Sign In" : "Login"}
                 </button>
