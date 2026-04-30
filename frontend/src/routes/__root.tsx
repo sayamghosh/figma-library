@@ -152,7 +152,7 @@ function RootLayout() {
     <div className={`min-h-screen ${bgClass} font-sans text-gray-900 overflow-x-hidden selection:bg-purple-200`}>
       {/* ── Header ── */}
       <header className={`relative z-30 ${isLandingPage ? "bg-transparent" : bgClass} ${isComponentsPage ? "border-b border-gray-200" : ""}`}>
-        <div className={isLandingPage ? "mx-auto w-full max-w-[1320px] px-5 pt-8 sm:px-8 lg:px-0" : "flex items-center justify-between px-5 lg:px-12 py-4 mx-auto w-full 2xl:max-w-[1536px]"}>
+        <div className={isLandingPage ? "mx-auto w-full max-w-[1320px] px-5 pt-8 sm:px-8 2xl:px-0" : "flex items-center justify-between px-5 lg:px-12 py-4 mx-auto w-full 2xl:max-w-[1536px]"}>
           <div className={isLandingPage ? "flex min-h-[68px] items-center justify-between rounded-full bg-white py-2 pl-5 pr-2.5 shadow-[0_1px_0_rgba(16,24,40,0.03)] lg:pl-6" : "contents"}>
           {/* Logo */}
           <Link to="/" onClick={() => setMobileOpen(false)} className="shrink-0">
