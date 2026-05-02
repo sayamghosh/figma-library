@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-	--bg: #090a0f;
-	--surface: #10131a;
-	--line: #232836;
-	--ink: #ecf1ff;
-	--muted: #99a0b6;
-	--accent: #9aff3f;
-	--accent-ink: #0f1a00;
+	--bg: #ffffff;
+	--surface: #f8fafc;
+	--line: #e2e8f0;
+	--ink: #0f172a;
+	--muted: #64748b;
+	--accent: #22c55e;
+	--accent-ink: #ffffff;
 }
 
 .font-syne {
@@ -15,49 +15,126 @@
 }
 
 .font-outfit {
-	font-family: "Plus Jakarta Sans", sans-serif !important;
+	font-family: "Outfit", sans-serif !important;
 }
 
 .font-manrope {
 	font-family: "Plus Jakarta Sans", sans-serif !important;
 }
 
-.figma-hero::before,
-.figma-hero::after {
-	content: "";
-	position: absolute;
-	inset: 0;
-	pointer-events: none;
-	z-index: -1;
+.figma-hero {
+	background: #ffffff;
 }
 
-.figma-hero::before {
-	background:
-		linear-gradient(135deg, transparent 0 47%, rgba(255, 255, 255, 0.54) 47.1% 61.8%, transparent 61.9%),
-		linear-gradient(135deg, transparent 0 71.5%, rgba(255, 255, 255, 0.42) 71.6% 86.7%, transparent 86.8%);
+.dynamic-island-header {
+	padding-top: 5px;
 }
 
-.figma-hero::after {
-	top: 50%;
-	left: 46%;
-	width: 51%;
-	height: 48%;
-	inset: auto auto auto 46%;
-	background: rgba(255, 255, 255, 0.36);
-	transform: skewX(-45deg);
-	transform-origin: top left;
+.dynamic-island-frame {
+	width: 100%;
+	padding-inline: 20px;
+	transition: padding 420ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@media (max-width: 1023px) {
-	.figma-hero::before {
-		background:
-			linear-gradient(135deg, transparent 0 45%, rgba(255, 255, 255, 0.48) 45.1% 63%, transparent 63.1%),
-			linear-gradient(135deg, transparent 0 74%, rgba(255, 255, 255, 0.34) 74.1% 91%, transparent 91.1%);
+.dynamic-island-shell {
+	min-height: 56px;
+	width: 100%;
+	max-width: 1320px;
+	margin-inline: auto;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+	backdrop-filter: blur(10px);
+
+	transition:
+		max-width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+		border-radius 420ms cubic-bezier(0.22, 1, 0.36, 1),
+		box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1),
+		background-color 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dynamic-island-content {
+	display: flex;
+	min-height: 70px;
+	width: 100%;
+	max-width: 1320px;
+	margin-inline: auto;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 8px 6px 30px;
+	transition: padding 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-frame {
+	padding-inline: 20px;
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-shell {
+	max-width: 100%;
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-content {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	max-width: 100%;
+	padding-inline: 0;
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-content > :last-child {
+	justify-self: end;
+}
+
+/* Sticky behavior: the shell grows to the viewport, while this inner rail keeps
+   the logo, navigation links, and actions at their original horizontal spots. */
+.dynamic-island-header.is-stuck {
+	padding-top: 0;
+}
+
+.dynamic-island-header.is-stuck .dynamic-island-frame {
+	padding-inline: 0;
+}
+
+.dynamic-island-header.is-stuck .dynamic-island-shell {
+	max-width: 100%;
+	border-radius: 0;
+	box-shadow: 0 8px 30px rgb(0 0 0 / 0.08);
+}
+
+.dynamic-island-header.is-stuck .dynamic-island-content {
+	padding-inline: 40px 28px;
+}
+
+@media (min-width: 640px) {
+	.dynamic-island-frame {
+		padding-inline: 32px;
 	}
 
-	.figma-hero::after {
-		left: 34%;
-		width: 72%;
+	.dynamic-island-content {
+		padding-left: 20px;
+	}
+
+	.dynamic-island-header.is-stuck .dynamic-island-content {
+		padding-inline: 52px 40px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.dynamic-island-content {
+		padding-left: 24px;
+	}
+
+	.dynamic-island-header.is-stuck .dynamic-island-content {
+		padding-inline: 56px 40px;
+	}
+}
+
+@media (min-width: 1536px) {
+	.dynamic-island-frame {
+		padding-inline: 0;
+	}
+
+	.dynamic-island-header.is-stuck .dynamic-island-content {
+		padding-inline: 24px 8px;
 	}
 }
 
@@ -116,12 +193,7 @@ body {
 	margin: 0;
 	min-height: 100vh;
 	color: var(--ink);
-	background:
-		linear-gradient(to right, rgba(62, 69, 90, 0.16) 1px, transparent 1px),
-		linear-gradient(to bottom, rgba(62, 69, 90, 0.16) 1px, transparent 1px),
-		radial-gradient(circle at 20% -10%, rgba(154, 255, 63, 0.16), transparent 30%),
-		var(--bg);
-	background-size: 32px 32px, 32px 32px, auto, auto;
+	background: var(--bg);
 	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
 }
 
@@ -162,7 +234,7 @@ samp {
 	gap: 16px;
 	padding: 14px 20px;
 	border-bottom: 1px solid var(--line);
-	background: rgba(7, 10, 15, 0.9);
+	background: rgba(255, 255, 255, 0.9);
 	backdrop-filter: blur(6px);
 }
 
@@ -179,7 +251,7 @@ samp {
 
 .nav-link {
 	border: 1px solid var(--line);
-	background: #11151f;
+	background: #f1f5f9;
 	color: var(--ink);
 	padding: 8px 12px;
 	border-radius: 999px;
@@ -192,8 +264,8 @@ samp {
 }
 
 .accent-link {
-	border-color: #3d5f1f;
-	color: #bfff84;
+	border-color: #e2e8f0;
+	color: #22c55e;
 }
 
 .page-wrap {
@@ -206,11 +278,11 @@ samp {
 	border: 1px solid var(--line);
 	border-radius: 14px;
 	padding: 28px;
-	background: rgba(10, 13, 20, 0.84);
+	background: rgba(255, 255, 255, 0.84);
 }
 
 .eyebrow {
-	color: #9aff3f;
+	color: #22c55e;
 	letter-spacing: 0.08em;
 	font-size: 0.8rem;
 	font-weight: 700;
@@ -225,7 +297,7 @@ samp {
 }
 
 .hero-title span {
-	color: #9aff3f;
+	color: #22c55e;
 }
 
 .hero-copy {
@@ -252,8 +324,8 @@ samp {
 }
 
 .primary-btn {
-	background: linear-gradient(180deg, #a6ff5f, #88e639);
-	color: var(--accent-ink);
+	background: linear-gradient(180deg, #4ade80, #22c55e);
+	color: #ffffff;
 }
 
 .primary-btn:disabled {
@@ -262,18 +334,18 @@ samp {
 }
 
 .secondary-btn {
-	background: #151a25;
+	background: #f1f5f9;
 	border-color: var(--line);
 	color: var(--ink);
 }
 
 .hero-note {
 	margin-top: 20px;
-	border: 1px solid #2b4b19;
-	background: rgba(36, 65, 17, 0.35);
+	border: 1px solid #bbf7d0;
+	background: rgba(220, 252, 231, 0.35);
 	border-radius: 10px;
 	padding: 10px 12px;
-	color: #b8df93;
+	color: #166534;
 	font-size: 0.9rem;
 }
 
@@ -290,7 +362,7 @@ samp {
 .stack-form textarea {
 	width: 100%;
 	border: 1px solid var(--line);
-	background: #111723;
+	background: #ffffff;
 	color: var(--ink);
 	border-radius: 10px;
 	padding: 10px 12px;
@@ -310,7 +382,7 @@ samp {
 	border: 1px solid var(--line);
 	border-radius: 12px;
 	padding: 12px;
-	background: rgba(16, 19, 26, 0.95);
+	background: rgba(255, 255, 255, 0.95);
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
@@ -319,12 +391,13 @@ samp {
 .preview-box {
 	height: 180px;
 	border-radius: 10px;
-	border: 1px solid #2a2f3f;
-	background: #1a1f2d center / cover no-repeat;
+	border: 1px solid #e2e8f0;
+	background: #f1f5f9 center / cover no-repeat;
 }
 
 .component-content h3 {
 	margin: 0;
+	color: var(--ink);
 }
 
 .component-content p {
@@ -340,21 +413,22 @@ samp {
 }
 
 .tag-pill {
-	border: 1px solid #2f384f;
-	background: #131a2b;
+	border: 1px solid #e2e8f0;
+	background: #f8fafc;
 	border-radius: 999px;
 	padding: 4px 8px;
 	font-size: 0.76rem;
 	font-family: "DM Mono", "Consolas", "Courier New", monospace;
+	color: var(--muted);
 }
 
 .status-text {
-	color: #c9f9a2;
+	color: #166534;
 	margin-bottom: 12px;
 }
 
 .error-text {
-	color: #ff9b95;
+	color: #ef4444;
 }
 
 .auth-card,
@@ -363,7 +437,7 @@ samp {
 	margin: 0 auto;
 	border: 1px solid var(--line);
 	border-radius: 12px;
-	background: rgba(16, 19, 26, 0.94);
+	background: #ffffff;
 	padding: 20px;
 }
 
@@ -373,7 +447,7 @@ samp {
 }
 
 .field-label {
-	color: #c8cfdd;
+	color: #475569;
 	font-size: 0.9rem;
 	font-family: "DM Mono", "Consolas", "Courier New", monospace;
 }

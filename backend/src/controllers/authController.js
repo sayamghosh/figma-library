@@ -38,6 +38,7 @@ const register = asyncHandler(async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profilePicture: user.profilePicture,
       },
     },
   });
@@ -73,13 +74,14 @@ const login = asyncHandler(async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        profilePicture: user.profilePicture,
       },
     },
   });
 });
 
 const me = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.userId).select("name email createdAt updatedAt");
+  const user = await User.findById(req.user.userId).select("name email profilePicture createdAt updatedAt");
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -115,6 +117,9 @@ const googleAuth = asyncHandler(async (req, res) => {
     if (!user.googleId) {
       user.googleId = googleId;
       user.authProvider = "google";
+      if (!user.profilePicture && picture) {
+        user.profilePicture = picture;
+      }
       await user.save();
     }
   } else {
@@ -124,6 +129,7 @@ const googleAuth = asyncHandler(async (req, res) => {
       email: lowercaseEmail,
       googleId: googleId,
       authProvider: "google",
+      profilePicture: picture || "",
       // Optional password could be left empty or undefined since it's not required for 'google' auth provider
     });
   }
@@ -138,7 +144,7 @@ const googleAuth = asyncHandler(async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        picture: picture, // We don't save picture yet, but we can pass it
+        profilePicture: user.profilePicture,
       },
     },
   });

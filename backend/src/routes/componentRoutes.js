@@ -13,6 +13,7 @@ const router = express.Router();
 
 router.get("/", listComponents);
 router.get("/my", protect, listMyComponents);
+router.get("/top-creators", require("../controllers/componentController").getTopCreators);
 router.get("/:id", getComponent);
 router.post("/", protect, createComponent);
 router.patch("/:id", protect, updateComponent);

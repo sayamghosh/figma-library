@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       enum: ["local", "google"],
       default: "local",
     },
+    profilePicture: {
+      type: String,
+      default: "",
+    },
     googleId: {
       type: String,
       sparse: true,

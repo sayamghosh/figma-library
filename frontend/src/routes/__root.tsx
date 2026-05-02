@@ -45,7 +45,7 @@ function UserAvatar({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#8A2BE2] to-[#A020F0] text-white text-[0.8rem] font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white focus:outline-none focus:ring-purple-300 cursor-pointer"
+        className="flex items-center justify-center w-11 h-11 rounded-full bg-black text-[#9FE870] text-[0.9rem] font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white focus:outline-none focus:ring-[#9FE870]/50 cursor-pointer"
         aria-label="User menu"
         aria-expanded={open}
       >
@@ -128,17 +128,29 @@ function RootLayout() {
 
   const isLandingPage = location.pathname === "/";
   const isComponentsPage = location.pathname.startsWith("/components");
-  const bgClass = isLandingPage ? "bg-[#eef1f7]" : "bg-white";
+  const usesDynamicNavbar = isLandingPage || isComponentsPage;
+  const bgClass = "bg-white";
 
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const isScrolled = window.scrollY > 20;
-      setScrolled(isScrolled);
+    let ticking = false;
+
+    const updateScrolledState = () => {
+      setScrolled(window.scrollY > 0);
+      ticking = false;
     };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateScrolledState);
+        ticking = true;
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    updateScrolledState();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -162,31 +174,28 @@ function RootLayout() {
   ];
 
   return (
-    <div className={`min-h-screen ${bgClass} font-sans text-gray-900 selection:bg-purple-200`}>
+    <div className={`min-h-screen ${bgClass} font-sans text-gray-900 selection:bg-[#9FE870]/30`}>
       {/* ── Header ── */}
       <header 
-        className={`sticky top-0 z-50 transition-all duration-300 w-full ${
-          isLandingPage 
-            ? (scrolled ? "bg-white/80 backdrop-blur-md shadow-sm py-2" : "bg-transparent py-0") 
+        className={`sticky top-0 z-[100] transition-all duration-300 w-full ${
+          usesDynamicNavbar 
+            ? `dynamic-island-header bg-transparent ${isComponentsPage ? "is-components-page" : ""} ${scrolled ? "is-stuck" : ""}` 
             : `${bgClass} py-3 ${isComponentsPage ? "border-b border-gray-200" : ""}`
         }`}
       >
         <div className={`mx-auto w-full transition-all duration-300 ${
-          isLandingPage 
-            ? (scrolled ? "max-w-none px-0" : "max-w-[1320px] px-5 pt-8 sm:px-8 2xl:px-0") 
+          usesDynamicNavbar 
+            ? "dynamic-island-frame" 
             : "flex items-center justify-between px-5 lg:px-12 mx-auto w-full 2xl:max-w-[1536px]"
         }`}>
-          <div className={isLandingPage ? `flex min-h-[56px] items-center justify-between transition-all duration-500 mx-auto w-full ${
-            scrolled 
-              ? "max-w-[1320px] px-5 sm:px-8 2xl:px-0 rounded-none bg-transparent shadow-none" 
-              : "rounded-full bg-white py-1.5 pl-5 pr-2 shadow-[0_1px_0_rgba(16,24,40,0.03)] lg:pl-6"
-          }` : "contents"}>
+          <div className={usesDynamicNavbar ? "dynamic-island-shell" : "contents"}>
+          <div className={usesDynamicNavbar ? "dynamic-island-content" : "contents"}>
           {/* Logo */}
           <Link to="/" onClick={() => setMobileOpen(false)} className="shrink-0">
             <img src={logoImg} alt="FigComponents Logo" className="h-8 w-auto object-contain" />
           </Link>
 
-          <nav className={isLandingPage ? "hidden lg:flex items-center gap-[38px] font-manrope text-[15px] font-bold text-[#15171b]" : "hidden lg:flex items-center gap-10 font-manrope font-semibold text-[18px] text-gray-700"}>
+          <nav className={usesDynamicNavbar ? "hidden lg:flex items-center gap-[38px] font-manrope text-[15px] font-bold text-[#15171b]" : "hidden lg:flex items-center gap-10 font-manrope font-semibold text-[18px] text-gray-700"}>
             {navLinks.map((l) => {
               const content = (
                 <span className="flex flex-col items-center">
@@ -198,7 +207,7 @@ function RootLayout() {
                 <Link 
                   key={l.label} 
                   to={l.to} 
-                  className={`${isLandingPage ? "hover:text-[#8c45d9]" : "hover:text-[#A855F7] hover:font-bold"} transition-all cursor-pointer`}
+                  className={`${usesDynamicNavbar ? "hover:text-[#4a6b2c]" : "hover:text-black hover:font-bold"} transition-all cursor-pointer`}
                 >
                   {content}
                 </Link>
@@ -206,7 +215,7 @@ function RootLayout() {
                 <a 
                   key={l.label} 
                   href={l.href} 
-                  className={`${isLandingPage ? "hover:text-[#8c45d9]" : "hover:text-[#A855F7] hover:font-bold"} transition-all cursor-pointer`}
+                  className={`${usesDynamicNavbar ? "hover:text-[#4a6b2c]" : "hover:text-black hover:font-bold"} transition-all cursor-pointer`}
                 >
                   {content}
                 </a>
@@ -221,13 +230,13 @@ function RootLayout() {
               <>
                 <button
                   onClick={() => setLoginModalOpen(true)}
-                  className={`${isLandingPage ? "hidden h-[44px] rounded-full bg-[#96e96a] px-6 font-manrope text-[14px] font-bold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
+                  className={`${usesDynamicNavbar ? "hidden h-[44px] rounded-full bg-[#96e96a] px-6 font-manrope text-[14px] font-bold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
                 >
-                  {isLandingPage ? "Sign In" : "Login"}
+                  {usesDynamicNavbar ? "Sign In" : "Login"}
                 </button>
-                {!isLandingPage && <button
+                {!usesDynamicNavbar && <button
                   onClick={() => setRegisterModalOpen(true)}
-                  className="bg-[#8A2BE2] hover:bg-[#7b22cc] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[0.88rem] sm:text-[0.95rem] font-medium transition-all shadow-sm"
+                  className="bg-black hover:bg-gray-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[0.88rem] sm:text-[0.95rem] font-medium transition-all shadow-sm"
                   style={{ color: "#ffffff" }}
                 >
                   Start for free
@@ -240,13 +249,14 @@ function RootLayout() {
             {/* Hamburger — mobile only */}
             <button
               type="button"
-              className={`${isLandingPage ? "bg-[#96e96a] text-[#111318] hover:bg-[#8de35f]" : "text-gray-700 hover:bg-gray-200"} lg:hidden flex items-center justify-center w-11 h-11 rounded-full transition-colors`}
+              className={`${usesDynamicNavbar ? "bg-[#96e96a] text-[#111318] hover:bg-[#8de35f]" : "text-gray-700 hover:bg-gray-200"} lg:hidden flex items-center justify-center w-11 h-11 rounded-full transition-colors`}
               onClick={() => setMobileOpen((v) => !v)}
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileOpen}
             >
               <HamburgerIcon open={mobileOpen} />
             </button>
+          </div>
           </div>
           </div>
         </div>
@@ -298,7 +308,7 @@ function RootLayout() {
                     </button>
                     <button
                       onClick={() => { setMobileOpen(false); setRegisterModalOpen(true); }}
-                      className="flex items-center justify-center px-3 py-3 rounded-xl text-[0.95rem] font-semibold bg-[#8A2BE2] text-white hover:bg-[#7b22cc] transition-colors w-full"
+                      className="flex items-center justify-center px-3 py-3 rounded-xl text-[0.95rem] font-semibold bg-black text-white hover:bg-gray-800 transition-colors w-full"
                       style={{ color: "#ffffff" }}
                     >
                       Start for free
@@ -313,7 +323,7 @@ function RootLayout() {
                     <Link
                       to="/my-components"
                       onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-3 rounded-xl text-[0.95rem] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-3  rounded-xl text-[0.95rem] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                         <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />

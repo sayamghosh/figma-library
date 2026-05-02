@@ -255,6 +255,49 @@ const deleteComponent = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET /api/components/top-creators ─────────────────────────────────────────
+const getTopCreators = asyncHandler(async (req, res) => {
+  // Use aggregation to find the top 2 creators based on component count
+  const topCreators = await Component.aggregate([
+    {
+      $group: {
+        _id: "$createdBy",
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $sort: { count: -1 },
+    },
+    {
+      $limit: 2,
+    },
+    {
+      $lookup: {
+        from: "users", // The users collection name in MongoDB
+        localField: "_id",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    {
+      $unwind: "$user",
+    },
+    {
+      $project: {
+        _id: "$user._id",
+        name: "$user.name",
+        profilePicture: "$user.profilePicture",
+        componentCount: "$count",
+      },
+    },
+  ]);
+
+  res.json({
+    success: true,
+    data: topCreators,
+  });
+});
+
 module.exports = {
   listComponents,
   listMyComponents,
@@ -262,4 +305,5 @@ module.exports = {
   getComponent,
   updateComponent,
   deleteComponent,
+  getTopCreators,
 };
