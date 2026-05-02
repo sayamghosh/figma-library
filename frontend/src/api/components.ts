@@ -21,6 +21,11 @@ export const componentsApi = {
     return response.data.data;
   },
 
+  async getTopCreators(): Promise<{_id: string, name: string, profilePicture?: string, componentCount: number}[]> {
+    const response = await apiClient.get("/components/top-creators");
+    return response.data.data;
+  },
+
   async getById(id: string): Promise<ComponentItem> {
     const response = await apiClient.get(`/components/${id}`);
     return response.data.data;

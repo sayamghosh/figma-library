@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { componentsApi } from "../../api/components";
 import { copyToFigma } from "../../lib/clipboard";
-import wireframeIcon from "../../assets/wireframe.png";
+import { Scaling, Frame, Component } from "lucide-react";
 
 export const Route = createFileRoute("/components/")({
   component: ComponentsPage,
@@ -58,17 +58,10 @@ function IconStar() {
   );
 }
 function IconWireframe() {
-  return <img src={wireframeIcon} alt="Wireframe" className="w-[18px] h-[18px] object-contain" />;
+  return <Frame size={18} />;
 }
 function IconPalette() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-      <path d="M8 1a7 7 0 100 14c1 0 2-.8 2-2s-.8-2-2-2H6a1 1 0 010-2h3a5 5 0 10-1 9.9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="4.5" cy="7" r="1" fill="currentColor" />
-      <circle cx="7" cy="4" r="1" fill="currentColor" />
-      <circle cx="11" cy="5" r="1" fill="currentColor" />
-    </svg>
-  );
+  return <Scaling size={18} />;
 }
 function IconX() {
   return (
@@ -230,7 +223,7 @@ function ComponentCard({
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-semibold text-gray-800 text-[0.88rem] truncate">{item.name}</span>
           {isPro ? (
-            <span className="flex items-center gap-1 bg-[#8A2BE2] text-white text-[0.68rem] font-bold px-1.5 py-0.5 rounded-md shrink-0">
+            <span className="flex items-center gap-1 bg-black text-[#9FE870] text-[0.68rem] font-bold px-1.5 py-0.5 rounded-md shrink-0">
               <IconStar />
               PRO
             </span>
@@ -394,7 +387,7 @@ function ComponentsPage() {
         {/* Components section */}
         <div className="px-4 flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5 text-[16px] font-bold text-gray-800">
-            <span className="text-[#8A2BE2]">✦</span>
+            <span className="text-black"><Component size={18} /></span>
             Components
           </div>
           <span className="text-[0.68rem] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
@@ -412,8 +405,8 @@ function ComponentsPage() {
               onFocus={() => prefetchCategory(cat)}
               className={`flex items-center justify-between px-3 py-2 rounded-lg text-[0.82rem] font-medium transition-colors cursor-pointer font-manrope ${
                 activeCategory === cat
-                  ? "text-[#8A2BE2] bg-purple-50"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  ? "bg-[#9FE870] text-black font-bold"
+                  : "text-gray-600 hover:text-black hover:bg-gray-50"
               }`}
             >
               {cat}
@@ -445,8 +438,8 @@ function ComponentsPage() {
                 onClick={() => setViewMode("wireframe")}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   viewMode === "wireframe"
-                    ? "bg-[#8A2BE2] text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-[#9FE870] text-black shadow-sm"
+                    : "text-gray-600 hover:text-black hover:bg-gray-50"
                 }`}
               >
                 <IconWireframe />
@@ -457,8 +450,8 @@ function ComponentsPage() {
                 onClick={() => setViewMode("ui-design")}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   viewMode === "ui-design"
-                    ? "bg-[#8A2BE2] text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-[#9FE870] text-black shadow-sm"
+                    : "text-gray-600 hover:text-black hover:bg-gray-50"
                 }`}
               >
                 <IconPalette />
@@ -475,8 +468,8 @@ function ComponentsPage() {
                 onClick={() => setPriceMode("free")}
                 className={`px-5 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   priceMode === "free"
-                    ? "bg-[#8A2BE2] text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-[#9FE870] text-black shadow-sm"
+                    : "text-gray-600 hover:text-black hover:bg-gray-50"
                 }`}
               >
                 Free
@@ -486,8 +479,8 @@ function ComponentsPage() {
                 onClick={() => setPriceMode("pro")}
                 className={`flex items-center gap-2 px-5 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
                   priceMode === "pro"
-                    ? "bg-[#8A2BE2] text-white shadow-sm"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-[#9FE870] text-black shadow-sm"
+                    : "text-gray-600 hover:text-black hover:bg-gray-50"
                 }`}
               >
                 <IconStar />
@@ -510,7 +503,7 @@ function ComponentsPage() {
                 <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
               <input
-                className="w-full pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded text-[0.78rem] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-transparent transition"
+                className="w-full pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded text-[0.78rem] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9FE870]/60 focus:border-[#9FE870] transition"
                 placeholder="Search components…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

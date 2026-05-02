@@ -1,20 +1,69 @@
+import icon from "../assets/icon.svg"
+import codeCard from "../assets/code-card.svg"
+
 function ChartCard() {
   return (
-    <div className="rounded-[10px] border border-[#e7e7e7] bg-white p-5">
-      <div className="mb-4 flex items-start justify-between">
+    <div className="rounded-[10px] border border-[#e7e7e7] bg-white p-6">
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase text-[#6b7280]">Primary text</p>
-          <p className="mt-1 text-[28px] font-semibold leading-none text-[#111111]">5,987,37</p>
-          <p className="mt-1 text-[10px] text-[#9ca3af]">Saturday, test</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-[#999]">Primary text</p>
+          <p className="mt-1 text-[28px] font-semibold leading-none text-[#111111]">5.987,37</p>
+          <p className="mt-1 text-[11px] text-[#999]">Secondary text</p>
         </div>
-        <span className="grid h-5 w-5 place-items-center rounded-full bg-[#d4d4d4] text-[11px] text-white">i</span>
+        <span className="grid h-5 w-5 place-items-center rounded-full bg-[#e5e5e5] text-[11px] font-bold text-gray-500">i</span>
       </div>
-      <svg className="h-[130px] w-full" viewBox="0 0 260 130" fill="none" aria-hidden="true">
-        <path d="M0 106H260M0 78H260M0 50H260M0 22H260" stroke="#e9e9e9" />
-        <path d="M8 92L44 98L78 71L118 88L148 42L190 82L228 58L252 90" stroke="#1f77b4" strokeWidth="3" fill="none" />
-        <path d="M8 102L44 88L78 97L118 78L148 84L190 62L228 92L252 73" stroke="#a855f7" strokeWidth="3" fill="none" />
-        <path d="M8 74L44 91L78 79L118 101L148 74L190 86L228 65L252 48" stroke="#ec4899" strokeWidth="3" fill="none" />
-      </svg>
+
+      <div className="relative h-[140px] w-full text-[8px] text-[#9ca3af] font-medium">
+        {/* Y-Axis */}
+        <div className="absolute left-0 flex h-[120px] flex-col justify-between text-right">
+          <span>100</span>
+          <span>80</span>
+          <span>60</span>
+          <span>40</span>
+          <span>20</span>
+          <span>0</span>
+          <span>-20</span>
+          <span>-40</span>
+          <span>-60</span>
+          <span>-80</span>
+          <span>-100</span>
+        </div>
+
+        {/* Grid and Lines */}
+        <div className="absolute left-7 right-0 h-[120px]">
+          <svg className="h-full w-full" viewBox="0 0 240 120" preserveAspectRatio="none">
+            {/* Grid lines */}
+            <path d="M0 0H240 M0 24H240 M0 48H240 M0 72H240 M0 96H240 M0 120H240" stroke="#f3f4f6" strokeWidth="1" fill="none" />
+            <path d="M0 0V120 M40 0V120 M80 0V120 M120 0V120 M160 0V120 M200 0V120 M240 0V120" stroke="#f3f4f6" strokeWidth="1" fill="none" />
+
+            {/* Data lines */}
+            <path d="M0 60 L40 40 L80 60 L120 20 L160 40 L200 10 L240 40" stroke="#1b75d0" strokeWidth="1.5" fill="none" />
+            <circle cx="120" cy="20" r="2" fill="#1b75d0" />
+            <path d="M0 80 L40 60 L80 90 L120 70 L160 85 L200 60 L240 80" stroke="#a855f7" strokeWidth="1.5" fill="none" />
+            <circle cx="200" cy="60" r="2" fill="#a855f7" />
+            <path d="M0 50 L40 70 L80 40 L120 60 L160 30 L200 50 L240 20" stroke="#ec4899" strokeWidth="1.5" fill="none" />
+            <circle cx="80" cy="40" r="2" fill="#ec4899" />
+          </svg>
+        </div>
+
+        {/* X-Axis */}
+        <div className="absolute bottom-0 left-7 right-0 flex justify-between text-center">
+          <span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span><span>JUL</span>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-5 flex justify-center gap-5 text-[9px] font-medium text-[#666]">
+        <div className="flex items-center gap-2">
+          <span className="h-[3px] w-3.5 rounded-full bg-[#1b75d0]"></span> Dataset 1
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-[3px] w-3.5 rounded-full bg-[#a855f7]"></span> Dataset 2
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-[3px] w-3.5 rounded-full bg-[#ec4899]"></span> Dataset 3
+        </div>
+      </div>
     </div>
   );
 }
@@ -24,15 +73,25 @@ function ChecklistCard() {
 
   return (
     <div className="grid grid-cols-3 gap-x-4 gap-y-5 rounded-[10px] border border-[#e7e7e7] bg-white p-7">
-      {items.map((item) => (
-        <label key={item} className="flex items-center gap-2 text-[13px] text-[#575757]">
-          <span className={`grid h-4 w-4 place-items-center rounded border ${item % 3 === 1 ? "border-[#1b75d0] bg-[#1b75d0]" : "border-[#b7c2cf]"}`}>
-            {item % 3 === 1 && <span className="h-1.5 w-1.5 rounded-sm bg-white" />}
-          </span>
-          Label
-        </label>
-      ))}
-      <p className="col-span-3 mt-2 max-w-[230px] text-[20px] font-medium leading-tight text-[#111111]">
+      {items.map((item) => {
+        const col = item % 3;
+        return (
+          <label key={item} className="flex items-center gap-2 text-[13px] text-[#575757]">
+            <span className={`grid h-4 w-4 place-items-center rounded border ${col === 0 ? "border-[#b7c2cf]" : "border-[#1b75d0] bg-[#1b75d0]"}`}>
+              {col === 1 && (
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              {col === 2 && (
+                <span className="h-0.5 w-2 bg-white rounded-full" />
+              )}
+            </span>
+            Label
+          </label>
+        );
+      })}
+      <p className="col-span-3 mt-3 text-[20px] font-medium leading-tight text-[#111111]">
         All in one kind of alerts from one place
       </p>
     </div>
@@ -41,76 +100,47 @@ function ChecklistCard() {
 
 function CodeCard() {
   return (
-    <div className="flex h-full flex-col justify-end rounded-[10px] border border-[#dedede] bg-white p-7">
-      <div className="relative mx-auto mb-12 flex min-h-[290px] w-full max-w-[380px] items-center justify-center rounded-[28px] bg-[radial-gradient(circle_at_center,_rgba(159,232,112,0.35),_rgba(168,85,247,0.1)_42%,_transparent_70%)]">
-        <div className="absolute top-2 left-6 rounded-lg bg-white/95 px-5 py-4 font-mono text-[10px] leading-5 text-[#999] shadow-[0_20px_50px_rgba(0,0,0,0.08)] z-10">
-          <div className="flex gap-1.5 mb-2">
-             <div className="w-2 h-2 rounded-full bg-[#f87171]" />
-             <div className="w-2 h-2 rounded-full bg-[#facc15]" />
-             <div className="w-2 h-2 rounded-full bg-[#4ade80]" />
-          </div>
-          <p className="text-[#c46b75]">&lt;ul&gt;</p>
-          <p className="pl-4 text-[#c46b75]">&lt;li&gt;<span className="text-[#333]">Classic Movies</span>&lt;/li&gt;</p>
-          <p className="pl-4 text-[#c46b75]">&lt;ul&gt;</p>
-          <p className="pl-8 text-[#c46b75]">&lt;li className=<span className="text-[#3b82f6]">"hover:underline"</span>&gt;</p>
-          <p className="pl-12 text-[#c46b75]">&lt;a&gt;<span className="text-[#333]">Movie Title</span>&lt;/a&gt;</p>
-          <p className="pl-8 text-[#c46b75]">&lt;/li&gt;</p>
-          <p className="pl-8 text-[#c46b75]">&lt;li&gt;<span className="text-[#333]">Genre</span>&lt;/li&gt;</p>
-          <p className="pl-8 text-[#c46b75]">&lt;li&gt;<span className="text-[#333]">Year</span>&lt;/li&gt;</p>
-          <p className="pl-4 text-[#c46b75]">&lt;/ul&gt;</p>
-          <p className="text-[#c46b75]">&lt;/ul&gt;</p>
-        </div>
-        <svg className="absolute right-[40px] top-[75px] w-10 h-[70px] z-20" viewBox="0 0 40 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 2 C 25 -5, 45 20, 20 35 C -5 50, 15 65, 30 65" stroke="#111111" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-          <path d="M22 68 L 30 65 L 28 56" stroke="#111111" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </svg>
-
-        <div className="absolute bottom-2 right-4 rounded-lg bg-[#111111] px-5 py-4 text-[9px] leading-4 text-white shadow-2xl min-w-[200px] z-30">
-          <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 border-b border-gray-700 pb-2 mb-2 text-gray-400 font-semibold uppercase text-[8px]">
-            <span>Movie Title</span>
-            <span>Genre</span>
-            <span>Year</span>
-          </div>
-          <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-2">
-            <span>Star Wars</span><span className="text-gray-400">Adventure</span><span className="text-gray-400">1977</span>
-            <span>Howard The Duck</span><span className="text-gray-400">Comedy</span><span className="text-gray-400">1986</span>
-            <span>American Graffiti</span><span className="text-gray-400">Comedy</span><span className="text-gray-400">1973</span>
-            <span>Spaceballs</span><span className="text-gray-400">Sci-Fi</span><span className="text-gray-400">1987</span>
-            <span>Psycho</span><span className="text-gray-400">Thriller</span><span className="text-gray-400">1960</span>
-            <span>The Godfather</span><span className="text-gray-400">Crime</span><span className="text-gray-400">1972</span>
-          </div>
-        </div>
+    <div className="flex h-full flex-col justify-end rounded-[10px] border border-[#e7e7e7] bg-white p-8">
+      <div className="relative mb-10 flex flex-1 items-center justify-center rounded-3xl bg-[radial-gradient(circle_at_center,_rgba(159,232,112,0.3),_rgba(168,85,247,0.08)_40%,_transparent_70%)] p-6">
+        <img src={codeCard} alt="" className="w-[329px] h-[363px] object-contain" />
       </div>
-      <h3 className="text-[25px] font-semibold text-[#111111]">Including both free and premium options</h3>
-      <p className="mt-4 max-w-[620px] text-[16px] leading-[1.65] text-[#6f6f6f]">
+      <h3 className="text-[22px] font-semibold text-[#111111] tracking-tight">Including both free and premium options</h3>
+      <p className="mt-3 text-[15px] leading-[1.6] text-[#6f6f6f]">
         Premium design seamlessly merges superior materials, intuitive functionality, and elegant aesthetics. It prioritizes meticulous attention to detail and user experience to maximize the product's value.
       </p>
     </div>
   );
 }
 
+
 function UiControlsCard() {
   return (
-    <div className="rounded-[10px] border border-[#e7e7e7] bg-white p-5">
-      <div className="grid grid-cols-3 overflow-hidden rounded-md border border-[#d8d8d8] text-center text-[14px]">
-        <span className="border-r border-[#d8d8d8] py-3">Text</span>
-        <span className="border-r border-[#d8d8d8] py-3">Text</span>
-        <span className="py-3">Text</span>
+    <div className="rounded-[10px] border border-[#e7e7e7] bg-white p-7">
+      <div className="grid grid-cols-3 overflow-hidden rounded-lg border border-[#e5e7eb] text-center text-[13px] font-medium text-[#444]">
+        <span className="border-r border-[#e5e7eb] py-2.5">Text</span>
+        <span className="border-r border-[#e5e7eb] py-2.5">Text</span>
+        <span className="py-2.5">Text</span>
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-3 rounded-md border border-[#d8d8d8] px-4 py-3 text-[14px]">
+      <div className="mt-4 grid grid-cols-3 gap-3 rounded-lg border border-[#e5e7eb] px-4 py-3 text-[13px] text-[#444]">
         {["Text", "Text", "Text"].map((text, index) => (
           <span key={`${text}-${index}`} className="flex items-center gap-2">
-            <span className="h-4 w-4 rounded-full border border-[#222]" />
+            <span className="h-3.5 w-3.5 rounded-full border border-[#999]" />
             {text}
           </span>
         ))}
       </div>
-      <div className="mt-4 inline-grid grid-cols-3 overflow-hidden rounded-md border border-[#d8d8d8] text-[18px]">
-        <span className="border-r border-[#d8d8d8] px-4 py-2">←</span>
-        <span className="border-r border-[#d8d8d8] px-4 py-2">+</span>
-        <span className="px-4 py-2">→</span>
+      <div className="mt-4 inline-grid grid-cols-3 overflow-hidden rounded-lg border border-[#e5e7eb] text-[16px] text-[#444]">
+        <span className="border-r border-[#e5e7eb] px-4 py-2 hover:bg-gray-50 flex justify-center items-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+        </span>
+        <span className="border-r border-[#e5e7eb] px-4 py-2 hover:bg-gray-50 flex justify-center items-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>
+        </span>
+        <span className="px-4 py-2 hover:bg-gray-50 flex justify-center items-center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+        </span>
       </div>
-      <p className="mt-9 text-[20px] font-medium leading-tight text-[#111111]">
+      <p className="mt-8 text-[18px] font-medium leading-snug text-[#111111]">
         Secure authentication with multi factor verification
       </p>
     </div>
@@ -120,21 +150,23 @@ function UiControlsCard() {
 function TagsCard() {
   return (
     <div className="rounded-[10px] border border-[#e7e7e7] bg-white p-7">
-      <div className="mb-7 flex flex-wrap gap-3">
+      <div className="mb-6 flex flex-wrap gap-2.5">
         {["BUTTON", "NAV BAR", "MENU BAR", "FOOTER", "CTA"].map((tag) => (
-          <span key={tag} className="rounded border border-[#dddddd] px-3 py-2 text-[15px] font-semibold">
+          <span key={tag} className="rounded-md border border-[#e5e7eb] px-3 py-1.5 text-[12px] font-semibold text-[#333] tracking-wide">
             {tag}
           </span>
         ))}
       </div>
-      <div className="mb-7 flex min-h-[78px] items-center justify-center rounded border border-[#eeeeee]">
-        <span className="text-[23px] font-semibold leading-none text-[#111111]">
-          <span className="text-[#9fe870]">figma</span>
-          <br />
-          components
-        </span>
+      <div className="mb-6 flex w-full items-center justify-center gap-3 rounded-lg border border-[#e5e7eb] py-4">
+        <div className="flex items-center justify-center">
+          <img src={icon} alt="icon" className="w-10 h-10" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[18px] font-semibold leading-[1.1] text-[#111111] tracking-tight">figma</span>
+          <span className="text-[18px] font-semibold leading-[1.1] text-[#111111] tracking-tight mt-[1px]">Components</span>
+        </div>
       </div>
-      <p className="text-[20px] font-medium leading-tight text-[#111111]">
+      <p className="text-[18px] font-medium leading-snug text-[#111111]">
         Auto spin up incident Slack channels, Zoom, Jira tickets
       </p>
     </div>
@@ -143,16 +175,13 @@ function TagsCard() {
 
 export function OperationsSection() {
   return (
-    <section className="w-full bg-white px-5 pt-20 sm:px-8 lg:pt-28 pb-8">
+    <section className="w-full bg-[#f8fafc] px-5 pt-20 sm:px-8 lg:pt-28 pb-8">
       <div className="mx-auto w-full max-w-[1320px]">
         <div className="mx-auto max-w-[760px] text-center">
-          <div className="mx-auto mb-8 h-12 w-full max-w-[300px] border-t border-[#9fe870] relative">
-            <div className="absolute left-1/2 top-0 h-full w-[1px] bg-[#9fe870] -translate-x-1/2" />
-          </div>
-          <p className="mx-auto inline-flex rounded-full border border-[#d7d7d7] bg-white px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#111]">
+          <p className="mx-auto inline-flex rounded-full border border-[#e0e0e0] bg-white px-6 py-2 text-[14px] font-semibold uppercase tracking-widest text-[#111]">
             BUILD YOUR PIXEL-PERFECT APP
           </p>
-          <h2 className="mt-7 font-outfit text-[clamp(2.4rem,3.6vw,4rem)] font-semibold leading-[1.12] tracking-normal text-[#111111]">
+          <h2 className="mt-6 font-outfit text-[clamp(2.4rem,3.6vw,3.5rem)] font-semibold leading-[1.05] tracking-tight text-[#111111]">
             Browse thousands of reusable website components
           </h2>
         </div>

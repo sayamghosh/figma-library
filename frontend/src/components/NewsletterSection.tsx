@@ -1,5 +1,3 @@
-import mailImg from "../assets/mail.png";
-
 export function NewsletterSection() {
   return (
     <section className="relative w-full">
@@ -11,7 +9,10 @@ export function NewsletterSection() {
 
           {/* Mail graphic — hidden on mobile to save space */}
           <div className="shrink-0 hidden sm:flex items-center justify-center w-[140px] md:w-[240px] lg:w-[300px]">
-            <img src={mailImg} alt="Newsletter Mail Graphic" className="w-full max-w-[240px] h-auto object-contain" />
+            <svg width="240" height="240" viewBox="0 0 24 24" fill="none" className="w-full max-w-[240px] h-auto text-purple-200 opacity-90">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M22 6l-10 7L2 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </div>
 
           {/* Content */}
