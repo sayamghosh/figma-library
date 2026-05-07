@@ -2,11 +2,26 @@ import { apiClient } from "./client";
 import type { ComponentItem, PaginatedComponentResponse } from "../lib/types";
 
 export const componentsApi = {
-  async list(search = "", tag = ""): Promise<PaginatedComponentResponse> {
+  async list(
+    search = "",
+    tag = "",
+    page = 1,
+    limit = 20,
+    filters: {
+      designType?: "Wireframe" | "UI Design";
+      pricingType?: "Free" | "Pro";
+      skip?: number;
+    } = {}
+  ): Promise<PaginatedComponentResponse> {
     const response = await apiClient.get("/components", {
       params: {
         q: search || undefined,
         tag: tag || undefined,
+        page,
+        limit,
+        skip: filters.skip,
+        designType: filters.designType,
+        pricingType: filters.pricingType,
       },
     });
     return response.data.data;

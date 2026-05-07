@@ -97,8 +97,8 @@ async function getListVersion() {
 /**
  * Build a versioned cache key for the public component list.
  */
-async function listKey(version, q, tag, page, limit, includeData) {
-  return `components:list:v${version}:q=${q}:tag=${tag}:p=${page}:l=${limit}:d=${includeData}`;
+async function listKey(version, q, tag, page, limit, includeData, designType = "", pricingType = "", skip = 0) {
+  return `components:list:v${version}:q=${q}:tag=${tag}:p=${page}:l=${limit}:s=${skip}:d=${includeData}:design=${designType}:price=${pricingType}`;
 }
 
 /**
@@ -111,8 +111,8 @@ function componentKey(id) {
 /**
  * Build a versioned cache key for a user's own component list.
  */
-async function myListKey(version, userId, q, tag, page, limit) {
-  return `components:my:v${version}:u=${userId}:q=${q}:tag=${tag}:p=${page}:l=${limit}`;
+async function myListKey(version, userId, q, tag, page, limit, skip = 0) {
+  return `components:my:v${version}:u=${userId}:q=${q}:tag=${tag}:p=${page}:l=${limit}:s=${skip}`;
 }
 
 module.exports = {

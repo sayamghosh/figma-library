@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-const heroImg = "/hero-image.svg";;
+import Image from "next/image";
+const heroImg = "/hero-image.svg";
 
 export function HeroSection() {
   return (
@@ -38,12 +39,13 @@ export function HeroSection() {
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto mt-8 w-full max-w-[1320px] sm:mt-12 lg:mt-16 pointer-events-none select-none">
-        <img
+      <div className="relative z-10 mx-auto mt-8 w-full max-w-[1320px] sm:mt-12 lg:mt-16 pointer-events-none select-none h-[400px] sm:h-[500px] lg:h-[600px]">
+        <Image
           src={heroImg}
           alt="Figma component previews arranged across a design canvas"
+          fill
+          priority
           className="mx-auto w-full object-contain"
-          loading="eager"
         />
       </div>
     </section>
