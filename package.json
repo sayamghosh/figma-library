@@ -1,0 +1,9 @@
+{
+  "name": "figma-workspace",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "frontend-nextjs"
+  ]
+}
