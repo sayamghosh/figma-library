@@ -166,7 +166,7 @@ export default function Navbar() {
           <div className={usesDynamicNavbar ? "dynamic-island-shell" : "contents"}>
           <div className={usesDynamicNavbar ? "dynamic-island-content" : "contents"}>
           <Link href="/" onClick={() => setMobileOpen(false)} className="shrink-0">
-            <img src="/logo.svg" alt="FigComponents Logo" className="h-8 w-auto object-contain" />
+            <Image priority src="/logo.webp" alt="FigComponents Logo" width={120} height={32} className="h-8 w-auto object-contain" />
           </Link>
 
           <nav className={usesDynamicNavbar ? "hidden lg:flex items-center gap-[38px] font-manrope text-[15px] font-bold text-[#15171b]" : "hidden lg:flex items-center gap-10 font-manrope font-semibold text-[18px] text-gray-700"}>

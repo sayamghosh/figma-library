@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-const heroImg = "/hero-image.svg";
+const heroImg = "/hero-image.webp";
 
 export function HeroSection() {
   return (
