@@ -1,0 +1,463 @@
+@import "tailwindcss";
+
+:root {
+	--bg: #ffffff;
+	--surface: #f8fafc;
+	--line: #e2e8f0;
+	--ink: #0f172a;
+	--muted: #64748b;
+	--accent: #22c55e;
+	--accent-ink: #ffffff;
+}
+
+.font-syne {
+	font-family: "Plus Jakarta Sans", sans-serif !important;
+}
+
+.font-outfit {
+	font-family: "Outfit", sans-serif !important;
+}
+
+.font-manrope {
+	font-family: "Plus Jakarta Sans", sans-serif !important;
+}
+
+.figma-hero {
+	background: #ffffff;
+}
+
+.dynamic-island-header {
+	padding-top: 5px;
+}
+
+.dynamic-island-frame {
+	width: 100%;
+	padding-inline: 20px;
+	transition: padding 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dynamic-island-shell {
+	min-height: 56px;
+	width: 100%;
+	max-width: 1320px;
+	margin-inline: auto;
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.95);
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+	backdrop-filter: blur(10px);
+
+	transition:
+		max-width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+		border-radius 420ms cubic-bezier(0.22, 1, 0.36, 1),
+		box-shadow 420ms cubic-bezier(0.22, 1, 0.36, 1),
+		background-color 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dynamic-island-content {
+	display: flex;
+	min-height: 70px;
+	width: 100%;
+	max-width: 1320px;
+	margin-inline: auto;
+	align-items: center;
+	justify-content: space-between;
+	padding: 6px 8px 6px 30px;
+	transition: padding 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-frame {
+	padding-inline: 20px;
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-shell {
+	max-width: 100%;
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-content {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	max-width: 100%;
+	padding-inline: 0;
+}
+
+.dynamic-island-header.is-components-page .dynamic-island-content > :last-child {
+	justify-self: end;
+}
+
+/* Sticky behavior: the shell grows to the viewport, while this inner rail keeps
+   the logo, navigation links, and actions at their original horizontal spots. */
+.dynamic-island-header.is-stuck {
+	padding-top: 0;
+}
+
+.dynamic-island-header.is-stuck .dynamic-island-frame {
+	padding-inline: 0;
+}
+
+.dynamic-island-header.is-stuck .dynamic-island-shell {
+	max-width: 100%;
+	border-radius: 0;
+	box-shadow: 0 8px 30px rgb(0 0 0 / 0.08);
+}
+
+.dynamic-island-header.is-stuck .dynamic-island-content {
+	padding-inline: 40px 28px;
+}
+
+@media (min-width: 640px) {
+	.dynamic-island-frame {
+		padding-inline: 32px;
+	}
+
+	.dynamic-island-content {
+		padding-left: 20px;
+	}
+
+	.dynamic-island-header.is-stuck .dynamic-island-content {
+		padding-inline: 52px 40px;
+	}
+}
+
+@media (min-width: 1024px) {
+	.dynamic-island-content {
+		padding-left: 24px;
+	}
+
+	.dynamic-island-header.is-stuck .dynamic-island-content {
+		padding-inline: 56px 40px;
+	}
+}
+
+@media (min-width: 1536px) {
+	.dynamic-island-frame {
+		padding-inline: 0;
+	}
+
+	.dynamic-island-header.is-stuck .dynamic-island-content {
+		padding-inline: 24px 8px;
+	}
+}
+
+@media (max-width: 640px) {
+	.figma-hero {
+		min-height: 720px;
+		padding-top: 104px;
+	}
+
+	.hero-eyebrow {
+		max-width: 100%;
+		height: auto;
+		min-height: 28px;
+		white-space: normal;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+
+/* Custom Scrollbar Global */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar:horizontal {
+  display: none;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  background-clip: content-box;
+}
+
+/* Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	color: var(--ink);
+	background: var(--bg);
+	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+input,
+textarea,
+select,
+label {
+	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
+}
+
+code,
+pre,
+kbd,
+samp {
+	font-family: "DM Mono", "Consolas", "Courier New", monospace;
+}
+
+
+
+.app-shell {
+	min-height: 100vh;
+}
+
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 14px 20px;
+	border-bottom: 1px solid var(--line);
+	background: rgba(255, 255, 255, 0.9);
+	backdrop-filter: blur(6px);
+}
+
+.brand {
+	font-weight: 700;
+}
+
+.nav-links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.nav-link {
+	border: 1px solid var(--line);
+	background: #f1f5f9;
+	color: var(--ink);
+	padding: 8px 12px;
+	border-radius: 999px;
+	text-decoration: none;
+	font-size: 0.9rem;
+}
+
+.btn-link {
+	cursor: pointer;
+}
+
+.accent-link {
+	border-color: #e2e8f0;
+	color: #22c55e;
+}
+
+.page-wrap {
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 24px 16px 40px;
+}
+
+.landing-grid {
+	border: 1px solid var(--line);
+	border-radius: 14px;
+	padding: 28px;
+	background: rgba(255, 255, 255, 0.84);
+}
+
+.eyebrow {
+	color: #22c55e;
+	letter-spacing: 0.08em;
+	font-size: 0.8rem;
+	font-weight: 700;
+	font-family: "DM Mono", "Consolas", "Courier New", monospace;
+	margin-bottom: 8px;
+}
+
+.hero-title {
+	margin: 0;
+	line-height: 1.03;
+	font-size: clamp(2rem, 7vw, 4.4rem);
+}
+
+.hero-title span {
+	color: #22c55e;
+}
+
+.hero-copy {
+	margin-top: 16px;
+	max-width: 660px;
+	color: var(--muted);
+}
+
+.hero-actions {
+	margin-top: 22px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.primary-btn,
+.secondary-btn {
+	border-radius: 10px;
+	border: 1px solid transparent;
+	text-decoration: none;
+	padding: 10px 14px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.primary-btn {
+	background: linear-gradient(180deg, #4ade80, #22c55e);
+	color: #ffffff;
+}
+
+.primary-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.secondary-btn {
+	background: #f1f5f9;
+	border-color: var(--line);
+	color: var(--ink);
+}
+
+.hero-note {
+	margin-top: 20px;
+	border: 1px solid #bbf7d0;
+	background: rgba(220, 252, 231, 0.35);
+	border-radius: 10px;
+	padding: 10px 12px;
+	color: #166534;
+	font-size: 0.9rem;
+}
+
+.section-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 12px;
+}
+
+.search-input,
+.stack-form input,
+.stack-form textarea {
+	width: 100%;
+	border: 1px solid var(--line);
+	background: #ffffff;
+	color: var(--ink);
+	border-radius: 10px;
+	padding: 10px 12px;
+}
+
+.search-input {
+	margin-bottom: 14px;
+}
+
+.component-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+	gap: 14px;
+}
+
+.component-card {
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	padding: 12px;
+	background: rgba(255, 255, 255, 0.95);
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.preview-box {
+	height: 180px;
+	border-radius: 10px;
+	border: 1px solid #e2e8f0;
+	background: #f1f5f9 center / cover no-repeat;
+}
+
+.component-content h3 {
+	margin: 0;
+	color: var(--ink);
+}
+
+.component-content p {
+	margin: 6px 0;
+	color: var(--muted);
+	font-size: 0.92rem;
+}
+
+.tag-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.tag-pill {
+	border: 1px solid #e2e8f0;
+	background: #f8fafc;
+	border-radius: 999px;
+	padding: 4px 8px;
+	font-size: 0.76rem;
+	font-family: "DM Mono", "Consolas", "Courier New", monospace;
+	color: var(--muted);
+}
+
+.status-text {
+	color: #166534;
+	margin-bottom: 12px;
+}
+
+.error-text {
+	color: #ef4444;
+}
+
+.auth-card,
+.add-page {
+	max-width: 680px;
+	margin: 0 auto;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	background: #ffffff;
+	padding: 20px;
+}
+
+.stack-form {
+	display: grid;
+	gap: 10px;
+}
+
+.field-label {
+	color: #475569;
+	font-size: 0.9rem;
+	font-family: "DM Mono", "Consolas", "Courier New", monospace;
+}
+
+@media (max-width: 720px) {
+	.topbar {
+		position: static;
+	}
+
+	.hero-actions {
+		flex-direction: column;
+	}
+}

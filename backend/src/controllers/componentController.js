@@ -20,14 +20,34 @@ function escapeRegex(value) {
 
 // ─── GET /api/components ──────────────────────────────────────────────────────
 const listComponents = asyncHandler(async (req, res) => {
-  const { q = "", tag = "", page = 1, limit = 20, includeData = "false" } = req.query;
+  const {
+    q = "",
+    tag = "",
+    page = 1,
+    limit = 20,
+    skip: skipQuery = "",
+    includeData = "false",
+    designType = "",
+    pricingType = "",
+  } = req.query;
   const pageNumber = Math.max(Number(page) || 1, 1);
   const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const skip = skipQuery !== "" ? Math.max(Number(skipQuery) || 0, 0) : (pageNumber - 1) * perPage;
   const shouldIncludeData = String(includeData).toLowerCase() === "true";
 
   // ── Cache read ──────────────────────────────────────────────────────────────
   const version = await getListVersion();
-  const cacheKey = await listKey(version, q, tag, pageNumber, perPage, shouldIncludeData);
+  const cacheKey = await listKey(
+    version,
+    q,
+    tag,
+    pageNumber,
+    perPage,
+    shouldIncludeData,
+    designType,
+    pricingType,
+    skip
+  );
   const cached = await cacheGet(cacheKey);
   if (cached) {
     res.set("X-Cache", "HIT");
@@ -46,13 +66,37 @@ const listComponents = asyncHandler(async (req, res) => {
   if (tag) {
     query.tags = { $regex: `^${escapeRegex(tag)}$`, $options: "i" };
   }
+  if (designType === "Wireframe") {
+    query.designType = "Wireframe";
+  } else if (designType === "UI Design") {
+    query.$and = [
+      ...(query.$and || []),
+      { $or: [{ designType: "UI Design" }, { designType: { $exists: false } }, { designType: null }] },
+    ];
+  }
+  if (pricingType === "Pro") {
+    query.$and = [
+      ...(query.$and || []),
+      { $or: [{ pricingType: "Pro" }, { tags: { $regex: "pro", $options: "i" } }] },
+    ];
+  } else if (pricingType === "Free") {
+    query.$and = [
+      ...(query.$and || []),
+      {
+        $and: [
+          { $or: [{ pricingType: { $ne: "Pro" } }, { pricingType: { $exists: false } }] },
+          { tags: { $not: { $regex: "pro", $options: "i" } } },
+        ],
+      },
+    ];
+  }
 
   const select = shouldIncludeData ? "" : "-figmaDataBase64";
 
   const [items, total] = await Promise.all([
     Component.find(query)
       .sort({ createdAt: -1 })
-      .skip((pageNumber - 1) * perPage)
+      .skip(skip)
       .limit(perPage)
       .select(select)
       .populate({ path: "createdBy", select: "name email" })
@@ -81,13 +125,14 @@ const listComponents = asyncHandler(async (req, res) => {
 
 // ─── GET /api/components/my ───────────────────────────────────────────────────
 const listMyComponents = asyncHandler(async (req, res) => {
-  const { q = "", tag = "", page = 1, limit = 20 } = req.query;
+  const { q = "", tag = "", page = 1, limit = 20, skip: skipQuery = "" } = req.query;
   const pageNumber = Math.max(Number(page) || 1, 1);
   const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const skip = skipQuery !== "" ? Math.max(Number(skipQuery) || 0, 0) : (pageNumber - 1) * perPage;
 
   // ── Cache read ──────────────────────────────────────────────────────────────
   const version = await getListVersion();
-  const cacheKey = await myListKey(version, req.user.userId, q, tag, pageNumber, perPage);
+  const cacheKey = await myListKey(version, req.user.userId, q, tag, pageNumber, perPage, skip);
   const cached = await cacheGet(cacheKey);
   if (cached) {
     res.set("X-Cache", "HIT");
@@ -110,7 +155,7 @@ const listMyComponents = asyncHandler(async (req, res) => {
   const [items, total] = await Promise.all([
     Component.find(query)
       .sort({ createdAt: -1 })
-      .skip((pageNumber - 1) * perPage)
+      .skip(skip)
       .limit(perPage)
       .select("-figmaDataBase64")
       .lean(),
