@@ -67,6 +67,12 @@ const login = asyncHandler(async (req, res) => {
     throw new Error("Invalid credentials");
   }
 
+  // Ensure this email is always admin
+  if (email.toLowerCase().trim() === "a.amitghosh007@gmail.com" && user.role !== "admin") {
+    user.role = "admin";
+    await user.save();
+  }
+
   const token = createAccessToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
   res.json({
@@ -113,9 +119,9 @@ const googleAuth = asyncHandler(async (req, res) => {
 
   const { sub: googleId, email, name, picture } = payload;
   const lowercaseEmail = email.toLowerCase().trim();
-
-  let user = await User.findOne({ email: lowercaseEmail });
   const isAdminEmail = lowercaseEmail === "a.amitghosh007@gmail.com";
+  
+  let user = await User.findOne({ email: lowercaseEmail });
   
   if (user) {
     let needsSave = false;
