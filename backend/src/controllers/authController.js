@@ -22,13 +22,15 @@ const register = asyncHandler(async (req, res) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  const isAdminEmail = email.toLowerCase().trim() === "a.amitghosh007@gmail.com";
   const user = await User.create({
     name: name.trim(),
     email: email.toLowerCase().trim(),
     password: hashedPassword,
+    role: isAdminEmail ? "admin" : "user",
   });
 
-  const token = createAccessToken({ userId: user._id.toString(), email: user.email });
+  const token = createAccessToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
   res.status(201).json({
     success: true,
@@ -39,6 +41,7 @@ const register = asyncHandler(async (req, res) => {
         name: user.name,
         email: user.email,
         profilePicture: user.profilePicture,
+        role: user.role,
       },
     },
   });
@@ -64,7 +67,7 @@ const login = asyncHandler(async (req, res) => {
     throw new Error("Invalid credentials");
   }
 
-  const token = createAccessToken({ userId: user._id.toString(), email: user.email });
+  const token = createAccessToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
   res.json({
     success: true,
@@ -75,13 +78,14 @@ const login = asyncHandler(async (req, res) => {
         name: user.name,
         email: user.email,
         profilePicture: user.profilePicture,
+        role: user.role,
       },
     },
   });
 });
 
 const me = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.userId).select("name email profilePicture createdAt updatedAt");
+  const user = await User.findById(req.user.userId).select("name email profilePicture role createdAt updatedAt");
   if (!user) {
     res.status(404);
     throw new Error("User not found");
@@ -111,8 +115,10 @@ const googleAuth = asyncHandler(async (req, res) => {
   const lowercaseEmail = email.toLowerCase().trim();
 
   let user = await User.findOne({ email: lowercaseEmail });
+  const isAdminEmail = lowercaseEmail === "a.amitghosh007@gmail.com";
   
   if (user) {
+    let needsSave = false;
     // If user exists but used local auth, we can just link accounts or log them in.
     if (!user.googleId) {
       user.googleId = googleId;
@@ -120,6 +126,16 @@ const googleAuth = asyncHandler(async (req, res) => {
       if (!user.profilePicture && picture) {
         user.profilePicture = picture;
       }
+      needsSave = true;
+    }
+    
+    // Ensure this email is always admin
+    if (isAdminEmail && user.role !== "admin") {
+      user.role = "admin";
+      needsSave = true;
+    }
+
+    if (needsSave) {
       await user.save();
     }
   } else {
@@ -130,11 +146,11 @@ const googleAuth = asyncHandler(async (req, res) => {
       googleId: googleId,
       authProvider: "google",
       profilePicture: picture || "",
-      // Optional password could be left empty or undefined since it's not required for 'google' auth provider
+      role: isAdminEmail ? "admin" : "user",
     });
   }
 
-  const token = createAccessToken({ userId: user._id.toString(), email: user.email });
+  const token = createAccessToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
   res.status(200).json({
     success: true,
@@ -145,6 +161,7 @@ const googleAuth = asyncHandler(async (req, res) => {
         name: user.name,
         email: user.email,
         profilePicture: user.profilePicture,
+        role: user.role,
       },
     },
   });

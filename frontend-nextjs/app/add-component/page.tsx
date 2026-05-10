@@ -141,8 +141,14 @@ export default function AddComponentPage({ params }: any) {
         designType,
         pricingType,
       });
-      setStatus("Component added successfully.");
-      router.push("/components");
+      
+      if (user?.role === "admin") {
+        setStatus("Component added successfully.");
+        router.push("/components");
+      } else {
+        setStatus("Component submitted! It will be public after admin review.");
+        setTimeout(() => router.push("/my-components"), 2500);
+      }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not add component.");
     }
@@ -249,7 +255,7 @@ export default function AddComponentPage({ params }: any) {
                         className="w-full px-3 py-2 rounded-lg border border-gray-200 text-gray-900 bg-gray-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent transition-all shadow-sm text-sm"
                       >
                         <option value="Free">Free</option>
-                        <option value="Pro">Pro</option>
+                        {user?.role === "admin" && <option value="Pro">Pro</option>}
                       </select>
                     </div>
                   </div>

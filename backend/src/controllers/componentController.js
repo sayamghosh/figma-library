@@ -55,7 +55,7 @@ const listComponents = asyncHandler(async (req, res) => {
   }
 
   // ── MongoDB query ───────────────────────────────────────────────────────────
-  const query = {};
+  const query = { status: "approved" };
   if (q) {
     const safeSearch = escapeRegex(q);
     query.$or = [
@@ -181,13 +181,65 @@ const listMyComponents = asyncHandler(async (req, res) => {
   res.json(responseBody);
 });
 
+// ─── GET /api/components/admin ────────────────────────────────────────────────
+const listComponentsAdmin = asyncHandler(async (req, res) => {
+  if (req.user.role !== "admin") {
+    res.status(403);
+    throw new Error("Admin access required");
+  }
+
+  const { page = 1, limit = 50 } = req.query;
+  const pageNumber = Math.max(Number(page) || 1, 1);
+  const perPage = Math.min(Math.max(Number(limit) || 50, 1), 100);
+  const skip = (pageNumber - 1) * perPage;
+
+  const [items, total] = await Promise.all([
+    Component.find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(perPage)
+      .populate({ path: "createdBy", select: "name email" })
+      .lean(),
+    Component.countDocuments({}),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      items,
+      pagination: {
+        page: pageNumber,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+    },
+  });
+});
+
 // ─── POST /api/components ─────────────────────────────────────────────────────
 const createComponent = asyncHandler(async (req, res) => {
   const { name, description = "", tags = [], previewImageUrl, figmaDataBase64, designType, pricingType } = req.body;
+  const userRole = req.user.role || "user";
 
   if (!name || !previewImageUrl || !figmaDataBase64) {
     res.status(400);
     throw new Error("name, previewImageUrl, and figmaDataBase64 are required");
+  }
+
+  // Logic: normal people can post free components only no pro.
+  if (pricingType === "Pro" && userRole !== "admin") {
+    res.status(403);
+    throw new Error("Only admins can post Pro components");
+  }
+
+  // Logic: normal people can post atmost 20 components.
+  if (userRole !== "admin") {
+    const userComponentCount = await Component.countDocuments({ createdBy: req.user.userId });
+    if (userComponentCount >= 20) {
+      res.status(403);
+      throw new Error("You have reached the limit of 20 components");
+    }
   }
 
   const component = await Component.create({
@@ -197,8 +249,9 @@ const createComponent = asyncHandler(async (req, res) => {
     previewImageUrl,
     figmaDataBase64,
     designType,
-    pricingType,
+    pricingType: userRole === "admin" ? pricingType : "Free",
     createdBy: req.user.userId,
+    status: userRole === "admin" ? "approved" : "pending",
   });
 
   // Invalidate all list caches (bump version)
@@ -208,6 +261,41 @@ const createComponent = asyncHandler(async (req, res) => {
     success: true,
     data: component,
   });
+});
+
+// ─── PATCH /api/components/:id/status ─────────────────────────────────────────
+const updateComponentStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const userRole = req.user.role || "user";
+
+  if (userRole !== "admin") {
+    res.status(403);
+    throw new Error("Only admins can update component status");
+  }
+
+  if (!["approved", "rejected", "pending"].includes(status)) {
+    res.status(400);
+    throw new Error("Invalid status");
+  }
+
+  const component = await Component.findByIdAndUpdate(
+    req.params.id,
+    { status },
+    { new: true }
+  );
+
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  // Invalidate this component's cache + all list caches
+  await Promise.all([
+    cacheInvalidate(componentKey(req.params.id)),
+    bumpListVersion(),
+  ]);
+
+  res.json({ success: true, data: component });
 });
 
 // ─── GET /api/components/:id ──────────────────────────────────────────────────
@@ -351,4 +439,6 @@ module.exports = {
   updateComponent,
   deleteComponent,
   getTopCreators,
+  updateComponentStatus,
+  listComponentsAdmin,
 };

@@ -1,3 +1,5 @@
+import { GoogleLogin } from '@react-oauth/google'
+import axios from 'axios'
 import { useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -5,9 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
-import { IconFacebook, IconGithub } from '@/assets/brand-icons'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -20,6 +21,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 const formSchema = z.object({
   email: z.email({
     error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
@@ -27,7 +30,7 @@ const formSchema = z.object({
   password: z
     .string()
     .min(1, 'Please enter your password.')
-    .min(7, 'Password must be at least 7 characters long.'),
+    .min(6, 'Password must be at least 6 characters long.'),
 })
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLFormElement> {
@@ -51,34 +54,54 @@ export function UserAuthForm({
     },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  const handleGoogleSuccess = async (credentialResponse: any) => {
     setIsLoading(true)
+    try {
+      const response = await axios.post(`${API_URL}/auth/google`, {
+        idToken: credentialResponse.credential,
+      })
+      const { token, user } = response.data.data
 
-    toast.promise(sleep(2000), {
-      loading: 'Signing in...',
-      success: () => {
-        setIsLoading(false)
+      if (user.role !== 'admin') {
+        toast.error('Access denied. Admin only.')
+        return
+      }
 
-        // Mock successful authentication with expiry computed at success time
-        const mockUser = {
-          accountNo: 'ACC001',
-          email: data.email,
-          role: ['user'],
-          exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
-        }
+      auth.setUser(user)
+      auth.setAccessToken(token)
 
-        // Set user and access token
-        auth.setUser(mockUser)
-        auth.setAccessToken('mock-access-token')
+      toast.success(`Welcome back, ${user.name}!`)
+      const targetPath = redirectTo || '/'
+      navigate({ to: targetPath, replace: true })
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Google login failed')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-        // Redirect to the stored location or default to dashboard
-        const targetPath = redirectTo || '/'
-        navigate({ to: targetPath, replace: true })
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    setIsLoading(true)
+    try {
+      const response = await axios.post(`${API_URL}/auth/login`, data)
+      const { token, user } = response.data.data
 
-        return `Welcome back, ${data.email}!`
-      },
-      error: 'Error',
-    })
+      if (user.role !== 'admin') {
+        toast.error('Access denied. Admin only.')
+        return
+      }
+
+      auth.setUser(user)
+      auth.setAccessToken(token)
+
+      toast.success(`Welcome back, ${user.name}!`)
+      const targetPath = redirectTo || '/'
+      navigate({ to: targetPath, replace: true })
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Login failed')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -136,13 +159,14 @@ export function UserAuthForm({
           </div>
         </div>
 
-        <div className='grid grid-cols-2 gap-2'>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconGithub className='h-4 w-4' /> GitHub
-          </Button>
-          <Button variant='outline' type='button' disabled={isLoading}>
-            <IconFacebook className='h-4 w-4' /> Facebook
-          </Button>
+        <div className='flex flex-col items-center gap-2'>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => toast.error('Google Login Failed')}
+            useOneTap
+            width='100%'
+            theme='outline'
+          />
         </div>
       </form>
     </Form>
