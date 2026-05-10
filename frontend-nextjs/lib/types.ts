@@ -19,6 +19,7 @@ export interface ComponentItem {
     name?: string;
     email?: string;
   };
+  status?: "pending" | "approved" | "rejected";
   createdAt: string;
   updatedAt: string;
 }
