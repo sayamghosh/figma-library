@@ -24,7 +24,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 export function ComponentsModeration() {
   const [components, setComponents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedComponent, setSelectedComponent] = useState<any>(null)
   const [copyingId, setCopyingId] = useState<string | null>(null)
   const { accessToken } = useAuthStore.getState().auth
 
@@ -136,7 +135,6 @@ export function ComponentsModeration() {
                           variant="secondary" 
                           size="sm" 
                           className="flex-1"
-                          onClick={() => setSelectedComponent(comp)}
                         >
                           <Eye className="w-4 h-4 mr-1.5" />
                           View
