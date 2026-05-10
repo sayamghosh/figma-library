@@ -7,36 +7,33 @@ import { ThemeSwitch } from '@/components/theme-switch'
 import { useAuthStore } from '@/stores/auth-store'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
+import { copyToFigma } from '@/lib/clipboard'
+import { Copy, Eye, Check, X } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 export function ComponentsModeration() {
   const [components, setComponents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedComponent, setSelectedComponent] = useState<any>(null)
+  const [copyingId, setCopyingId] = useState<string | null>(null)
   const { accessToken } = useAuthStore.getState().auth
 
   const fetchComponents = async () => {
     try {
       setLoading(true)
-      // Note: We need a way to fetch ALL components including pending ones.
-      // For now, let's assume /api/components with a special flag or separate admin route.
-      // Since I added status filtering to /api/components, I should probably add an admin route.
-      // I'll use the same route but maybe the backend should allow admins to see all.
-      // For this task, I'll just try to fetch and filter pending ones if possible, 
-      // but I should have added a dedicated admin route in the backend.
-      
       const response = await axios.get(`${API_URL}/components/admin`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       })
-      // Filtering is better done on backend, but let's see what we get.
       setComponents(response.data.data.items)
     } catch (error) {
       toast.error('Failed to fetch components')
@@ -61,6 +58,19 @@ export function ComponentsModeration() {
     }
   }
 
+  const handleCopy = async (id: string, name: string, figmaDataBase64: string) => {
+    try {
+      setCopyingId(id)
+      await copyToFigma(figmaDataBase64, name)
+      toast.success('Copied to Figma clipboard!')
+    } catch (error) {
+      console.error(error)
+      toast.error('Failed to copy to clipboard')
+    } finally {
+      setCopyingId(null)
+    }
+  }
+
   return (
     <>
       <Header fixed>
@@ -77,71 +87,149 @@ export function ComponentsModeration() {
           </p>
         </div>
 
-        <div className='rounded-md border'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Creator</TableHead>
-                <TableHead>Pricing</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className='text-right'>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className='text-center'>Loading...</TableCell>
-                </TableRow>
-              ) : components.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className='text-center'>No components found.</TableCell>
-                </TableRow>
-              ) : (
-                components.map((comp) => (
-                  <TableRow key={comp._id}>
-                    <TableCell className='font-medium'>{comp.name}</TableCell>
-                    <TableCell>{comp.createdBy?.name || 'Unknown'}</TableCell>
-                    <TableCell>{comp.pricingType}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        comp.status === 'approved' ? 'bg-green-100 text-green-700' :
-                        comp.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {comp.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <div className='flex justify-end gap-2'>
-                        {comp.status === 'pending' && (
-                          <>
-                            <Button 
-                              variant='outline' 
-                              size='sm'
-                              onClick={() => handleStatusUpdate(comp._id, 'approved')}
-                              className='text-green-600 hover:text-green-700'
-                            >
-                              Approve
-                            </Button>
-                            <Button 
-                              variant='outline' 
-                              size='sm'
-                              onClick={() => handleStatusUpdate(comp._id, 'rejected')}
-                              className='text-red-600 hover:text-red-700'
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">Loading...</div>
+        ) : components.length === 0 ? (
+          <div className="flex justify-center py-12 text-muted-foreground">No components found.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {components.map((comp) => (
+              <div key={comp._id} className="group relative rounded-2xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
+                {/* Preview Image */}
+                <div className="relative h-48 bg-[#F3F3F6] p-4 border-b dark:border-white/10">
+                  {comp.previewImageUrl ? (
+                    <img 
+                      src={comp.previewImageUrl} 
+                      alt={comp.name} 
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">No Preview</div>
+                  )}
+                  {/* Status Badge */}
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      comp.status === 'approved' ? 'bg-green-100 text-green-700 border border-green-200' :
+                      comp.status === 'rejected' ? 'bg-red-100 text-red-700 border border-red-200' :
+                      'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                    }`}>
+                      {comp.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="p-4 flex flex-col flex-1">
+                  <h3 className="font-semibold text-lg line-clamp-1">{comp.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">by {comp.createdBy?.name || 'Unknown'}</p>
+                  
+                  <div className="flex items-center gap-2 mt-3">
+                    <Badge variant="secondary" className="text-xs">{comp.designType || 'UI Design'}</Badge>
+                    <Badge variant="outline" className="text-xs">{comp.pricingType}</Badge>
+                  </div>
+
+                  <div className="mt-auto pt-6 flex flex-wrap gap-2">
+                    {/* View Button */}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => setSelectedComponent(comp)}
+                        >
+                          <Eye className="w-4 h-4 mr-1.5" />
+                          View
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                          <DialogTitle>{comp.name}</DialogTitle>
+                          <DialogDescription>
+                            Submitted by {comp.createdBy?.name || 'Unknown'}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col gap-4 py-4">
+                          {comp.previewImageUrl && (
+                            <div className="rounded-md overflow-hidden border bg-[#F3F3F6] p-4 dark:border-white/10">
+                              <img 
+                                src={comp.previewImageUrl} 
+                                alt={comp.name} 
+                                className="w-full h-auto object-contain max-h-[300px]"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <h4 className="text-sm font-semibold mb-1">Description</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {comp.description || 'No description provided.'}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="text-sm font-semibold mb-1">Design Type</h4>
+                              <p className="text-sm">{comp.designType || 'UI Design'}</p>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold mb-1">Pricing</h4>
+                              <p className="text-sm">{comp.pricingType}</p>
+                            </div>
+                          </div>
+                          {comp.tags && comp.tags.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold mb-2">Tags</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {comp.tags.map((tag: string, i: number) => (
+                                  <Badge key={i} variant="secondary">{tag}</Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Copy Button */}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      disabled={copyingId === comp._id}
+                      onClick={() => handleCopy(comp._id, comp.name, comp.figmaDataBase64)}
+                    >
+                      <Copy className="w-4 h-4 mr-1.5" />
+                      {copyingId === comp._id ? 'Copying...' : 'Figma'}
+                    </Button>
+                  </div>
+
+                  {/* Moderation Actions */}
+                  {comp.status === 'pending' && (
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                        onClick={() => handleStatusUpdate(comp._id, 'approved')}
+                      >
+                        <Check className="w-4 h-4 mr-1.5" />
+                        Approve
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => handleStatusUpdate(comp._id, 'rejected')}
+                      >
+                        <X className="w-4 h-4 mr-1.5" />
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </Main>
     </>
   )
