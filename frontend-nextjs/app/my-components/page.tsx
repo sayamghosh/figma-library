@@ -248,13 +248,28 @@ export default function MyComponentsPage() {
             >
               {/* Preview */}
               <div
-                className="h-[170px] bg-[#F3F3F6] bg-center bg-contain bg-no-repeat"
+                className="relative h-[170px] bg-[#F3F3F6] bg-center bg-contain bg-no-repeat"
                 style={item.previewImageUrl ? { backgroundImage: `url(${item.previewImageUrl})` } : {}}
                 aria-label={item.name}
               >
                 {!item.previewImageUrl && (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
                     No preview
+                  </div>
+                )}
+                {item.status && (
+                  <div className="absolute top-3 right-3">
+                    <span
+                      className={`px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wider rounded-md text-white shadow-sm ${
+                        item.status === "approved"
+                          ? "bg-green-500"
+                          : item.status === "rejected"
+                          ? "bg-red-500"
+                          : "bg-yellow-500"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
                   </div>
                 )}
               </div>

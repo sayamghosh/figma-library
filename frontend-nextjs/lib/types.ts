@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role: "user" | "admin";
 }
 
 export interface ComponentItem {
@@ -18,6 +19,7 @@ export interface ComponentItem {
     name?: string;
     email?: string;
   };
+  status?: "pending" | "approved" | "rejected";
   createdAt: string;
   updatedAt: string;
 }

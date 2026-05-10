@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useMemo, useState, useCallback } from "react";
+import { createContext, useContext, useMemo, useState, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "../api/auth";
 import type { User } from "../lib/types";
@@ -24,6 +24,7 @@ function normalizeUser(user: User): User {
     id: user.id,
     name: user.name,
     email: user.email,
+    role: user.role,
   };
 }
 
@@ -32,7 +33,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
-  const hasToken = typeof window !== 'undefined' ? Boolean(localStorage.getItem("accessToken")) : false;
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const hasToken = isMounted ? Boolean(localStorage.getItem("accessToken")) : false;
   const authQuery = useQuery({
     queryKey: ["auth", "me"],
     queryFn: async () => normalizeUser(await authApi.me()),
@@ -42,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const user = authQuery.data ?? null;
-  const loading = hasToken ? authQuery.isLoading : false;
+  const loading = isMounted && hasToken ? authQuery.isLoading : false;
 
   const login = useCallback(async (input: { email: string; password: string }) => {
     const payload = await authApi.login(input);
