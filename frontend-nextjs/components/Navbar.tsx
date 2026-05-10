@@ -189,12 +189,14 @@ export default function Navbar() {
             {!loading && !user ? (
               <>
                 <button
+                  type="button"
                   onClick={() => setLoginModalOpen(true)}
                   className={`${usesDynamicNavbar ? "hidden h-[44px] rounded-full bg-[#96e96a] px-6 font-manrope text-[14px] font-bold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
                 >
                   {usesDynamicNavbar ? "Sign In" : "Login"}
                 </button>
                 {!usesDynamicNavbar && <button
+                  type="button"
                   onClick={() => setRegisterModalOpen(true)}
                   className="bg-black hover:bg-gray-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[0.88rem] sm:text-[0.95rem] font-medium transition-all shadow-sm"
                   style={{ color: "#ffffff" }}
