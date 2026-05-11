@@ -339,7 +339,7 @@ function buildQueryOptions(search: string, tag: string, viewMode: ViewMode, pric
 export default function ComponentsClient({
   initialPage,
 }: {
-  initialPage: PaginatedComponentResponse;
+  initialPage: PaginatedComponentResponse | null;
 }) {
   const queryClient = useQueryClient();
 
@@ -374,7 +374,7 @@ export default function ComponentsClient({
     isFetchingNextPage,
   } = useInfiniteQuery({
     ...buildQueryOptions(debouncedSearch, activeTag, viewMode, priceMode),
-    initialData: isInitialQuery
+    initialData: isInitialQuery && initialPage
       ? {
           pages: [initialPage],
           pageParams: [{ skip: 0, limit: 15 }],
@@ -383,7 +383,7 @@ export default function ComponentsClient({
   });
 
   const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
-  const total = data?.pages[0]?.pagination?.total ?? initialPage.pagination.total;
+  const total = data?.pages[0]?.pagination?.total ?? (initialPage?.pagination?.total || 0);
 
   // ── Prefetch a category on hover ───────────────────────────────────────────
   const prefetchCategory = useCallback(

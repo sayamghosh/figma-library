@@ -4,18 +4,8 @@ import ComponentsClient from "./client";
 
 export const dynamic = "force-dynamic";
 
-const EMPTY_COMPONENTS_PAGE: PaginatedComponentResponse = {
-  items: [],
-  pagination: {
-    page: 1,
-    limit: 15,
-    total: 0,
-    totalPages: 0,
-  },
-};
-
 export default async function ComponentsPage() {
-  let initialPage = EMPTY_COMPONENTS_PAGE;
+  let initialPage: PaginatedComponentResponse | null = null;
 
   try {
     initialPage = await componentsApi.list("", "", 1, 15, {

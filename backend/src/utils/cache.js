@@ -82,13 +82,13 @@ async function bumpListVersion() {
  */
 async function getListVersion() {
   const client = getRedisClient();
-  if (!client) return 0;
+  if (!client) return Date.now();
   try {
     const v = await client.get(LIST_VERSION_KEY);
     return Number(v) || 0;
   } catch (err) {
     console.warn("[cache] version GET error:", err.message);
-    return 0;
+    return Date.now(); // Fallback to a unique version to bypass cache on error
   }
 }
 
