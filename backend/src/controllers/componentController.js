@@ -55,7 +55,17 @@ const listComponents = asyncHandler(async (req, res) => {
   }
 
   // ── MongoDB query ───────────────────────────────────────────────────────────
-  const query = { status: "approved" };
+  const query = {
+    $and: [
+      {
+        $or: [
+          { status: "approved" },
+          { status: { $exists: false } },
+          { status: null },
+        ],
+      },
+    ],
+  };
   if (q) {
     const safeSearch = escapeRegex(q);
     query.$or = [
