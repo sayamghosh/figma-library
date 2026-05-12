@@ -27,6 +27,7 @@ export default function AddComponentPage({ params }: any) {
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [designType, setDesignType] = useState<"Wireframe" | "UI Design">("UI Design");
   const [pricingType, setPricingType] = useState<"Free" | "Pro">("Free");
+  const [platformTag, setPlatformTag] = useState<"app" | "web">("web");
   const [status, setStatus] = useState("");
 
   const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,10 +133,16 @@ export default function AddComponentPage({ params }: any) {
     setStatus("Uploading image to Cloudinary...");
 
     try {
+      const submittedTags = Array.from(new Set([
+        ...tags,
+        ...tagInputValue.split(",").map(t => t.trim()).filter(Boolean),
+        platformTag,
+      ]));
+
       await addComponentMutation.mutateAsync({
         name,
         description,
-        tags: [...tags, ...tagInputValue.split(",").map(t => t.trim())].filter(Boolean),
+        tags: submittedTags,
         figmaDataBase64,
         previewFile,
         designType,
@@ -258,6 +265,37 @@ export default function AddComponentPage({ params }: any) {
                         {user?.role === "admin" && <option value="Pro">Pro</option>}
                       </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[0.75rem] font-semibold text-gray-700 mb-0.5 font-syne uppercase tracking-wider">Platform Tag</label>
+                    <div className="inline-flex w-full rounded-lg border border-gray-200 bg-gray-50/50 p-1 shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => setPlatformTag("web")}
+                        className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+                          platformTag === "web"
+                            ? "bg-[#10131A] text-white shadow"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                        aria-pressed={platformTag === "web"}
+                      >
+                        Web
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPlatformTag("app")}
+                        className={`flex-1 rounded-md px-3 py-1.5 text-sm font-semibold transition-all ${
+                          platformTag === "app"
+                            ? "bg-[#10131A] text-white shadow"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                        aria-pressed={platformTag === "app"}
+                      >
+                        App
+                      </button>
+                    </div>
+                    <p className="mt-1 text-[0.7rem] text-gray-500">Adds a tag for app or web components.</p>
                   </div>
 
                   <div>
