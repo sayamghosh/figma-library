@@ -91,10 +91,12 @@ const CATEGORIES = [
 
 type ViewMode = "wireframe" | "ui-design";
 type PriceMode = "free" | "pro" | "all";
+type PlatformMode = "all" | "web" | "app";
 
 const PAGE_SIZE = 15;
 const INITIAL_VIEW_MODE: ViewMode = "ui-design";
 const INITIAL_PRICE_MODE: PriceMode = "all";
+const INITIAL_PLATFORM_MODE: PlatformMode = "all";
 
 // ── SkeletonCard ──────────────────────────────────────────────────────────────
 function SkeletonCard() {
@@ -347,6 +349,7 @@ export default function ComponentsClient({
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [viewMode, setViewMode] = useState<ViewMode>(INITIAL_VIEW_MODE);
   const [priceMode, setPriceMode] = useState<PriceMode>(INITIAL_PRICE_MODE);
+  const [platformMode, setPlatformMode] = useState<PlatformMode>(INITIAL_PLATFORM_MODE);
   const [activeId, setActiveId] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [previewItem, setPreviewItem] = useState<null | {
@@ -415,8 +418,13 @@ export default function ComponentsClient({
     } else if (viewMode === "ui-design") {
       out = out.filter((i) => i.designType === "UI Design" || !i.designType || i.tags.some((t) => /ui[\s-]*design/i.test(t)));
     }
+    if (platformMode === "web") {
+      out = out.filter((i) => i.tags.some((t) => t.toLowerCase() === "web"));
+    } else if (platformMode === "app") {
+      out = out.filter((i) => i.tags.some((t) => t.toLowerCase() === "app"));
+    }
     return out;
-  }, [items, activeCategory, priceMode, viewMode]);
+  }, [items, activeCategory, priceMode, viewMode, platformMode]);
 
   useEffect(() => {
     const target = loadMoreRef.current;
@@ -540,6 +548,45 @@ export default function ComponentsClient({
               >
                 <IconPalette />
                 UI Design
+              </button>
+            </div>
+
+            <div className="w-px h-6 bg-gray-200 mx-1" />
+
+            {/* Platform segmented control */}
+            <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setPlatformMode("all")}
+                className={`px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
+                  platformMode === "all"
+                    ? "bg-[#9FE870] text-black shadow-sm"
+                    : "text-gray-600 hover:text-black hover:bg-gray-50"
+                }`}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlatformMode("web")}
+                className={`px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
+                  platformMode === "web"
+                    ? "bg-[#9FE870] text-black shadow-sm"
+                    : "text-gray-600 hover:text-black hover:bg-gray-50"
+                }`}
+              >
+                Web
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlatformMode("app")}
+                className={`px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
+                  platformMode === "app"
+                    ? "bg-[#9FE870] text-black shadow-sm"
+                    : "text-gray-600 hover:text-black hover:bg-gray-50"
+                }`}
+              >
+                App
               </button>
             </div>
 
