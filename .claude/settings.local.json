@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Sayam\\\\Desktop\\\\figma\" -Force)",
+      "Bash(Select-Object Name, Mode)"
+    ]
+  }
+}
