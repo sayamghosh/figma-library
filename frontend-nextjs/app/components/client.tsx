@@ -451,8 +451,8 @@ export default function ComponentsClient({
         figmaDataBase64 ||
         (
           await queryClient.fetchQuery({
-            queryKey: ["components", "detail", id],
-            queryFn: () => componentsApi.getById(id),
+            queryKey: ["components", "data", id],
+            queryFn: () => componentsApi.getComponentData(id),
             staleTime: 10 * 60 * 1000,
           })
         ).figmaDataBase64;
