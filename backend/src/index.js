@@ -2,6 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
 const dotenv = require("dotenv");
+const path = require("path");
+
+// Load dotenv FIRST before any other imports
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
 const dns = require("dns");
 
 dns.setDefaultResultOrder("ipv4first");
@@ -11,9 +16,10 @@ const { getRedisClient } = require("./config/redis");
 const authRoutes = require("./routes/authRoutes");
 const componentRoutes = require("./routes/componentRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const planRoutes = require("./routes/planRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
-
-dotenv.config();
 
 const app = express();
 
@@ -41,9 +47,22 @@ app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "Server is running" });
 });
 
+app.get("/api/debug/razorpay", (req, res) => {
+  const { razorpay } = require("./config/razorpay");
+  res.json({
+    razorpayInitialized: !!razorpay,
+    keyId: razorpay ? "***" : null,
+    envKeyId: process.env.RAZORPAY_KEY_ID ? "SET" : "MISSING",
+    envKeySecret: process.env.RAZORPAY_KEY_SECRET ? "SET" : "MISSING",
+  });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/components", componentRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/plans", planRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

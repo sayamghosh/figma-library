@@ -4,9 +4,12 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+import { paymentsApi } from "../api/payments";
 
 import { RegisterModal } from "./RegisterModal";
 import { LoginModal } from "./LoginModal";
+import { PricingModal } from "./PricingModal";
 
 function getInitials(name: string) {
   return name
@@ -104,8 +107,18 @@ function HamburgerIcon({ open }: { open: boolean }) {
 }
 
 export default function Navbar() {
-  const { user, logout, loading, setRegisterModalOpen, registerModalOpen, setLoginModalOpen, loginModalOpen } = useAuth();
+  const { user, logout, loading, setRegisterModalOpen, registerModalOpen, setLoginModalOpen, loginModalOpen, pricingModalOpen, setPricingModalOpen } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Fetch subscription status when user is logged in
+  const { data: subscriptionData, isLoading: subscriptionLoading } = useQuery({
+    queryKey: ["subscription", "checkAccess"],
+    queryFn: () => paymentsApi.checkAccess(),
+    enabled: !!user,
+    staleTime: 60000, // 1 minute
+  });
+
+  const isProUser = subscriptionData?.isProUser ?? false;
   const router = useRouter();
   const pathname = usePathname();
 
@@ -190,6 +203,13 @@ export default function Navbar() {
               <>
                 <button
                   type="button"
+                  onClick={() => setPricingModalOpen(true)}
+                  className="hidden h-[44px] rounded-full bg-[#8A2BE2] px-5 font-manrope text-[14px] font-bold text-white hover:bg-[#7b22cc] sm:inline-flex sm:items-center cursor-pointer"
+                >
+                  Get Pro
+                </button>
+                <button
+                  type="button"
                   onClick={() => setLoginModalOpen(true)}
                   className={`${usesDynamicNavbar ? "hidden h-[44px] rounded-full bg-[#96e96a] px-6 font-manrope text-[14px] font-bold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
                 >
@@ -205,7 +225,29 @@ export default function Navbar() {
                 </button>}
               </>
             ) : user ? (
-              <UserAvatar name={user.name} email={user.email} onLogout={logout} />
+              <div className="flex items-center gap-3">
+                {isProUser && subscriptionData?.subscription ? (
+                  <button
+                    type="button"
+                    onClick={() => setPricingModalOpen(true)}
+                    className="hidden h-[44px] rounded-full bg-gradient-to-r from-[#8A2BE2] to-[#9d4edd] px-4 font-manrope text-[13px] font-bold text-white hover:from-[#7b22cc] hover:to-[#8b5cf6] sm:inline-flex sm:items-center cursor-pointer flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    Pro
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPricingModalOpen(true)}
+                    className="hidden h-[44px] rounded-full bg-[#8A2BE2] px-5 font-manrope text-[14px] font-bold text-white hover:bg-[#7b22cc] sm:inline-flex sm:items-center cursor-pointer"
+                  >
+                    Upgrade to Pro
+                  </button>
+                )}
+                <UserAvatar name={user.name} email={user.email} onLogout={logout} />
+              </div>
             ) : null}
 
             <button
@@ -235,14 +277,45 @@ export default function Navbar() {
                   )
                 )}
 
-                {!loading && !user && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-2">
-                    <button onClick={() => { setMobileOpen(false); setLoginModalOpen(true); }} className="w-full justify-center px-4 py-3 rounded-xl border border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors">Login</button>
-                    {!usesDynamicNavbar && (
-                      <button onClick={() => { setMobileOpen(false); setRegisterModalOpen(true); }} className="w-full justify-center px-4 py-3 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 transition-colors">Start for free</button>
-                    )}
-                  </div>
-                )}
+                <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-2">
+                  {!loading && !user ? (
+                    <>
+                      <button
+                        onClick={() => { setMobileOpen(false); setPricingModalOpen(true); }}
+                        className="w-full justify-center px-4 py-3 rounded-xl bg-[#8A2BE2] text-white font-semibold hover:bg-[#7b22cc] transition-colors"
+                      >
+                        Get Pro
+                      </button>
+                      <button onClick={() => { setMobileOpen(false); setLoginModalOpen(true); }} className="w-full justify-center px-4 py-3 rounded-xl border border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors">Login</button>
+                      {!usesDynamicNavbar && (
+                        <button onClick={() => { setMobileOpen(false); setRegisterModalOpen(true); }} className="w-full justify-center px-4 py-3 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 transition-colors">Start for free</button>
+                      )}
+                    </>
+                  ) : user && (
+                    <>
+                      {isProUser && subscriptionData?.subscription ? (
+                        <div className="px-4 py-3 bg-purple-50 rounded-xl border border-purple-200">
+                          <p className="font-semibold text-purple-900 flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            Pro Active
+                          </p>
+                          <p className="text-sm text-purple-700 mt-1">
+                            {subscriptionData.subscription.maxComponents - subscriptionData.subscription.componentCountUsed} components left
+                          </p>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setMobileOpen(false); setPricingModalOpen(true); }}
+                          className="w-full justify-center px-4 py-3 rounded-xl bg-[#8A2BE2] text-white font-semibold hover:bg-[#7b22cc] transition-colors"
+                        >
+                          Upgrade to Pro
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </nav>
             </div>
           </>
@@ -251,6 +324,7 @@ export default function Navbar() {
 
       {registerModalOpen && <RegisterModal />}
       {loginModalOpen && <LoginModal />}
+      {pricingModalOpen && <PricingModal isOpen={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />}
     </>
   );
 }

@@ -46,6 +46,11 @@ export const componentsApi = {
     return response.data.data;
   },
 
+  async getComponentData(id: string): Promise<{ figmaDataBase64: string; remainingComponents?: number }> {
+    const response = await apiClient.get(`/components/${id}/data`);
+    return response.data.data;
+  },
+
   async create(input: {
     name: string;
     description: string;

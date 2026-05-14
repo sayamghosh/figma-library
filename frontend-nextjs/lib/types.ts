@@ -3,6 +3,14 @@ export interface User {
   name: string;
   email: string;
   role: "user" | "admin";
+  isProUser?: boolean;
+  subscription?: {
+    status: string;
+    endDate: string;
+    maxComponents: number;
+    componentCountUsed: number;
+    remainingComponents: number;
+  } | null;
 }
 
 export interface ComponentItem {

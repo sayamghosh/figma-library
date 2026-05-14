@@ -14,6 +14,8 @@ interface AuthContextValue {
   setRegisterModalOpen: (open: boolean) => void;
   loginModalOpen: boolean;
   setLoginModalOpen: (open: boolean) => void;
+  pricingModalOpen: boolean;
+  setPricingModalOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   const hasToken = Boolean(localStorage.getItem("accessToken"));
   const authQuery = useQuery({
@@ -68,8 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen }),
-    [user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen]
+    () => ({ user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen, pricingModalOpen, setPricingModalOpen }),
+    [user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen, pricingModalOpen, setPricingModalOpen]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
