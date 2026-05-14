@@ -6,7 +6,7 @@ import Image from "next/image";
 import { componentsApi } from "../../api/components";
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse } from "../../lib/types";
-import { Scaling, Frame, Component } from "lucide-react";
+import { Scaling, Frame, Component, Crown } from "lucide-react";
 
 
 
@@ -235,8 +235,8 @@ function ComponentCard({
         <div className="flex items-center gap-2 min-w-0">
           <span className="font-semibold text-gray-800 text-[0.88rem] truncate">{item.name}</span>
           {isPro ? (
-            <span className="flex items-center gap-1 bg-black text-[#9FE870] text-[0.68rem] font-bold px-1.5 py-0.5 rounded-md shrink-0">
-              <IconStar />
+            <span className="flex items-center gap-1 bg-gray-900 text-[#9FE870] text-[0.68rem] font-bold px-1.5 py-0.5 rounded-md shrink-0">
+              <Crown size={16} color="#ffffff" strokeWidth={2} />
               PRO
             </span>
           ) : (
@@ -614,7 +614,7 @@ export default function ComponentsClient({
                     : "text-gray-600 hover:text-black hover:bg-gray-50"
                 }`}
               >
-                <IconStar />
+                <Crown size={16} color="#ffffff" strokeWidth={2} />
                 Pro
               </button>
             </div>
