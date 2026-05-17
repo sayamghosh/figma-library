@@ -21,7 +21,6 @@ export function LoginModal() {
     try {
       await login({ email, password });
       setLoginModalOpen(false);
-      navigate.push("/components");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
@@ -34,7 +33,6 @@ export function LoginModal() {
       if (credentialResponse.credential) {
         await loginWithGoogle(credentialResponse.credential);
         setLoginModalOpen(false);
-        navigate.push("/components");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google Auth failed.");

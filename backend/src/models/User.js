@@ -43,6 +43,15 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    activeSubscription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subscription",
+      default: null,
+    },
+    isProUser: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

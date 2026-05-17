@@ -1,5 +1,7 @@
 const { asyncHandler } = require("../utils/asyncHandler");
 const { Component } = require("../models/Component");
+const { User } = require("../models/User");
+const { Subscription } = require("../models/Subscription");
 const {
   cacheGet,
   cacheSet,
@@ -329,12 +331,93 @@ const getComponent = asyncHandler(async (req, res) => {
     throw new Error("Component not found");
   }
 
-  const responseBody = { success: true, data: component };
+  // For Pro components, don't include figmaDataBase64 in the cached response
+  // The user needs to request it separately with authentication
+  const componentToReturn = { ...component };
+  if (component.pricingType === "Pro") {
+    delete componentToReturn.figmaDataBase64;
+  }
+
+  const responseBody = { success: true, data: componentToReturn };
 
   // ── Cache write ─────────────────────────────────────────────────────────────
   await cacheSet(cacheKey, responseBody, TTL_SINGLE);
   res.set("X-Cache", "MISS");
   res.json(responseBody);
+});
+
+// ─── GET /api/components/:id/data ─────────────────────────────────────────────
+// This endpoint returns the figma data for Pro components after subscription check
+const getComponentData = asyncHandler(async (req, res) => {
+  const component = await Component.findById(req.params.id);
+
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  // If component is free, return the data directly
+  if (component.pricingType !== "Pro") {
+    return res.json({
+      success: true,
+      data: {
+        figmaDataBase64: component.figmaDataBase64,
+      },
+    });
+  }
+
+  // For Pro components, check subscription
+  const user = await User.findById(req.user.userId);
+
+  if (!user || !user.isProUser || !user.activeSubscription) {
+    return res.status(403).json({
+      success: false,
+      message: "PRO_SUBSCRIPTION_REQUIRED",
+    });
+  }
+
+  const subscription = await Subscription.findById(user.activeSubscription);
+
+  if (!subscription || subscription.status !== "active") {
+    return res.status(403).json({
+      success: false,
+      message: "PRO_SUBSCRIPTION_REQUIRED",
+    });
+  }
+
+  // Check if subscription is still valid
+  if (new Date(subscription.endDate) < new Date()) {
+    // Update user status
+    await User.findByIdAndUpdate(req.user.userId, {
+      isProUser: false,
+      activeSubscription: null,
+    });
+
+    return res.status(403).json({
+      success: false,
+      message: "PRO_SUBSCRIPTION_EXPIRED",
+    });
+  }
+
+  // Check component limit
+  if (subscription.componentCountUsed >= subscription.maxComponents) {
+    return res.status(403).json({
+      success: false,
+      message: "COMPONENT_LIMIT_REACHED",
+    });
+  }
+
+  // Increment component usage
+  subscription.componentCountUsed += 1;
+  await subscription.save();
+
+  return res.json({
+    success: true,
+    data: {
+      figmaDataBase64: component.figmaDataBase64,
+      remainingComponents: subscription.maxComponents - subscription.componentCountUsed,
+    },
+  });
 });
 
 // ─── PATCH /api/components/:id ────────────────────────────────────────────────
@@ -446,6 +529,7 @@ module.exports = {
   listMyComponents,
   createComponent,
   getComponent,
+  getComponentData,
   updateComponent,
   deleteComponent,
   getTopCreators,

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import logoImg from "../assets/logo.svg";
 import { RegisterModal } from "../components/RegisterModal";
 import { LoginModal } from "../components/LoginModal";
+import { PricingModal } from "../components/PricingModal";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -121,7 +122,7 @@ function HamburgerIcon({ open }: { open: boolean }) {
 
 // ── RootLayout ────────────────────────────────────────────────────────────────
 function RootLayout() {
-  const { user, logout, loading, setRegisterModalOpen, registerModalOpen, setLoginModalOpen, loginModalOpen } = useAuth();
+  const { user, logout, loading, setRegisterModalOpen, registerModalOpen, setLoginModalOpen, loginModalOpen, pricingModalOpen, setPricingModalOpen } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const location = useLocation();
@@ -228,6 +229,12 @@ function RootLayout() {
             {/* Auth — always visible */}
             {!loading && !user ? (
               <>
+                <button
+                  onClick={() => setPricingModalOpen(true)}
+                  className="hidden h-[44px] rounded-full bg-[#8A2BE2] px-5 font-manrope text-[14px] font-bold text-white hover:bg-[#7b22cc] sm:inline-flex sm:items-center cursor-pointer"
+                >
+                  Get Pro
+                </button>
                 <button
                   onClick={() => setLoginModalOpen(true)}
                   className={`${usesDynamicNavbar ? "hidden h-[44px] rounded-full bg-[#96e96a] px-6 font-manrope text-[14px] font-bold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
@@ -363,6 +370,7 @@ function RootLayout() {
       
       {registerModalOpen && <RegisterModal />}
       {loginModalOpen && <LoginModal />}
+      {pricingModalOpen && <PricingModal isOpen={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />}
     </div>
   );
 }

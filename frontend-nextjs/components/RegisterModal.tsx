@@ -22,7 +22,6 @@ export function RegisterModal() {
     try {
       await register({ name, email, password });
       setRegisterModalOpen(false);
-      navigate.push("/components");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed.");
     } finally {
@@ -35,7 +34,6 @@ export function RegisterModal() {
       if (credentialResponse.credential) {
         await loginWithGoogle(credentialResponse.credential);
         setRegisterModalOpen(false);
-        navigate.push("/components");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google Auth failed.");

@@ -4,6 +4,7 @@ const {
   listMyComponents,
   createComponent,
   getComponent,
+  getComponentData,
   updateComponent,
   deleteComponent,
 } = require("../controllers/componentController");
@@ -16,6 +17,7 @@ router.get("/admin", protect, require("../controllers/componentController").list
 router.get("/my", protect, listMyComponents);
 router.get("/top-creators", require("../controllers/componentController").getTopCreators);
 router.get("/:id", getComponent);
+router.get("/:id/data", protect, getComponentData);
 router.post("/", protect, createComponent);
 router.patch("/:id", protect, updateComponent);
 router.patch("/:id/status", protect, require("../controllers/componentController").updateComponentStatus);
