@@ -71,6 +71,41 @@ function IconX() {
     </svg>
   );
 }
+function IconShare() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <circle cx="12" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="4" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" />
+      <circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M5.5 7l5-2.5M5.5 9l5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconUnlock({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+    </svg>
+  );
+}
+function IconCheck() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+  );
+}
+function IconLogoFourDots() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="#9FE870" strokeWidth="2" fill="none" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="#9FE870" strokeWidth="2" fill="none" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="#9FE870" strokeWidth="2" fill="none" />
+      <path d="M14 17.5a3.5 3.5 0 1 0 7 0 3.5 3.5 0 0 0-7 0z" stroke="#9FE870" strokeWidth="2" fill="none" />
+    </svg>
+  );
+}
 
 // ── constants ─────────────────────────────────────────────────────────────────
 
@@ -101,23 +136,26 @@ const INITIAL_PLATFORM_MODE: PlatformMode = "all";
 // ── SkeletonCard ──────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex flex-col animate-pulse">
+    <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex flex-col p-2 animate-pulse">
       {/* Preview placeholder */}
-      <div className="h-[185px] bg-gray-200 rounded-none" />
+      <div className="h-[185px] bg-gray-100 rounded-xl" />
 
       {/* Footer row placeholder */}
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
+      <div className="px-2 pt-3 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="h-3.5 w-28 bg-gray-200 rounded-full" />
-          <div className="h-3.5 w-10 bg-gray-100 rounded-md" />
+          <div className="h-3.5 w-24 bg-gray-200 rounded-full" />
+          <div className="h-3 w-8 bg-gray-100 rounded-md" />
         </div>
-        <div className="h-4 w-4 bg-gray-200 rounded-full" />
+        <div className="flex gap-2">
+          <div className="h-4 w-4 bg-gray-200 rounded-full" />
+          <div className="h-4 w-4 bg-gray-200 rounded-full" />
+          <div className="h-4 w-6 bg-gray-200 rounded-full" />
+        </div>
       </div>
 
       {/* Actions placeholder */}
-      <div className="px-2 pb-3 flex gap-1.5">
-        <div className="flex-1 h-8 bg-gray-100 rounded-xl" />
-        <div className="flex-1 h-8 bg-gray-100 rounded-xl" />
+      <div className="px-2 pb-2">
+        <div className="w-full h-9 bg-gray-100 rounded-full" />
       </div>
     </article>
   );
@@ -127,55 +165,122 @@ function SkeletonCard() {
 function PreviewModal({
   item,
   onClose,
+  onCopy,
+  isCopying,
 }: {
-  item: { name: string; previewImageUrl: string; tags: string[] };
+  item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string };
   onClose: () => void;
+  onCopy: (id: string, name: string, figmaData?: string) => Promise<void>;
+  isCopying: boolean;
 }) {
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  async function handleCopy() {
+    if (isCopying || isSuccess) return;
+    await onCopy(item._id, item.name, item.figmaDataBase64);
+    setIsSuccess(true);
+    setTimeout(() => setIsSuccess(false), 2000);
+  }
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 md:p-6"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full mx-4 overflow-hidden"
+        className="bg-white rounded-[24px] shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden font-manrope animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <span className="font-semibold text-gray-800">{item.name}</span>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b border-gray-50">
+          <div className="flex items-center gap-2.5">
+            <div className="text-[#9FE870] rotate-45 w-5 h-5 flex items-center justify-center">
+              <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
+                <rect x="0" y="0" width="6" height="6" rx="1" fill="currentColor" />
+                <rect x="8" y="0" width="6" height="6" rx="1" fill="currentColor" />
+                <rect x="0" y="8" width="6" height="6" rx="1" fill="currentColor" />
+                <rect x="8" y="8" width="6" height="6" rx="1" fill="currentColor" />
+              </svg>
+            </div>
+            <span className="font-bold text-xl text-gray-900 tracking-tight">{item.name}</span>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-lg hover:bg-gray-100"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-900 text-gray-900 hover:bg-gray-100 transition-colors"
           >
-            <IconX />
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
-        <div className="p-4 bg-[#F3F3F6] relative min-h-[300px]">
-          {item.previewImageUrl ? (
-            <div className="relative w-full h-[60vh]">
+
+        {/* Content - Image Preview */}
+        <div className="px-6 py-4 relative overflow-hidden flex flex-col items-center">
+          <div className="relative w-full h-[35vh] sm:h-[42vh] md:h-[46vh] max-h-[460px] min-h-[240px] rounded-xl border border-gray-100 overflow-hidden bg-[#FAFBFD] flex items-center justify-center">
+            {item.previewImageUrl ? (
               <Image
                 src={item.previewImageUrl}
                 alt={item.name}
                 fill
                 priority
-                className="rounded-xl object-contain bg-white"
+                className="object-contain p-2"
               />
-            </div>
-          ) : (
-            <div className="w-full h-64 bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
-              No preview available
-            </div>
-          )}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                No preview available
+              </div>
+            )}
+          </div>
         </div>
-        <div className="px-5 py-4 flex gap-2">
-          {item.tags.map((tag) => (
-            <span
-              key={tag}
-              className="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-full font-medium"
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 pb-6 pt-2 shrink-0">
+          {/* User Info */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#9FE870] to-[#54992e] flex items-center justify-center text-black font-extrabold text-xs shadow-sm shrink-0">
+              UN
+            </div>
+            <div className="flex flex-col">
+              <span className="font-semibold text-[0.88rem] text-gray-900 tracking-tight leading-tight">User Name</span>
+              <span className="text-[0.72rem] text-gray-400 font-medium">Contributor</span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-5">
+            <button 
+              type="button" 
+              className="text-gray-700 hover:text-black hover:scale-105 active:scale-95 transition-all p-1"
+              title="Share Component"
             >
-              {tag}
-            </span>
-          ))}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+            </button>
+            <div className="flex items-center gap-1.5 text-gray-700 hover:text-black hover:scale-105 transition-all cursor-pointer p-1">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+              <span className="font-semibold text-sm">10K</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleCopy}
+              disabled={isCopying || isSuccess}
+              className={`ml-2 px-6 py-2 rounded-xl border text-sm font-bold transition-all duration-200 ${
+                isSuccess
+                  ? "bg-green-50 text-green-600 border-green-200"
+                  : "bg-white text-black border-black hover:bg-black hover:text-white"
+              }`}
+            >
+              {isSuccess ? "Copied" : isCopying ? "Copying..." : "Copy"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -207,10 +312,10 @@ function ComponentCard({
   }
 
   return (
-    <article className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col font-manrope">
+    <article className="bg-white rounded-[20px] border border-gray-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col p-2.5 font-manrope">
       {/* Preview */}
       <div
-        className="relative cursor-pointer group/preview overflow-hidden h-[185px] w-full"
+        className="relative cursor-pointer group/preview overflow-hidden h-[210px] w-full rounded-xl border-2 border-[#9FE870]/40 bg-[#F4F9ED]"
         onClick={onPreview}
         title="Click to preview"
       >
@@ -221,50 +326,55 @@ function ComponentCard({
             fill
             priority={priority}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-contain bg-[#F3F3F6] transition-transform duration-300 group-hover/preview:scale-[1.02]"
+            className="object-contain transition-transform duration-300 group-hover/preview:scale-[1.02]"
           />
         ) : (
-          <div className="h-full w-full bg-[#F3F3F6] flex items-center justify-center text-gray-400 text-sm">
+          <div className="h-full w-full flex items-center justify-center text-gray-400 text-sm">
             No preview
           </div>
         )}
       </div>
 
       {/* Footer row */}
-      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-semibold text-gray-800 text-[0.88rem] truncate">{item.name}</span>
+      <div className="px-1 pt-3 pb-3 flex items-center justify-between">
+        <div className="flex items-center gap-1 min-w-0">
+          <span className="font-semibold text-gray-800 text-[0.8rem] truncate">{item.name}</span>
           {isPro ? (
-            <span className="flex items-center gap-1 bg-gray-900 text-[#9FE870] text-[0.68rem] font-bold px-1.5 py-0.5 rounded-md shrink-0">
-              <Crown size={16} color="#ffffff" strokeWidth={2} />
-              PRO
+            <span className="flex items-center gap-1 text-[#9FE870] text-[0.6rem] font-bold px-1.5 py-0.5 rounded-md shrink-0 tracking-wide">
+              <Crown size={20} color="#d66a04" strokeWidth={2} />
+              {/* PRO */}
             </span>
           ) : (
-            <span className="text-[0.68rem] font-bold text-gray-400 px-1.5 py-0.5 rounded-md border border-gray-200 shrink-0">
+            <span className="text-[0.6rem] font-bold text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 shrink-0 uppercase tracking-wide">
               FREE
             </span>
           )}
         </div>
-        <button
-          type="button"
-          className="text-gray-400 hover:text-red-400 transition-colors p-1 cursor-pointer"
-          aria-label="Favourite"
-        >
-          <IconHeart />
-        </button>
+
+        <div className="flex items-center gap-2 text-gray-500 text-[0.75rem]">
+          <button type="button" className="hover:text-red-500 transition-colors">
+            <IconHeart />
+          </button>
+          <button type="button" className="hover:text-blue-500 transition-colors">
+            <IconShare />
+          </button>
+          <div className="flex items-center gap-1 ml-1">
+            <IconEye />
+            <span className="font-medium">10k</span>
+          </div>
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="px-2 pb-3 flex gap-1.5">
+      <div className="px-1 pb-1">
         <button
           type="button"
           onClick={handleCopy}
           disabled={isCopying || isSuccess}
-          className={`flex-1 flex items-center justify-center gap-1.5 text-[0.8rem] font-semibold rounded-xl py-2 transition-all duration-300 cursor-pointer font-manrope border ${
-            isSuccess 
-              ? "bg-green-50 text-green-600 border-green-200" 
-              : "text-gray-700 bg-gray-50 hover:bg-gray-100 border-gray-200"
-          } disabled:opacity-100`}
+          className={`w-full flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold rounded-full py-2.5 transition-all duration-300 cursor-pointer font-manrope border ${isSuccess
+            ? "bg-green-50 text-green-600 border-green-200"
+            : "text-gray-700 bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300"
+            } disabled:opacity-100`}
         >
           {isSuccess ? (
             <span className="flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
@@ -280,14 +390,6 @@ function ComponentCard({
             </>
           )}
         </button>
-        <button
-          type="button"
-          onClick={onPreview}
-          className="flex-1 flex items-center justify-center gap-1.5 text-[0.8rem] font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl py-2 transition-colors cursor-pointer font-manrope"
-        >
-          <IconEye />
-          Preview
-        </button>
       </div>
     </article>
   );
@@ -295,7 +397,7 @@ function ComponentCard({
 
 // ── QUERY CONFIG (shared) ─────────────────────────────────────────────────────
 const STALE_TIME = 5 * 60 * 1000;  // 5 minutes — cached data treated as fresh
-const GC_TIME    = 10 * 60 * 1000; // 10 minutes — data kept in memory after unmount
+const GC_TIME = 10 * 60 * 1000; // 10 minutes — data kept in memory after unmount
 
 function getDesignType(viewMode: ViewMode): "Wireframe" | "UI Design" {
   return viewMode === "wireframe" ? "Wireframe" : "UI Design";
@@ -353,9 +455,11 @@ export default function ComponentsClient({
   const [activeId, setActiveId] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [previewItem, setPreviewItem] = useState<null | {
+    _id: string;
     name: string;
     previewImageUrl: string;
     tags: string[];
+    figmaDataBase64?: string;
   }>(null);
   const debouncedSearch = useDebouncedValue(search.trim());
   const activeTag = activeCategory === "All" ? "" : activeCategory;
@@ -379,9 +483,9 @@ export default function ComponentsClient({
     ...buildQueryOptions(debouncedSearch, activeTag, viewMode, priceMode),
     initialData: isInitialQuery && initialPage
       ? {
-          pages: [initialPage],
-          pageParams: [{ skip: 0, limit: 15 }],
-        }
+        pages: [initialPage],
+        pageParams: [{ skip: 0, limit: 15 }],
+      }
       : undefined,
   });
 
@@ -472,67 +576,110 @@ export default function ComponentsClient({
   const showStaleIndicator = isFetching && !isLoading;
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-[#F3F3F6] relative">
+    <div className="flex h-[calc(100vh-80px)] bg-[#FAFAFA] relative">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .no-scrollbar::-webkit-scrollbar {
+          display: none !important;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none !important;
+          scrollbar-width: none !important;
+        }
+      `}} />
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col w-[220px] shrink-0 border-r border-gray-200 bg-white pt-2 pb-8 overflow-y-auto font-manrope">
+      <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope h-full">
 
-        {/* Components section */}
-        <div className="px-4 flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5 text-[16px] font-bold text-gray-800">
-            <span className="text-black"><Component size={18} /></span>
-            Components
+        {/* Unlock Premium+ Block (Fixed at Top) */}
+        <div className="mx-4 mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0">
+          <div className="flex items-center gap-2 mb-4 justify-center">
+            <IconUnlock className="text-orange-500 w-5 h-5" />
+            <span className="text-[#3B82F6] font-bold text-[0.95rem]">Unlock Premium+</span>
           </div>
-          <span className="text-[0.68rem] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+
+          <div className="space-y-2 mb-4">
+            <div className="flex items-start gap-2.5 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg p-2.5">
+              <div className="mt-0.5 shrink-0 bg-[#3B82F6] rounded-full w-4 h-4 flex items-center justify-center text-white">
+                <IconCheck />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[0.65rem] text-gray-800 font-bold leading-tight">Everything in Components</span>
+                <span className="text-[0.65rem] text-gray-500 font-medium leading-tight">Unlimited Components</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2.5 border border-gray-200 rounded-lg p-2.5 bg-white">
+              <div className="mt-0.5 shrink-0 bg-gray-200 rounded-full w-4 h-4 flex items-center justify-center text-gray-400">
+                <IconCheck />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[0.65rem] text-gray-800 font-bold leading-tight">50+ Figma Website UI Template</span>
+                <span className="text-[0.65rem] text-gray-500 font-medium leading-tight">All future components</span>
+              </div>
+            </div>
+          </div>
+
+          <button className="w-full text-gray-900 border border-gray-300 bg-gray-50 hover:bg-black hover:text-white transition-all duration-100 cursor-pointer font-bold text-[0.75rem] py-3 rounded-lg transition-colors shadow-sm">
+            BUY NOW !
+          </button>
+        </div>
+
+        {/* Components section (Fixed in Position) */}
+        <div className="px-6 flex items-center gap-2 mb-3 shrink-0">
+          <span className="text-[#9FE870]"><IconLogoFourDots /></span>
+          <span className="font-bold text-gray-800 text-[15px]">Components</span>
+          <span className="ml-auto text-[0.65rem] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
             {total}
           </span>
         </div>
 
-        <nav className="flex flex-col px-2">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setActiveCategory(cat)}
-              onMouseEnter={() => prefetchCategory(cat)}
-              onFocus={() => prefetchCategory(cat)}
-              className={`flex items-center justify-between px-3 py-2 rounded-lg text-[0.82rem] font-medium transition-colors cursor-pointer font-manrope ${
-                activeCategory === cat
-                  ? "bg-[#9FE870] text-black font-bold"
-                  : "text-gray-600 hover:text-black hover:bg-gray-50"
-              }`}
-            >
-              {cat}
-              <IconChevron />
-            </button>
-          ))}
-        </nav>
+        {/* Scrollable Categories List Container (Hidden scrollbar) */}
+        <div className="flex-1 overflow-y-auto pb-8 select-none no-scrollbar">
+          <nav className="flex flex-col px-3">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActiveCategory(cat)}
+                onMouseEnter={() => prefetchCategory(cat)}
+                onFocus={() => prefetchCategory(cat)}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-[0.85rem] font-medium transition-colors cursor-pointer font-manrope ${activeCategory === cat
+                  ? "text-black font-bold"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
+              >
+                {cat}
+                <span className="text-gray-400"><IconChevron /></span>
+              </button>
+            ))}
+          </nav>
+        </div>
       </aside>
 
       {/* ── Main Area ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-[#FAFAFA]">
         {/* Page title section */}
-        <div className="px-6 pt-2 pb-2 bg-white">
-          <h1 className="font-outfit font-semibold text-[21px] text-[#161616] leading-tight">
+        <div className="px-8 pt-4 pb-4">
+          <h1 className="font-outfit font-bold text-[24px] text-[#161616] leading-tight">
             Browse Figma Components, Wireframe &amp; UI Design
           </h1>
-          <p className="font-manrope font-normal text-[14px] text-gray-500 mt-0.5">
+          <p className="font-manrope font-normal text-[14px] text-gray-500 mt-1">
             {total > 0 ? `${total}+ Components` : "Components"}
           </p>
         </div>
 
         {/* Sticky Toolbar */}
-        <div className="sticky top-0 z-20 px-6 py-3 bg-white border-b border-gray-200 font-manrope">
-          <div className="flex flex-wrap items-center gap-4">
+        <div className="sticky top-0 z-20 px-8 py-4 bg-[#FAFAFA] font-manrope">
+          <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 xl:gap-5">
             {/* View mode segmented control */}
-            <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
+            <div className="flex items-center bg-white border border-gray-200/60 rounded-lg p-1 gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => setViewMode("wireframe")}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
-                  viewMode === "wireframe"
-                    ? "bg-[#9FE870] text-black shadow-sm"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${viewMode === "wireframe"
+                  ? "bg-[#79e041] text-black shadow-sm"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
               >
                 <IconWireframe />
                 Wireframe
@@ -540,122 +687,115 @@ export default function ComponentsClient({
               <button
                 type="button"
                 onClick={() => setViewMode("ui-design")}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
-                  viewMode === "ui-design"
-                    ? "bg-[#9FE870] text-black shadow-sm"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${viewMode === "ui-design"
+                  ? "bg-[#79e041] text-black shadow-sm"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
               >
                 <IconPalette />
                 UI Design
               </button>
             </div>
 
-            <div className="w-px h-6 bg-gray-200 mx-1" />
-
             {/* Platform segmented control */}
-            <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
+            <div className="flex items-center bg-white border border-gray-200/60 rounded-lg p-1 gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => setPlatformMode("all")}
-                className={`px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
-                  platformMode === "all"
-                    ? "bg-[#9FE870] text-black shadow-sm"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
+                className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "all"
+                  ? "bg-[#79e041] text-black shadow-sm"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
               >
                 All
               </button>
               <button
                 type="button"
                 onClick={() => setPlatformMode("web")}
-                className={`px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
-                  platformMode === "web"
-                    ? "bg-[#9FE870] text-black shadow-sm"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
+                className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "web"
+                  ? "bg-[#79e041] text-black shadow-sm"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
               >
                 Web
               </button>
               <button
                 type="button"
                 onClick={() => setPlatformMode("app")}
-                className={`px-4 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
-                  platformMode === "app"
-                    ? "bg-[#9FE870] text-black shadow-sm"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
+                className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "app"
+                  ? "bg-[#79e041] text-black shadow-sm"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
               >
                 App
               </button>
             </div>
 
-            <div className="w-px h-6 bg-gray-200 mx-1" />
-
             {/* Pricing segmented control */}
-            <div className="flex items-center bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] rounded p-1 gap-1">
+            <div className="flex items-center bg-white border border-gray-200/60 rounded-lg p-1 gap-1 shrink-0">
               <button
                 type="button"
                 onClick={() => setPriceMode("free")}
-                className={`px-5 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
-                  priceMode === "free"
-                    ? "bg-[#9FE870] text-black shadow-sm"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
+                className={`px-6 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "free"
+                  ? "bg-[#79e041] text-black shadow-sm"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
               >
                 Free
               </button>
               <button
                 type="button"
                 onClick={() => setPriceMode("pro")}
-                className={`flex items-center gap-2 px-5 py-1.5 rounded text-[0.82rem] font-bold transition-all cursor-pointer ${
-                  priceMode === "pro"
-                    ? "bg-[#9FE870] text-black shadow-sm"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-1 px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "pro"
+                  ? "bg-[#79e041] text-black shadow-sm"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                  }`}
               >
-                <Crown size={16} color="#ffffff" strokeWidth={2} />
+                <Crown size={16} color="black" strokeWidth={2} />
                 Pro
               </button>
             </div>
 
-            <div className="flex-1" />
+            <div className="hidden lg:block flex-1" />
 
-            {/* Search */}
-            <div className="relative w-full max-w-[450px]">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="none"
-              >
-                <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
-              <input
-                className="w-full pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded text-[0.78rem] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9FE870]/60 focus:border-[#9FE870] transition"
-                placeholder="Search components…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-
-            {/* Refresh button — shows subtle spinner when background re-fetch is happening */}
-            <button
-              type="button"
-              onClick={() => refetch()}
-              className="flex items-center justify-center min-w-[80px] text-[0.76rem] font-semibold text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded transition-colors shrink-0 cursor-pointer"
-            >
-              {showStaleIndicator ? (
-                <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
-                  <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            {/* Search and Refresh Group */}
+            <div className="flex items-center gap-3 w-full lg:w-auto mt-2 lg:mt-0 shrink-0">
+              {/* Search */}
+              <div className="relative w-full lg:w-[260px] xl:w-[280px]">
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                >
+                  <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4" />
+                  <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
-              ) : (
-                "Refresh"
-              )}
-            </button>
+                <input
+                  className="w-full pl-8 pr-4 py-2 bg-white border border-gray-200/60 rounded-lg text-[0.82rem] text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 transition"
+                  placeholder="Search components..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              {/* Refresh button */}
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="flex items-center justify-center min-w-[80px] h-[36px] text-[0.82rem] font-bold text-gray-600 bg-[#F3F4F6] hover:bg-[#E5E7EB] px-4 rounded-lg transition-colors shrink-0 cursor-pointer"
+              >
+                {showStaleIndicator ? (
+                  <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                ) : (
+                  "Refresh"
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -674,7 +814,7 @@ export default function ComponentsClient({
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {/* Skeleton cards during initial load */}
             {showSkeletons &&
               Array.from({ length: SKELETON_COUNT }).map((_, i) => (
@@ -691,11 +831,7 @@ export default function ComponentsClient({
                   isCopying={activeId === item._id}
                   onCopy={() => onCopy(item._id, item.name, item.figmaDataBase64)}
                   onPreview={() =>
-                    setPreviewItem({
-                      name: item.name,
-                      previewImageUrl: item.previewImageUrl,
-                      tags: item.tags,
-                    })
+                    setPreviewItem(item)
                   }
                 />
               ))}
@@ -724,7 +860,12 @@ export default function ComponentsClient({
 
       {/* Preview Modal */}
       {previewItem && (
-        <PreviewModal item={previewItem} onClose={() => setPreviewItem(null)} />
+        <PreviewModal 
+          item={previewItem} 
+          onClose={() => setPreviewItem(null)} 
+          onCopy={onCopy}
+          isCopying={activeId === previewItem._id}
+        />
       )}
     </div>
   );

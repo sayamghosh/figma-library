@@ -1,10 +1,12 @@
 "use client";
+
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "../context/AuthContext";
-import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+
+import { useAuth } from "../context/AuthContext";
 import { paymentsApi } from "../api/payments";
 
 import { RegisterModal } from "./RegisterModal";
@@ -19,66 +21,124 @@ function getInitials(name: string) {
     .join("");
 }
 
-function UserAvatar({ name, email, onLogout }: { name: string; email: string; onLogout: () => void; }) {
+function UserAvatar({
+  name,
+  email,
+  onLogout,
+  onClick,
+  isMobile = false,
+}: {
+  name: string;
+  email: string;
+  onLogout: () => void;
+  onClick?: () => void;
+  isMobile?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+    };
   }, [open]);
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center w-11 h-11 rounded-full bg-black text-[#9FE870] text-[0.9rem] font-bold shadow-md hover:shadow-lg transition-all ring-2 ring-white focus:outline-none focus:ring-[#9FE870]/50 cursor-pointer"
-        aria-label="User menu"
-        aria-expanded={open}
+        onClick={() => {
+          if (isMobile && onClick) {
+            onClick();
+          } else {
+            setOpen((v) => !v);
+          }
+        }}
+        className={`
+          flex items-center justify-center
+          w-11 h-11
+          rounded-full
+          ${isMobile ? "bg-[#9FE870] text-black" : "bg-black/70 text-[#9FE870]"}
+          backdrop-blur-xl
+          text-[0.9rem]
+          font-bold
+          border border-white/10
+          transition-all
+          active:scale-95
+        `}
       >
         {getInitials(name)}
       </button>
 
-      {open && (
-        <div className="absolute right-0 mt-2.5 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-[0.85rem] font-semibold text-gray-900 truncate">{name}</p>
-            <p className="text-[0.75rem] text-gray-400 truncate mt-0.5">{email}</p>
+      {!isMobile && open && (
+        <div
+          className="
+            absolute right-0 mt-3 w-56
+            rounded-2xl
+            border border-white/10
+            bg-black/80
+            backdrop-blur-2xl
+            shadow-2xl
+            overflow-hidden
+            z-50
+          "
+        >
+          <div className="px-4 py-4 border-b border-white/10">
+            <p className="text-white text-sm font-semibold truncate">
+              {name}
+            </p>
+
+            <p className="text-gray-400 text-xs truncate mt-1">
+              {email}
+            </p>
           </div>
-          <div className="py-1.5">
+
+          <div className="p-2">
             <Link
               href="/my-components"
               onClick={() => setOpen(false)}
-              className="w-full text-left flex items-center gap-2.5 px-4 py-2 text-[0.83rem] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="
+                flex items-center
+                px-3 py-3
+                rounded-xl
+                text-sm
+                text-gray-300
+                hover:bg-white/5
+                hover:text-white
+                transition-all
+              "
             >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
-                <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.4" />
-              </svg>
               My Components
             </Link>
-            <div className="mx-3 border-t border-gray-100 my-1" />
+
             <button
               type="button"
-              onClick={() => { setOpen(false); onLogout(); }}
-              className="w-full text-left flex items-center gap-2.5 px-4 py-2 text-[0.83rem] font-medium text-red-500 hover:bg-red-50 transition-colors"
+              onClick={() => {
+                setOpen(false);
+                onLogout();
+              }}
+              className="
+                w-full text-left
+                flex items-center
+                px-3 py-3
+                rounded-xl
+                text-sm
+                text-red-400
+                hover:bg-red-500/10
+                transition-all
+              "
             >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Sign out
+              Sign Out
             </button>
           </div>
         </div>
@@ -89,17 +149,48 @@ function UserAvatar({ name, email, onLogout }: { name: string; email: string; on
 
 function HamburgerIcon({ open }: { open: boolean }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className="transition-transform">
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 22 22"
+      fill="none"
+      className="transition-transform duration-300"
+    >
       {open ? (
         <>
-          <path d="M5 5l12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <path d="M17 5L5 17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path
+            d="M5 5l12 12"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M17 5L5 17"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
         </>
       ) : (
         <>
-          <path d="M3 6h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <path d="M3 11h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          <path d="M3 16h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          <path
+            d="M3 6h16"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M3 11h16"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+          <path
+            d="M3 16h16"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
         </>
       )}
     </svg>
@@ -107,44 +198,30 @@ function HamburgerIcon({ open }: { open: boolean }) {
 }
 
 export default function Navbar() {
-  const { user, logout, loading, setRegisterModalOpen, registerModalOpen, setLoginModalOpen, loginModalOpen, pricingModalOpen, setPricingModalOpen } = useAuth();
+  const {
+    user,
+    logout,
+    loading,
+    setRegisterModalOpen,
+    registerModalOpen,
+    setLoginModalOpen,
+    loginModalOpen,
+    pricingModalOpen,
+    setPricingModalOpen,
+  } = useAuth();
+
+  const pathname = usePathname();
+
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Fetch subscription status when user is logged in
-  const { data: subscriptionData, isLoading: subscriptionLoading } = useQuery({
+  const { data: subscriptionData } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: !!user,
-    staleTime: 60000, // 1 minute
+    staleTime: 60000,
   });
 
   const isProUser = subscriptionData?.isProUser ?? false;
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const isLandingPage = pathname === "/";
-  const isComponentsPage = pathname.startsWith("/components");
-  const usesDynamicNavbar = isLandingPage || isComponentsPage;
-  const bgClass = "bg-white";
-
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    let ticking = false;
-    const updateScrolledState = () => {
-      setScrolled(window.scrollY > 0);
-      ticking = false;
-    };
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(updateScrolledState);
-        ticking = true;
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    updateScrolledState();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -152,181 +229,297 @@ export default function Navbar() {
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileOpen]);
 
   const navLinks = [
-    { label: "Components", href: "/components" },
-    { label: "Resources", href: "/add-component" },
-    { label: "FAQ", href: "#", isExternal: true },
-    { label: "Contact", href: "#", isExternal: true },
+    { label: "Component", href: "/components" },
+    // { label: "Template", href: "#" },
+    { label: "Pricing", href: "#" },
+    // { label: "All Pages", href: "#" },
+    { label: "Hire Us", href: "#" },
   ];
+
+  const isComponentsPage = pathname === "/components";
 
   return (
     <>
-      <header 
-        className={`sticky top-0 z-[100] transition-all duration-300 w-full ${
-          usesDynamicNavbar 
-            ? `dynamic-island-header bg-transparent ${isComponentsPage ? "is-components-page" : ""} ${scrolled ? "is-stuck" : ""}` 
-            : `${bgClass} py-3 ${isComponentsPage ? "border-b border-gray-200" : ""}`
-        }`}
-      >
-        <div className={`mx-auto w-full transition-all duration-300 ${
-          usesDynamicNavbar 
-            ? "dynamic-island-frame" 
-            : "flex items-center justify-between px-5 lg:px-12 mx-auto w-full 2xl:max-w-[1536px]"
-        }`}>
-          <div className={usesDynamicNavbar ? "dynamic-island-shell" : "contents"}>
-          <div className={usesDynamicNavbar ? "dynamic-island-content" : "contents"}>
-          <Link href="/" onClick={() => setMobileOpen(false)} className="shrink-0">
-            <Image priority src="/logo.webp" alt="FigComponents Logo" width={120} height={32} className="h-8 w-auto object-contain" />
-          </Link>
+      <header className="sticky top-0 z-[100] w-full bg-white border-b border-gray-50">
+        <div
+          className={`
+            mx-auto flex h-15 items-center px-5
+            ${isComponentsPage ? "max-w-full" : "max-w-[1344px]"}
+          `}
+        >
 
-          <nav className={usesDynamicNavbar ? "hidden lg:flex items-center gap-[38px] font-manrope text-[15px] font-bold text-[#15171b]" : "hidden lg:flex items-center gap-10 font-manrope font-semibold text-[18px] text-gray-700"}>
+          {/* LEFT: LOGO */}
+          <div className="lg:flex-1 flex items-center justify-start lg:min-w-[280px]">
+            <Link
+              href="/"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 lg:gap-3 shrink-0"
+            >
+              <Image
+                priority
+                src="/logo2.png"
+                alt="figma components"
+                width={42}
+                height={42}
+                className="h-[36px] w-[36px] lg:h-[42px] lg:w-[42px] object-contain"
+              />
+
+              <span
+                className="
+            font-dm-sans
+            text-[16px]
+            lg:text-[18px]
+            font-bold
+            tracking-[-0.04em]
+            text-[#111111]
+            leading-none
+          "
+              >
+                figma components
+              </span>
+            </Link>
+          </div>
+
+          {/* CENTER: NAVIGATION */}
+          <nav className="hidden lg:flex items-center justify-center gap-10">
             {navLinks.map((l) => {
-              const content = (
-                <span className="flex flex-col items-center">
-                  <span className="font-bold invisible h-0 overflow-hidden" aria-hidden="true">{l.label}</span>
-                  <span className="transition-all duration-200">{l.label}</span>
-                </span>
-              );
-              return !l.isExternal ? (
-                <Link key={l.label} href={l.href} className={`${usesDynamicNavbar ? "hover:text-[#4a6b2c]" : "hover:text-black hover:font-bold"} transition-all cursor-pointer`}>{content}</Link>
-              ) : (
-                <a key={l.label} href={l.href} className={`${usesDynamicNavbar ? "hover:text-[#4a6b2c]" : "hover:text-black hover:font-bold"} transition-all cursor-pointer`}>{content}</a>
+              const isActive = pathname === l.href;
+              return (
+                <Link
+                  key={l.label}
+                  href={l.href}
+                  className={`
+              relative
+              font-dm-sans
+              text-[16px]
+              transition-all
+              duration-200
+              tracking-tight
+              ${isActive
+                      ? "text-[#54992e]"
+                      : "text-black hover:text-[#54992e]"
+                    }
+            `}
+                >
+                  <span className="flex flex-col items-center justify-center">
+                    <span className={isActive ? "font-semibold" : "font-medium"}>
+                      {l.label}
+                    </span>
+                    {/* Hidden semibold span to reserve space and prevent layout shift */}
+                    <span className="font-semibold invisible h-0 overflow-hidden" aria-hidden="true">
+                      {l.label}
+                    </span>
+                  </span>
+                </Link>
               );
             })}
           </nav>
 
-          <div className="flex items-center gap-3 sm:gap-5">
-            {!loading && !user ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setPricingModalOpen(true)}
-                  className="hidden h-[44px] rounded-full bg-[#8A2BE2] px-5 font-manrope text-[14px] font-bold text-white hover:bg-[#7b22cc] sm:inline-flex sm:items-center cursor-pointer"
-                >
-                  Get Pro
-                </button>
+          {/* RIGHT: CTA */}
+          <div className="flex-1 flex items-center justify-end lg:min-w-[280px]">
+            <div className="flex items-center gap-3">
+              {!loading && !user ? (
                 <button
                   type="button"
                   onClick={() => setLoginModalOpen(true)}
-                  className={`${usesDynamicNavbar ? "hidden h-[44px] rounded-full bg-[#96e96a] px-6 font-manrope text-[14px] font-bold text-[#111318] hover:bg-[#8de35f] sm:inline-flex sm:items-center" : "hidden sm:inline text-[0.95rem] font-bold text-gray-900 hover:text-black transition-colors bg-transparent border-none p-0"} cursor-pointer`}
+                  className="
+              hidden sm:flex
+              items-center
+              justify-center
+              h-[40px]
+              px-6
+              rounded-full
+              bg-[#9FE870]
+              font-dm-sans
+              text-[14px]
+              font-semibold
+              text-black
+              transition-all
+              duration-200
+              hover:bg-[#8edb5f]
+              hover:shadow-md
+              hover:shadow-[#9FE870]/10
+              active:scale-[0.98]
+              cursor-pointer
+            "
                 >
-                  {usesDynamicNavbar ? "Sign In" : "Login"}
+                  Sign In
                 </button>
-                {!usesDynamicNavbar && <button
-                  type="button"
-                  onClick={() => setRegisterModalOpen(true)}
-                  className="bg-black hover:bg-gray-800 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-[0.88rem] sm:text-[0.95rem] font-medium transition-all shadow-sm"
-                  style={{ color: "#ffffff" }}
-                >
-                  Start for free
-                </button>}
-              </>
-            ) : user ? (
-              <div className="flex items-center gap-3">
-                {isProUser && subscriptionData?.subscription ? (
-                  <button
-                    type="button"
-                    onClick={() => setPricingModalOpen(true)}
-                    className="hidden h-[44px] rounded-full bg-gradient-to-r from-[#8A2BE2] to-[#9d4edd] px-4 font-manrope text-[13px] font-bold text-white hover:from-[#7b22cc] hover:to-[#8b5cf6] sm:inline-flex sm:items-center cursor-pointer flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    Pro
-                  </button>
+              ) : user ? (
+                <div className="hidden lg:block">
+                  <UserAvatar
+                    name={user.name}
+                    email={user.email}
+                    onLogout={logout}
+                  />
+                </div>
+              ) : null}
+
+              {/* MOBILE BUTTON (Uses Profile Icon if logged in) */}
+              <div className="lg:hidden flex items-center">
+                {user ? (
+                  <div className="relative">
+                    {/* Show X icon if mobile menu is open, otherwise show avatar */}
+                    {mobileOpen ? (
+                      <button
+                        type="button"
+                        className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#9FE870] text-black transition-all active:scale-95"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <HamburgerIcon open={true} />
+                      </button>
+                    ) : (
+                      <UserAvatar
+                        name={user.name}
+                        email={user.email}
+                        onLogout={logout}
+                        isMobile={true}
+                        onClick={() => setMobileOpen(true)}
+                      />
+                    )}
+                  </div>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setPricingModalOpen(true)}
-                    className="hidden h-[44px] rounded-full bg-[#8A2BE2] px-5 font-manrope text-[14px] font-bold text-white hover:bg-[#7b22cc] sm:inline-flex sm:items-center cursor-pointer"
+                    className="
+                flex items-center justify-center
+                w-10 h-10
+                rounded-xl
+                bg-[#9FE870]
+                text-black
+                transition-all
+                hover:bg-[#8edb5f]
+                active:scale-95
+              "
+                    onClick={() => setMobileOpen((v) => !v)}
                   >
-                    Upgrade to Pro
+                    <HamburgerIcon open={mobileOpen} />
                   </button>
                 )}
-                <UserAvatar name={user.name} email={user.email} onLogout={logout} />
               </div>
-            ) : null}
-
-            <button
-              type="button"
-              className={`${usesDynamicNavbar ? "bg-[#96e96a] text-[#111318] hover:bg-[#8de35f]" : "text-gray-700 hover:bg-gray-200"} lg:hidden flex items-center justify-center w-11 h-11 rounded-full transition-colors`}
-              onClick={() => setMobileOpen((v) => !v)}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen}
-            >
-              <HamburgerIcon open={mobileOpen} />
-            </button>
-          </div>
-          </div>
+            </div>
           </div>
         </div>
-
-        {mobileOpen && (
-          <>
-            <div className="fixed inset-0 z-20 bg-black/30 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} aria-hidden="true" />
-            <div className="absolute top-full left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-xl lg:hidden">
-              <nav className="flex flex-col px-5 py-4 gap-1">
-                {navLinks.map((l) =>
-                  !l.isExternal ? (
-                    <Link key={l.label} href={l.href} onClick={() => setMobileOpen(false)} className="flex items-center px-3 py-3 rounded-xl font-manrope font-normal text-[16px] text-gray-700 hover:bg-gray-50 hover:text-black hover:font-bold transition-all">{l.label}</Link>
-                  ) : (
-                    <a key={l.label} href={l.href} onClick={() => setMobileOpen(false)} className="flex items-center px-3 py-3 rounded-xl font-manrope font-normal text-[16px] text-gray-700 hover:bg-gray-50 hover:text-black hover:font-bold transition-all">{l.label}</a>
-                  )
-                )}
-
-                <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-2">
-                  {!loading && !user ? (
-                    <>
-                      <button
-                        onClick={() => { setMobileOpen(false); setPricingModalOpen(true); }}
-                        className="w-full justify-center px-4 py-3 rounded-xl bg-[#8A2BE2] text-white font-semibold hover:bg-[#7b22cc] transition-colors"
-                      >
-                        Get Pro
-                      </button>
-                      <button onClick={() => { setMobileOpen(false); setLoginModalOpen(true); }} className="w-full justify-center px-4 py-3 rounded-xl border border-gray-200 text-gray-900 font-semibold hover:bg-gray-50 transition-colors">Login</button>
-                      {!usesDynamicNavbar && (
-                        <button onClick={() => { setMobileOpen(false); setRegisterModalOpen(true); }} className="w-full justify-center px-4 py-3 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 transition-colors">Start for free</button>
-                      )}
-                    </>
-                  ) : user && (
-                    <>
-                      {isProUser && subscriptionData?.subscription ? (
-                        <div className="px-4 py-3 bg-purple-50 rounded-xl border border-purple-200">
-                          <p className="font-semibold text-purple-900 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                            Pro Active
-                          </p>
-                          <p className="text-sm text-purple-700 mt-1">
-                            {subscriptionData.subscription.maxComponents - subscriptionData.subscription.componentCountUsed} components left
-                          </p>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => { setMobileOpen(false); setPricingModalOpen(true); }}
-                          className="w-full justify-center px-4 py-3 rounded-xl bg-[#8A2BE2] text-white font-semibold hover:bg-[#7b22cc] transition-colors"
-                        >
-                          Upgrade to Pro
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </nav>
-            </div>
-          </>
-        )}
       </header>
 
+      {/* MOBILE OVERLAY MENU (Slide-down animation) */}
+      <div
+        className={`
+    fixed inset-0 z-[90] lg:hidden
+    bg-white/98 backdrop-blur-2xl
+    transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+    ${mobileOpen ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"}
+  `}
+      >
+        <div className="flex flex-col items-center pt-[90px] pb-10 gap-4 px-6 overflow-y-auto h-full">
+          {navLinks.map((l, i) => {
+            const isActive = pathname === l.href;
+            return (
+              <Link
+                key={l.label}
+                href={l.href}
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  transitionDelay: mobileOpen ? `${i * 70}ms` : "0ms",
+                  opacity: mobileOpen ? 1 : 0,
+                  transform: mobileOpen ? "translateY(0)" : "translateY(-10px)"
+                }}
+                className={`
+            font-dm-sans text-lg font-medium transition-all duration-500
+            ${isActive ? "text-[#9FE870]" : "text-black"}
+          `}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
+
+          {user ? (
+            <div
+              className="flex flex-col items-center gap-6 mt-4 pt-8 border-t border-gray-100 w-full"
+              style={{
+                transitionDelay: mobileOpen ? `${navLinks.length * 70}ms` : "0ms",
+                opacity: mobileOpen ? 1 : 0,
+                transform: mobileOpen ? "translateY(0)" : "translateY(-10px)"
+              }}
+            >
+              <div className="text-center">
+                <p className="font-dm-sans text-[20px] font-medium text-black">{user.name}</p>
+                <p className="font-dm-sans text-[12px] font-normal text-gray-500">{user.email}</p>
+              </div>
+
+              <div className="flex flex-col items-center gap-4 w-full px-6">
+                <Link
+                  href="/my-components"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center h-14 w-full rounded-2xl bg-black text-white font-dm-sans text-[14px] font-medium transition-all hover:bg-black/90 active:scale-95"
+                >
+                  My Components
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    logout();
+                  }}
+                  className="flex items-center justify-center h-14 w-full rounded-2xl border-2 border-red-500 text-red-500 font-dm-sans text-[14px] font-medium transition-all hover:bg-red-50 active:scale-95"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          ) : (
+            !loading && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileOpen(false);
+                  setLoginModalOpen(true);
+                }}
+                className="
+            mt-4
+            flex items-center justify-center
+            h-14 w-full max-w-[280px]
+            rounded-2xl
+            bg-[#9FE870]
+            font-dm-sans text-[14px] font-medium
+            text-black
+            transition-all duration-500
+            hover:bg-[#8edb5f]
+            active:scale-95
+            cursor-pointer
+          "
+                style={{
+                  transitionDelay: mobileOpen ? `${navLinks.length * 70}ms` : "0ms",
+                  opacity: mobileOpen ? 1 : 0,
+                  transform: mobileOpen ? "translateY(0)" : "translateY(-10px)"
+                }}
+              >
+                Sign In
+              </button>
+            )
+          )}
+        </div>
+      </div>
+
       {registerModalOpen && <RegisterModal />}
+
       {loginModalOpen && <LoginModal />}
-      {pricingModalOpen && <PricingModal isOpen={pricingModalOpen} onClose={() => setPricingModalOpen(false)} />}
+
+      {pricingModalOpen && (
+        <PricingModal
+          isOpen={pricingModalOpen}
+          onClose={() => setPricingModalOpen(false)}
+        />
+      )}
     </>
   );
 }
-
-

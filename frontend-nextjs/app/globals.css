@@ -8,6 +8,11 @@
 	--muted: #64748b;
 	--accent: #22c55e;
 	--accent-ink: #ffffff;
+	--font-dm-sans: "DM Sans", sans-serif;
+}
+
+.font-dm-sans {
+	font-family: var(--font-dm-sans);
 }
 
 .font-syne {
@@ -195,6 +200,7 @@ body {
 	color: var(--ink);
 	background: var(--bg);
 	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
+	scrollbar-gutter: stable;
 }
 
 h1,
@@ -460,4 +466,13 @@ samp {
 	.hero-actions {
 		flex-direction: column;
 	}
+}
+
+/* Utility to hide scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
