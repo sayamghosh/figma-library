@@ -27,12 +27,16 @@ function UserAvatar({
   onLogout,
   onClick,
   isMobile = false,
+  isProUser = false,
+  onGetPro,
 }: {
   name: string;
   email: string;
   onLogout: () => void;
   onClick?: () => void;
   isMobile?: boolean;
+  isProUser?: boolean;
+  onGetPro?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -98,12 +102,50 @@ function UserAvatar({
               {name}
             </p>
 
-            <p className="text-gray-400 text-xs truncate mt-1">
-              {email}
-            </p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <p className="text-gray-400 text-xs truncate max-w-[150px]">
+                {email}
+              </p>
+              {isProUser && (
+                <span className="px-1.5 py-0.5 rounded-md bg-[#9FE870]/20 text-[#9FE870] text-[0.62rem] font-bold tracking-wider uppercase shrink-0">
+                  Pro
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="p-2">
+            {!isProUser && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  onGetPro?.();
+                }}
+                className="
+                  w-full
+                  flex items-center justify-center gap-2
+                  mb-2 px-3 py-2.5
+                  rounded-xl
+                  bg-[#9FE870]
+                  hover:bg-[#8edb5f]
+                  text-black
+                  font-bold text-sm
+                  transition-all duration-200
+                  active:scale-[0.98]
+                  shadow-lg shadow-[#9FE870]/10
+                  cursor-pointer
+                "
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+                Get Pro
+              </button>
+            )}
+
             <Link
               href="/my-components"
               onClick={() => setOpen(false)}
@@ -358,6 +400,8 @@ export default function Navbar() {
                     name={user.name}
                     email={user.email}
                     onLogout={logout}
+                    isProUser={isProUser}
+                    onGetPro={() => setPricingModalOpen(true)}
                   />
                 </div>
               ) : null}
@@ -382,6 +426,8 @@ export default function Navbar() {
                         onLogout={logout}
                         isMobile={true}
                         onClick={() => setMobileOpen(true)}
+                        isProUser={isProUser}
+                        onGetPro={() => setPricingModalOpen(true)}
                       />
                     )}
                   </div>
@@ -456,6 +502,32 @@ export default function Navbar() {
               </div>
 
               <div className="flex flex-col items-center gap-4 w-full px-6">
+                {!isProUser && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setPricingModalOpen(true);
+                    }}
+                    className="
+                      flex items-center justify-center gap-2
+                      h-14 w-full rounded-2xl
+                      bg-[#9FE870] hover:bg-[#8edb5f]
+                      text-black font-dm-sans text-[14px] font-bold
+                      transition-all duration-200 active:scale-[0.98]
+                      shadow-md shadow-[#9FE870]/10
+                      cursor-pointer
+                    "
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                      <path d="M2 17l10 5 10-5" />
+                      <path d="M2 12l10 5 10-5" />
+                    </svg>
+                    Get Pro
+                  </button>
+                )}
+
                 <Link
                   href="/my-components"
                   onClick={() => setMobileOpen(false)}

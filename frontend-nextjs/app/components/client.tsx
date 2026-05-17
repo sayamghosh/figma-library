@@ -5,8 +5,8 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { componentsApi } from "../../api/components";
 import { copyToFigma } from "../../lib/clipboard";
-import type { PaginatedComponentResponse } from "../../lib/types";
-import { Scaling, Frame, Component, Crown } from "lucide-react";
+import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
+import { Scaling, Frame, Copy, Component, Crown } from "lucide-react";
 
 
 
@@ -162,13 +162,22 @@ function SkeletonCard() {
 }
 
 // ── PreviewModal ──────────────────────────────────────────────────────────────
+function getInitials(name: string) {
+  if (!name) return "U";
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 function PreviewModal({
   item,
   onClose,
   onCopy,
   isCopying,
 }: {
-  item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string };
+  item: ComponentItem;
   onClose: () => void;
   onCopy: (id: string, name: string, figmaData?: string) => Promise<void>;
   isCopying: boolean;
@@ -239,18 +248,20 @@ function PreviewModal({
           {/* User Info */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#9FE870] to-[#54992e] flex items-center justify-center text-black font-extrabold text-xs shadow-sm shrink-0">
-              UN
+              {getInitials(item.createdBy?.name || "System")}
             </div>
             <div className="flex flex-col">
-              <span className="font-semibold text-[0.88rem] text-gray-900 tracking-tight leading-tight">User Name</span>
+              <span className="font-semibold text-[0.88rem] text-gray-900 tracking-tight leading-tight">
+                {item.createdBy?.name || "System Uploader"}
+              </span>
               <span className="text-[0.72rem] text-gray-400 font-medium">Contributor</span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-5">
-            <button 
-              type="button" 
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
               className="text-gray-700 hover:text-black hover:scale-105 active:scale-95 transition-all p-1"
               title="Share Component"
             >
@@ -272,13 +283,32 @@ function PreviewModal({
               type="button"
               onClick={handleCopy}
               disabled={isCopying || isSuccess}
-              className={`ml-2 px-6 py-2 rounded-xl border text-sm font-bold transition-all duration-200 ${
-                isSuccess
-                  ? "bg-green-50 text-green-600 border-green-200"
-                  : "bg-white text-black border-black hover:bg-black hover:text-white"
-              }`}
+              className={`ml-2 w-[120px] shrink-0 py-2 rounded-xl border text-sm font-bold transition-all duration-300 flex items-center justify-center gap-1.5 ${isSuccess
+                ? "bg-green-500 text-white border-green-500 shadow-md shadow-green-500/20 scale-[0.98]"
+                : "bg-white text-black border-black hover:bg-black hover:text-white active:scale-95 cursor-pointer"
+                }`}
             >
-              {isSuccess ? "Copied" : isCopying ? "Copying..." : "Copy"}
+              {isSuccess ? (
+                <span className="flex items-center gap-1.5 animate-in fade-in zoom-in duration-300">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                    <polyline points="13.33 4 5.33 12 2.67 9.33" />
+                  </svg>
+                  Copied!
+                </span>
+              ) : isCopying ? (
+                <span className="flex items-center gap-1.5">
+                  <svg className="animate-spin h-3.5 w-3.5 text-current" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M12 2a10 10 0 00-10 10h2a8 8 0 018-8V2z" />
+                  </svg>
+                  Copying...
+                </span>
+              ) : (
+                <>
+                  <Copy size={18} color="currentColor" strokeWidth={2} className="mr-0.5" />
+                  Copy
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -336,7 +366,7 @@ function ComponentCard({
       </div>
 
       {/* Footer row */}
-      <div className="px-1 pt-3 pb-3 flex items-center justify-between">
+      <div className="px-2 pt-3 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-1 min-w-0">
           <span className="font-semibold text-gray-800 text-[0.8rem] truncate">{item.name}</span>
           {isPro ? (
@@ -351,15 +381,14 @@ function ComponentCard({
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-gray-500 text-[0.75rem]">
-          <button type="button" className="hover:text-red-500 transition-colors">
-            <IconHeart />
-          </button>
+        <div className="flex items-center gap-1 text-gray-500 text-[0.75rem]">
           <button type="button" className="hover:text-blue-500 transition-colors">
             <IconShare />
           </button>
           <div className="flex items-center gap-1 ml-1">
-            <IconEye />
+            <button type="button" className="hover:text-red-500 transition-colors">
+              <IconHeart />
+            </button>
             <span className="font-medium">10k</span>
           </div>
         </div>
@@ -385,7 +414,8 @@ function ComponentCard({
             </span>
           ) : (
             <>
-              <IconCopy />
+              <Copy size={16} color="#000000" strokeWidth={1.25} />
+
               {isCopying ? "Copying…" : "Copy"}
             </>
           )}
@@ -454,13 +484,7 @@ export default function ComponentsClient({
   const [platformMode, setPlatformMode] = useState<PlatformMode>(INITIAL_PLATFORM_MODE);
   const [activeId, setActiveId] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const [previewItem, setPreviewItem] = useState<null | {
-    _id: string;
-    name: string;
-    previewImageUrl: string;
-    tags: string[];
-    figmaDataBase64?: string;
-  }>(null);
+  const [previewItem, setPreviewItem] = useState<null | ComponentItem>(null);
   const debouncedSearch = useDebouncedValue(search.trim());
   const activeTag = activeCategory === "All" ? "" : activeCategory;
   const isInitialQuery =
@@ -591,13 +615,13 @@ export default function ComponentsClient({
       <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope h-full">
 
         {/* Unlock Premium+ Block (Fixed at Top) */}
-        <div className="mx-4 mb-6 bg-white rounded-xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0">
+        <div className="mx-4 mb-6 bg-slate-100 rounded-xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <IconUnlock className="text-orange-500 w-5 h-5" />
             <span className="text-[#3B82F6] font-bold text-[0.95rem]">Unlock Premium+</span>
           </div>
 
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-4 ">
             <div className="flex items-start gap-2.5 bg-[#F0F6FF] border border-[#BFDBFE] rounded-lg p-2.5">
               <div className="mt-0.5 shrink-0 bg-[#3B82F6] rounded-full w-4 h-4 flex items-center justify-center text-white">
                 <IconCheck />
@@ -613,7 +637,7 @@ export default function ComponentsClient({
                 <IconCheck />
               </div>
               <div className="flex flex-col gap-0.5">
-                <span className="text-[0.65rem] text-gray-800 font-bold leading-tight">50+ Figma Website UI Template</span>
+                <span className="text-[0.65rem] text-gray-800 font-bold leading-tight">50+ Website UI Template</span>
                 <span className="text-[0.65rem] text-gray-500 font-medium leading-tight">All future components</span>
               </div>
             </div>
@@ -860,9 +884,9 @@ export default function ComponentsClient({
 
       {/* Preview Modal */}
       {previewItem && (
-        <PreviewModal 
-          item={previewItem} 
-          onClose={() => setPreviewItem(null)} 
+        <PreviewModal
+          item={previewItem}
+          onClose={() => setPreviewItem(null)}
           onCopy={onCopy}
           isCopying={activeId === previewItem._id}
         />
