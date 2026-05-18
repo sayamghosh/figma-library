@@ -367,6 +367,13 @@ const getComponentData = asyncHandler(async (req, res) => {
   }
 
   // For Pro components, check subscription
+  if (!req.user) {
+    return res.status(403).json({
+      success: false,
+      message: "PRO_SUBSCRIPTION_REQUIRED",
+    });
+  }
+
   const user = await User.findById(req.user.userId);
 
   if (!user || !user.isProUser || !user.activeSubscription) {

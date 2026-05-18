@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { plansApi, type Plan } from "../api/plans";
 import { paymentsApi } from "../api/payments";
@@ -21,6 +21,8 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
+  const [showLoginNotice, setShowLoginNotice] = useState(false);
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ["plans"],
@@ -43,24 +45,19 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setPendingPlanName(null);
+      setShowLoginNotice(false);
+      setError("");
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
 
-  const handlePlanSelect = async (planName: string) => {
-    const plan = plans?.find((p) => p.name === planName);
-
-    if (!plan) {
-      alert("This plan is not available yet.");
-      return;
-    }
-
-    if (!user) {
-      setLoginModalOpen(true);
-      onClose();
-      return;
-    }
-
+  const startPayment = useCallback(async (plan: Plan) => {
     if (hasActiveSubscription) {
       const confirmUpgrade = window.confirm(
         "You already have an active subscription. Upgrading will replace your current plan. Continue?"
@@ -102,8 +99,8 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
           }
         },
         prefill: {
-          name: user.name,
-          email: user.email,
+          name: user?.name,
+          email: user?.email,
         },
         theme: {
           color: "#2563EB",
@@ -126,7 +123,34 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
       setLoading(false);
       setSelectedPlan(null);
     }
+  }, [hasActiveSubscription, onClose, refetchSubscription, user]);
+
+  const handlePlanSelect = async (planName: string) => {
+    const plan = plans?.find((p) => p.name === planName);
+
+    if (!plan) {
+      alert("This plan is not available yet.");
+      return;
+    }
+
+    if (!user) {
+      setPendingPlanName(plan.name);
+      setShowLoginNotice(true);
+      setLoginModalOpen(true);
+      return;
+    }
+
+    await startPayment(plan);
   };
+
+  useEffect(() => {
+    if (!user || !pendingPlanName || loading) return;
+    const pendingPlan = plans?.find((p) => p.name === pendingPlanName);
+    if (!pendingPlan) return;
+    setPendingPlanName(null);
+    setShowLoginNotice(false);
+    startPayment(pendingPlan);
+  }, [loading, pendingPlanName, plans, startPayment, user]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -153,6 +177,12 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
             {error}
+          </div>
+        )}
+
+        {showLoginNotice && !user && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm text-center">
+            Please log in to continue with your selected plan.
           </div>
         )}
 
