@@ -23,4 +23,24 @@ function protect(req, res, next) {
   }
 }
 
-module.exports = { protect };
+function optionalProtect(req, res, next) {
+  const authorization = req.headers.authorization || "";
+  const [, token] = authorization.split(" ");
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const payload = verifyAccessToken(token);
+    req.user = payload;
+    return next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired token",
+    });
+  }
+}
+
+module.exports = { protect, optionalProtect };

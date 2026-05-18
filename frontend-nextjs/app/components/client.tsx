@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { componentsApi } from "../../api/components";
+import { paymentsApi } from "../../api/payments";
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
+import { useAuth } from "../../context/AuthContext";
 import { Scaling, Frame, Copy, Component, Crown } from "lucide-react";
 
 
@@ -133,6 +135,28 @@ const INITIAL_VIEW_MODE: ViewMode = "ui-design";
 const INITIAL_PRICE_MODE: PriceMode = "all";
 const INITIAL_PLATFORM_MODE: PlatformMode = "all";
 
+function isProComponent(item: Pick<ComponentItem, "pricingType" | "tags">) {
+  return item.pricingType === "Pro" || item.tags.some((t) => /pro/i.test(t));
+}
+
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div className="fixed bottom-5 right-5 z-[220]">
+      <div className="flex items-center gap-3 rounded-xl bg-black/90 text-white px-4 py-3 shadow-lg border border-white/10">
+        <span className="text-sm font-semibold">{message}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-white/70 hover:text-white transition-colors"
+          aria-label="Dismiss"
+        >
+          <IconX />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── SkeletonCard ──────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
@@ -179,14 +203,14 @@ function PreviewModal({
 }: {
   item: ComponentItem;
   onClose: () => void;
-  onCopy: (id: string, name: string, figmaData?: string) => Promise<void>;
+  onCopy: (item: ComponentItem) => Promise<void>;
   isCopying: boolean;
 }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
   async function handleCopy() {
     if (isCopying || isSuccess) return;
-    await onCopy(item._id, item.name, item.figmaDataBase64);
+    await onCopy(item);
     setIsSuccess(true);
     setTimeout(() => setIsSuccess(false), 2000);
   }
@@ -331,7 +355,7 @@ function ComponentCard({
   onPreview: () => void;
   priority?: boolean;
 }) {
-  const isPro = item.pricingType === "Pro" || item.tags.some((t) => /pro/i.test(t));
+  const isPro = isProComponent(item);
   const [isSuccess, setIsSuccess] = useState(false);
 
   async function handleCopy() {
@@ -475,6 +499,7 @@ export default function ComponentsClient({
 }: {
   initialPage: PaginatedComponentResponse | null;
 }) {
+  const { user, setPricingModalOpen } = useAuth();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -485,6 +510,8 @@ export default function ComponentsClient({
   const [activeId, setActiveId] = useState<string | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [previewItem, setPreviewItem] = useState<null | ComponentItem>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<number | null>(null);
   const debouncedSearch = useDebouncedValue(search.trim());
   const activeTag = activeCategory === "All" ? "" : activeCategory;
   const isInitialQuery =
@@ -492,6 +519,31 @@ export default function ComponentsClient({
     activeTag === "" &&
     viewMode === INITIAL_VIEW_MODE &&
     priceMode === INITIAL_PRICE_MODE;
+
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscription", "checkAccess"],
+    queryFn: () => paymentsApi.checkAccess(),
+    enabled: !!user,
+    staleTime: 60000,
+  });
+
+  const isProUser = subscriptionData?.isProUser ?? user?.isProUser ?? false;
+
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    if (toastTimeoutRef.current) {
+      window.clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = window.setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        window.clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const {
@@ -572,20 +624,26 @@ export default function ComponentsClient({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // ── Copy handler ───────────────────────────────────────────────────────────
-  async function onCopy(id: string, name: string, figmaDataBase64?: string) {
-    setActiveId(id);
+  async function onCopy(item: ComponentItem) {
+    if (isProComponent(item) && !isProUser) {
+      showToast("Pro plan required to copy this component.");
+      setPricingModalOpen(true);
+      return;
+    }
+
+    setActiveId(item._id);
     try {
       const payload =
-        figmaDataBase64 ||
+        item.figmaDataBase64 ||
         (
           await queryClient.fetchQuery({
-            queryKey: ["components", "data", id],
-            queryFn: () => componentsApi.getComponentData(id),
+            queryKey: ["components", "data", item._id],
+            queryFn: () => componentsApi.getComponentData(item._id),
             staleTime: 10 * 60 * 1000,
           })
         ).figmaDataBase64;
       if (!payload) throw new Error("Component payload is missing.");
-      await copyToFigma(payload, name);
+      await copyToFigma(payload, item.name);
     } catch (error) {
       console.error("Copy failed:", error);
     } finally {
@@ -643,7 +701,11 @@ export default function ComponentsClient({
             </div>
           </div>
 
-          <button className="w-full text-gray-900 border border-gray-300 bg-gray-50 hover:bg-black hover:text-white transition-all duration-100 cursor-pointer font-bold text-[0.75rem] py-3 rounded-lg transition-colors shadow-sm">
+          <button
+            type="button"
+            onClick={() => setPricingModalOpen(true)}
+            className="w-full text-gray-900 border border-gray-300 bg-gray-50 hover:bg-black hover:text-white transition-all duration-100 cursor-pointer font-bold text-[0.75rem] py-3 rounded-lg transition-colors shadow-sm"
+          >
             BUY NOW !
           </button>
         </div>
@@ -853,7 +915,7 @@ export default function ComponentsClient({
                   item={item}
                   priority={index < 15}
                   isCopying={activeId === item._id}
-                  onCopy={() => onCopy(item._id, item.name, item.figmaDataBase64)}
+                  onCopy={() => onCopy(item)}
                   onPreview={() =>
                     setPreviewItem(item)
                   }
@@ -889,6 +951,13 @@ export default function ComponentsClient({
           onClose={() => setPreviewItem(null)}
           onCopy={onCopy}
           isCopying={activeId === previewItem._id}
+        />
+      )}
+
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          onClose={() => setToastMessage(null)}
         />
       )}
     </div>
