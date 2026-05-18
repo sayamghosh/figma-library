@@ -701,7 +701,11 @@ export default function ComponentsClient({
             </div>
           </div>
 
-          <button className="w-full text-gray-900 border border-gray-300 bg-gray-50 hover:bg-black hover:text-white transition-all duration-100 cursor-pointer font-bold text-[0.75rem] py-3 rounded-lg transition-colors shadow-sm">
+          <button
+            type="button"
+            onClick={() => setPricingModalOpen(true)}
+            className="w-full text-gray-900 border border-gray-300 bg-gray-50 hover:bg-black hover:text-white transition-all duration-100 cursor-pointer font-bold text-[0.75rem] py-3 rounded-lg transition-colors shadow-sm"
+          >
             BUY NOW !
           </button>
         </div>
