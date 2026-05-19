@@ -33,6 +33,23 @@ const seedPlans = async () => {
       sortOrder: 2,
       isActive: true,
     },
+    {
+      name: "pro_annual",
+      displayName: "Pro Annual",
+      description: "Unlimited components download for 365 days",
+      price: 39900,
+      durationDays: 365,
+      componentLimit: 999999,
+      features: [
+        "Unlimited components",
+        "Use Free & Pro",
+        "365 Days Validity",
+        "Access all Premium+",
+        "Use all Components",
+      ],
+      sortOrder: 3,
+      isActive: true,
+    },
   ];
 
   for (const planData of plans) {
