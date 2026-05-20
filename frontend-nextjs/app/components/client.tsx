@@ -354,7 +354,7 @@ function ComponentCard({
 }: {
   item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string; pricingType?: "Free" | "Pro"; designType?: "Wireframe" | "UI Design" };
   isCopying: boolean;
-  onCopy: () => Promise<void>;
+  onCopy: () => Promise<boolean>;
   onPreview: () => void;
   isProUser?: boolean;
   priority?: boolean;
@@ -365,9 +365,11 @@ function ComponentCard({
 
   async function handleCopy() {
     if (isCopying || isSuccess) return;
-    await onCopy();
-    setIsSuccess(true);
-    setTimeout(() => setIsSuccess(false), 2000);
+    const success = await onCopy();
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => setIsSuccess(false), 2000);
+    }
   }
 
   return (
