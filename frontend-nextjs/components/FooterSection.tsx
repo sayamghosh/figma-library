@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
-const logoImg = "/logo.svg";;
+import Image from "next/image";
+import fcLogo from "../app/assets/fc-logo.png";
+const logoImg = fcLogo;
 import { Mail, ArrowRight } from "lucide-react";
 
 const companyLinks = ["About Us", "Our Team", "Pricing Plans", "Faq", "Contact Us", "Refund Policy"];
@@ -33,7 +35,7 @@ export function FooterSection() {
           {/* Brand Column */}
           <div>
             <div className="flex items-center">
-              <img src={logoImg} alt="figma components" className="h-10 w-auto object-contain" />
+              <Image src={logoImg} alt="figma components" className="h-10 w-auto object-contain" />
             </div>
             <p className="mt-9 max-w-[340px] text-[16px] leading-[1.6] text-[#565656]">
               Products & services are important. They might sell dairy, meat, maybe even eco-friendly manure compost. Including a CSA program...

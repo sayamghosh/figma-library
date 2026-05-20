@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import fcLogo from "../app/assets/fc-logo.png";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
@@ -306,7 +307,7 @@ export default function Navbar() {
             >
               <Image
                 priority
-                src="/logo2.png"
+                src={fcLogo}
                 alt="figma components"
                 width={42}
                 height={42}
