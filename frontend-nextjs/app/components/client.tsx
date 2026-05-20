@@ -203,16 +203,18 @@ function PreviewModal({
 }: {
   item: ComponentItem;
   onClose: () => void;
-  onCopy: (item: ComponentItem) => Promise<void>;
+  onCopy: (item: ComponentItem, closePreview: () => void) => Promise<boolean>;
   isCopying: boolean;
 }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
   async function handleCopy() {
     if (isCopying || isSuccess) return;
-    await onCopy(item);
-    setIsSuccess(true);
-    setTimeout(() => setIsSuccess(false), 2000);
+    const success = await onCopy(item, onClose);
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => setIsSuccess(false), 2000);
+    }
   }
 
   return (
@@ -624,11 +626,12 @@ export default function ComponentsClient({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // ── Copy handler ───────────────────────────────────────────────────────────
-  async function onCopy(item: ComponentItem) {
+  async function onCopy(item: ComponentItem, closePreview: () => void): Promise<boolean> {
     if (isProComponent(item) && !isProUser) {
-      showToast("Pro plan required to copy this component.");
+      closePreview();
       setPricingModalOpen(true);
-      return;
+      showToast("Upgrade to Pro to copy this component.");
+      return false;
     }
 
     setActiveId(item._id);
@@ -644,8 +647,10 @@ export default function ComponentsClient({
         ).figmaDataBase64;
       if (!payload) throw new Error("Component payload is missing.");
       await copyToFigma(payload, item.name);
+      return true;
     } catch (error) {
       console.error("Copy failed:", error);
+      return false;
     } finally {
       setActiveId(null);
     }
