@@ -203,16 +203,18 @@ function PreviewModal({
 }: {
   item: ComponentItem;
   onClose: () => void;
-  onCopy: (item: ComponentItem) => Promise<void>;
+  onCopy: (item: ComponentItem, closePreview: () => void) => Promise<boolean>;
   isCopying: boolean;
 }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
   async function handleCopy() {
     if (isCopying || isSuccess) return;
-    await onCopy(item);
-    setIsSuccess(true);
-    setTimeout(() => setIsSuccess(false), 2000);
+    const success = await onCopy(item, onClose);
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => setIsSuccess(false), 2000);
+    }
   }
 
   return (
@@ -347,22 +349,27 @@ function ComponentCard({
   isCopying,
   onCopy,
   onPreview,
+  isProUser = false,
   priority = false,
 }: {
   item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string; pricingType?: "Free" | "Pro"; designType?: "Wireframe" | "UI Design" };
   isCopying: boolean;
-  onCopy: () => Promise<void>;
+  onCopy: () => Promise<boolean>;
   onPreview: () => void;
+  isProUser?: boolean;
   priority?: boolean;
 }) {
   const isPro = isProComponent(item);
+  const showLock = isPro && !isProUser;
   const [isSuccess, setIsSuccess] = useState(false);
 
   async function handleCopy() {
     if (isCopying || isSuccess) return;
-    await onCopy();
-    setIsSuccess(true);
-    setTimeout(() => setIsSuccess(false), 2000);
+    const success = await onCopy();
+    if (success) {
+      setIsSuccess(true);
+      setTimeout(() => setIsSuccess(false), 2000);
+    }
   }
 
   return (
@@ -426,7 +433,9 @@ function ComponentCard({
           disabled={isCopying || isSuccess}
           className={`w-full flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold rounded-full py-2.5 transition-all duration-300 cursor-pointer font-manrope border ${isSuccess
             ? "bg-green-50 text-green-600 border-green-200"
-            : "text-gray-700 bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300"
+            : showLock
+              ? "bg-gray-50 text-gray-400 border-gray-200"
+              : "text-gray-700 bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300"
             } disabled:opacity-100`}
         >
           {isSuccess ? (
@@ -435,6 +444,14 @@ function ComponentCard({
                 <path d="M3 8.5L6 11.5L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Copied
+            </span>
+          ) : showLock ? (
+            <span className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Unlock
             </span>
           ) : (
             <>
@@ -624,11 +641,12 @@ export default function ComponentsClient({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // ── Copy handler ───────────────────────────────────────────────────────────
-  async function onCopy(item: ComponentItem) {
+  async function onCopy(item: ComponentItem, closePreview?: () => void): Promise<boolean> {
     if (isProComponent(item) && !isProUser) {
-      showToast("Pro plan required to copy this component.");
+      closePreview?.();
       setPricingModalOpen(true);
-      return;
+      showToast("Upgrade to Pro to copy this component.");
+      return false;
     }
 
     setActiveId(item._id);
@@ -644,8 +662,10 @@ export default function ComponentsClient({
         ).figmaDataBase64;
       if (!payload) throw new Error("Component payload is missing.");
       await copyToFigma(payload, item.name);
+      return true;
     } catch (error) {
       console.error("Copy failed:", error);
+      return false;
     } finally {
       setActiveId(null);
     }
@@ -919,6 +939,7 @@ export default function ComponentsClient({
                   onPreview={() =>
                     setPreviewItem(item)
                   }
+                  isProUser={isProUser}
                 />
               ))}
 
