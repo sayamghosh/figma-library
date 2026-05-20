@@ -626,9 +626,9 @@ export default function ComponentsClient({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // ── Copy handler ───────────────────────────────────────────────────────────
-  async function onCopy(item: ComponentItem, closePreview: () => void): Promise<boolean> {
+  async function onCopy(item: ComponentItem, closePreview?: () => void): Promise<boolean> {
     if (isProComponent(item) && !isProUser) {
-      closePreview();
+      closePreview?.();
       setPricingModalOpen(true);
       showToast("Upgrade to Pro to copy this component.");
       return false;
