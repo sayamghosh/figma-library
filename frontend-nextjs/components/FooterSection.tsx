@@ -70,11 +70,16 @@ export function FooterSection() {
                 ))}
               </div>
               <div className="flex flex-col gap-4">
-                {policyLinks.map((link) => (
-                  <Link key={link} href={link === "Privacy Policy" ? "/privacy-policy" : "/"} className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
-                    {link}
-                  </Link>
-                ))}
+                {policyLinks.map((link) => {
+                  let href = "/";
+                  if (link === "Privacy Policy") href = "/privacy-policy";
+                  else if (link === "Terms & Conditions") href = "/terms-conditions";
+                  return (
+                    <Link key={link} href={href} className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
+                      {link}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>

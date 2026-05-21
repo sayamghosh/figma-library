@@ -198,7 +198,7 @@ function PricingFooter() {
               <div className="flex flex-col gap-7 text-[14px] font-medium text-[#282828]">
                 <Link href="/privacy-policy">Privacy Policy</Link>
                 <Link href="#">Careers</Link>
-                <Link href="#">Terms &amp; Conditions</Link>
+                <Link href="/terms-conditions">Terms &amp; Conditions</Link>
               </div>
             </div>
           </div>
