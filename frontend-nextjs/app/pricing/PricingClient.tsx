@@ -1,10 +1,19 @@
 "use client";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import fcLogo from "../assets/fc-logo.png";
 import type { Plan } from "../../api/plans";
+import { paymentsApi } from "../../api/payments";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 const FacebookIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -224,7 +233,126 @@ function PricingFooter() {
 }
 
 export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }) {
-  const { setPricingModalOpen } = useAuth();
+  const { user, setLoginModalOpen } = useAuth();
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
+
+  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+    queryKey: ["subscription", "checkAccess"],
+    queryFn: () => paymentsApi.checkAccess(),
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (!window.Razorpay) {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
+
+  const startPayment = useCallback(async (plan: Plan) => {
+    if (hasActiveSubscription) {
+      const confirmUpgrade = window.confirm(
+        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
+      );
+      if (!confirmUpgrade) return;
+    }
+
+    setSelectedPlan(plan);
+    setError("");
+    setLoading(true);
+
+    try {
+      const orderData = await paymentsApi.createOrder(plan._id);
+
+      if (!window.Razorpay) {
+        throw new Error("Razorpay SDK not loaded");
+      }
+
+      const razorpayOptions = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Figcomponents Pro",
+        description: `Subscribe to ${orderData.planName}`,
+        order_id: orderData.orderId,
+        handler: async (response: any) => {
+          try {
+            await paymentsApi.verifyPayment(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature,
+              plan._id
+            );
+            await refetchSubscription();
+            alert("Payment successful! You now have Pro access.");
+          } catch (err) {
+            setError("Payment verification failed. Please contact support.");
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+        },
+        theme: {
+          color: "#2563EB",
+        },
+      };
+
+      const razorpay = new window.Razorpay(razorpayOptions);
+      razorpay.open();
+
+      razorpay.on("payment.failed", (response: any) => {
+        const errMsg = `Payment failed: ${response.error.description}`;
+        setError(errMsg);
+        alert(errMsg);
+      });
+    } catch (err: any) {
+      let errMsg = "";
+      if (err.message === "SUBSCRIPTION_EXISTS") {
+        errMsg = "You already have an active subscription.";
+      } else {
+        errMsg = err.message || "Failed to create payment. Please try again.";
+      }
+      setError(errMsg);
+      alert(errMsg);
+    } finally {
+      setLoading(false);
+      setSelectedPlan(null);
+    }
+  }, [hasActiveSubscription, refetchSubscription, user]);
+
+  const handlePlanSelect = async (planName: string) => {
+    const plan = initialPlans?.find((p) => p.name === planName);
+
+    if (!plan) {
+      alert("This plan is not available yet.");
+      return;
+    }
+
+    if (!user) {
+      setPendingPlanName(plan.name);
+      setLoginModalOpen(true);
+      return;
+    }
+
+    await startPayment(plan);
+  };
+
+  useEffect(() => {
+    if (!user || !pendingPlanName || loading) return;
+    const pendingPlan = initialPlans?.find((p) => p.name === pendingPlanName);
+    if (!pendingPlan) return;
+    setPendingPlanName(null);
+    startPayment(pendingPlan);
+  }, [loading, pendingPlanName, initialPlans, startPayment, user]);
 
   return (
     <main className="min-h-screen bg-white text-[#111111]">
@@ -249,7 +377,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
                 key={plan._id}
                 plan={plan}
                 highlighted={index === 1}
-                onGetStarted={() => setPricingModalOpen(true)}
+                onGetStarted={() => handlePlanSelect(plan.name)}
               />
             ))
           ) : (
