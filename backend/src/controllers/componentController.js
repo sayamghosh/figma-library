@@ -531,6 +531,32 @@ const getTopCreators = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET /api/components/tags ─────────────────────────────────────────────────
+const getApprovedTags = asyncHandler(async (req, res) => {
+  const query = {
+    $or: [
+      { status: "approved" },
+      { status: { $exists: false } },
+      { status: null },
+    ],
+  };
+
+  const tags = await Component.distinct("tags", query);
+
+  // Clean and filter tags
+  const cleanedTags = tags
+    .map((tag) => (tag ? tag.trim() : ""))
+    .filter((tag) => tag.length > 0);
+
+  // Sort alphabetically (case-insensitive)
+  cleanedTags.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  res.json({
+    success: true,
+    data: cleanedTags,
+  });
+});
+
 module.exports = {
   listComponents,
   listMyComponents,
@@ -542,4 +568,6 @@ module.exports = {
   getTopCreators,
   updateComponentStatus,
   listComponentsAdmin,
+  getApprovedTags,
 };
+

@@ -36,6 +36,12 @@ export const componentsApi = {
     return response.data.data;
   },
 
+  async getTags(): Promise<string[]> {
+    const response = await apiClient.get("/components/tags");
+    return response.data.data;
+  },
+
+
   async getTopCreators(): Promise<{_id: string, name: string, profilePicture?: string, componentCount: number}[]> {
     const response = await apiClient.get("/components/top-creators");
     return response.data.data;
