@@ -7,6 +7,7 @@ const {
   getComponentData,
   updateComponent,
   deleteComponent,
+  getApprovedTags,
 } = require("../controllers/componentController");
 const { protect, optionalProtect } = require("../middleware/auth");
 
@@ -16,6 +17,7 @@ router.get("/", listComponents);
 router.get("/admin", protect, require("../controllers/componentController").listComponentsAdmin);
 router.get("/my", protect, listMyComponents);
 router.get("/top-creators", require("../controllers/componentController").getTopCreators);
+router.get("/tags", getApprovedTags);
 router.get("/:id", getComponent);
 router.get("/:id/data", optionalProtect, getComponentData);
 router.post("/", protect, createComponent);

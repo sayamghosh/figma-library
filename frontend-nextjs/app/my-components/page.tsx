@@ -127,6 +127,7 @@ export default function MyComponentsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => componentsApi.delete(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["components"] });
       queryClient.invalidateQueries({ queryKey: ["my-components"] });
       setDeleteTarget(null);
     },
