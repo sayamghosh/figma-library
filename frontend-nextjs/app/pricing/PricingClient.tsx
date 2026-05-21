@@ -356,7 +356,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
 
   return (
     <main className="min-h-screen bg-white text-[#111111]">
-      <section className="mx-auto w-full max-w-[1180px] px-5 pb-10 pt-[160px]">
+      <section className="mx-auto w-full max-w-[1180px] px-5 pb-10 pt-[80px]">
         <div className="text-center">
           <h1 className="text-[42px] font-medium leading-[1.18] tracking-[-0.045em] text-[#161616] md:text-[54px]">
             Powerful features for
