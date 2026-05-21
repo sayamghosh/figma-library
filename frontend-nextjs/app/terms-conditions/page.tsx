@@ -42,7 +42,7 @@ interface PlanCardProps {
   onClick: () => void;
   features: string[];
   description: string;
-  actionText: string;
+  actionText?: string;
   onActionClick: (e: React.MouseEvent) => void;
   actionLoading?: boolean;
 }
@@ -96,11 +96,11 @@ function PlanCard({
           disabled={actionLoading}
           className={`group inline-flex h-[56px] items-center gap-5 rounded-full py-2 pl-8 pr-2 text-[15px] font-bold transition-all disabled:opacity-50 cursor-pointer ${
             dark 
-              ? "bg-[#9FE870] text-black hover:opacity-90" 
-              : "border border-[#dedede] bg-white text-black hover:border-black"
+              ? "bg-[#9FE870] text-black hover:bg-[#8edb5f] shadow-[0_4px_14px_rgba(159,232,112,0.3)]" 
+              : "bg-[#111111] text-white hover:bg-black shadow-[0_4px_14px_rgba(0,0,0,0.1)]"
           }`}
         >
-          {actionLoading ? "Processing..." : actionText}
+          {actionLoading ? "Processing..." : "Buy Now"}
           <span className={`grid h-10 w-10 place-items-center rounded-full transition-transform group-hover:translate-x-0.5 ${
             dark ? "bg-white text-black" : "bg-[#9FE870] text-black"
           }`}>
@@ -129,7 +129,6 @@ function PlanCard({
 
 export default function TermsConditionsPage() {
   const { user, setLoginModalOpen } = useAuth();
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [selectedPlanName, setSelectedPlanName] = useState<"basic" | "advanced">("advanced");
   const [activeSection, setActiveSection] = useState("welcome");
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -557,27 +556,7 @@ export default function TermsConditionsPage() {
               Developing strong ideas into relatable and concrete
             </h2>
             
-            {/* Toggle Billing */}
-            <div className="mx-auto mt-14 inline-flex items-center gap-2 rounded-full bg-[#b4f090] p-1.5 text-[12px] font-bold uppercase tracking-wider">
-              <button
-                onClick={() => setBillingCycle("monthly")}
-                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 transition-all ${
-                  billingCycle === "monthly" ? "bg-black text-white" : "text-[#4a6b2c]"
-                }`}
-              >
-                {billingCycle === "monthly" && <div className="h-1.5 w-1.5 rounded-full bg-[#9FE870]"></div>}
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle("yearly")}
-                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 transition-all ${
-                  billingCycle === "yearly" ? "bg-black text-white" : "text-[#4a6b2c]"
-                }`}
-              >
-                {billingCycle === "yearly" && <div className="h-1.5 w-1.5 rounded-full bg-[#9FE870]"></div>}
-                Yearly
-              </button>
-            </div>
+
           </div>
 
           {/* Cards Wrapper */}
@@ -612,6 +591,19 @@ export default function TermsConditionsPage() {
               onActionClick={() => handlePlanSelect("pro_ultimate")}
               actionLoading={checkoutLoading && pendingPlanName === "pro_ultimate"}
             />
+          </div>
+
+          {/* Centered Try for free Button */}
+          <div className="mt-16 flex justify-center">
+            <Link
+              href="/components"
+              className="group inline-flex h-[56px] items-center gap-5 rounded-full border border-gray-300 bg-white pl-8 pr-2 text-[15px] font-bold text-black shadow-sm transition-all hover:bg-gray-50 hover:border-black cursor-pointer"
+            >
+              Try for free
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#9FE870] text-black transition-transform group-hover:translate-x-0.5">
+                <ArrowRight size={20} strokeWidth={2.5} />
+              </span>
+            </Link>
           </div>
         </div>
       </section>
