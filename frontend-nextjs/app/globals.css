@@ -201,7 +201,7 @@ html, body {
 	background: var(--bg);
 	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
 	scrollbar-gutter: stable;
-	overflow-y: auto;
+	overflow-y: visible;
 }
 
 h1,

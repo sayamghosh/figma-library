@@ -279,10 +279,11 @@ export default function Navbar() {
   }, [mobileOpen]);
 
   const navLinks = [
-    { label: "Component", href: "/components" },
-    // { label: "Template", href: "#" },
-    { label: "Pricing", href: "#" },
-    // { label: "All Pages", href: "#" },
+    { label: "Components", href: "/components" },
+    { label: "Template", href: "#" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "FAQs", href: "#" },
+    { label: "Blog", href: "#" },
     { label: "Hire Us", href: "#" },
   ];
 

@@ -30,6 +30,10 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     enabled: isOpen,
   });
 
+  const proStarter = plans?.find((p) => p.name === "pro_starter");
+  const proUltimate = plans?.find((p) => p.name === "pro_ultimate");
+  const proAnnual = plans?.find((p) => p.name === "pro_annual");
+
   const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
@@ -213,38 +217,36 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
               {/* BASIC Card */}
               <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
                 <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-center mb-1 text-gray-900">
-                  BASIC
+                  {proStarter?.displayName || "BASIC"}
                 </h3>
-                <p className="text-gray-400 text-xs text-center mb-4">Best for startups</p>
+                <p className="text-gray-400 text-xs text-center mb-4">{proStarter?.description || "Best for startups"}</p>
 
                 <div className="bg-[#FAFAFA] rounded-2xl py-4 flex flex-col items-center justify-center mb-6">
                   <div className="flex items-baseline text-slate-900">
                     <span className="text-lg font-bold align-top relative -top-2">₹</span>
-                    <span className="text-[40px] font-black tracking-tight leading-none">99</span>
+                    <span className="text-[40px] font-black tracking-tight leading-none">
+                      {proStarter ? Math.floor(proStarter.price / 100) : 99}
+                    </span>
                     <span className="text-xl font-bold ml-1 text-slate-900">/</span>
                   </div>
-                  <span className="text-[#94A3B8] text-xs font-medium mt-1">180 Days</span>
+                  <span className="text-[#94A3B8] text-xs font-medium mt-1">
+                    {proStarter ? `${proStarter.durationDays} Days` : "180 Days"}
+                  </span>
                 </div>
 
                 <ul className="space-y-3 mb-6 flex-1">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[#334155] text-sm font-medium">100 Components</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[#334155] text-sm font-medium">100 Pro Components</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[#334155] text-sm font-medium">Upgrade facility</span>
-                  </li>
+                  {(proStarter?.features || [
+                    "100 Components",
+                    "100 Pro Components",
+                    "Upgrade facility"
+                  ]).slice(0, 4).map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-[#334155] text-sm font-medium">{feature}</span>
+                    </li>
+                  ))}
                 </ul>
 
                 <button
@@ -259,38 +261,36 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
               {/* ADVANCE Card */}
               <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
                 <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-center mb-1 text-gray-900">
-                  ADVANCE
+                  {proUltimate?.displayName || "ADVANCE"}
                 </h3>
-                <p className="text-gray-400 text-xs text-center mb-4">Best for medium</p>
+                <p className="text-gray-400 text-xs text-center mb-4">{proUltimate?.description || "Best for medium"}</p>
 
                 <div className="bg-[#FAFAFA] rounded-2xl py-4 flex flex-col items-center justify-center mb-6">
                   <div className="flex items-baseline text-slate-900">
                     <span className="text-lg font-bold align-top relative -top-2">₹</span>
-                    <span className="text-[40px] font-black tracking-tight leading-none">199</span>
+                    <span className="text-[40px] font-black tracking-tight leading-none">
+                      {proUltimate ? Math.floor(proUltimate.price / 100) : 199}
+                    </span>
                     <span className="text-xl font-bold ml-1 text-slate-900">/</span>
                   </div>
-                  <span className="text-[#94A3B8] text-xs font-medium mt-1">180 Days</span>
+                  <span className="text-[#94A3B8] text-xs font-medium mt-1">
+                    {proUltimate ? `${proUltimate.durationDays} Days` : "180 Days"}
+                  </span>
                 </div>
 
                 <ul className="space-y-3 mb-6 flex-1">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[#334155] text-sm font-medium">250 Components</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[#334155] text-sm font-medium">250 Pro Components</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[#334155] text-sm font-medium">Upgrade facility</span>
-                  </li>
+                  {(proUltimate?.features || [
+                    "250 Components",
+                    "250 Pro Components",
+                    "Upgrade facility"
+                  ]).slice(0, 4).map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-[#22C55E] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-[#334155] text-sm font-medium">{feature}</span>
+                    </li>
+                  ))}
                 </ul>
 
                 <button
@@ -307,48 +307,31 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
           {/* Bottom Dark Card */}
           <div className="bg-[#111111] rounded-[24px] px-6 md:px-8 py-6 text-white flex flex-col md:flex-row items-center justify-between shadow-xl">
             <div className="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 mb-6 md:mb-0">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                <span className="text-sm font-medium tracking-wide">Unlimited components</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                <span className="text-sm font-medium tracking-wide">Use Free & Pro</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                <span className="text-sm font-medium tracking-wide">365 Days Validity</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                <span className="text-sm font-medium tracking-wide">Access all Premium+</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                <span className="text-sm font-medium tracking-wide">Use all Components</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 6L9 17l-5-5" />
-                </svg>
-                <span className="text-sm font-medium tracking-wide">365 Days Validity</span>
-              </div>
+              {(proAnnual?.features || [
+                "Unlimited components",
+                "Use Free & Pro",
+                "365 Days Validity",
+                "Access all Premium+",
+                "Use all Components",
+                "365 Days Validity"
+              ]).slice(0, 4).map((feature, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 6L9 17l-5-5" />
+                  </svg>
+                  <span className="text-sm font-medium tracking-wide">{feature}</span>
+                </div>
+              ))}
             </div>
 
             <div className="flex flex-col items-center md:items-end w-full md:w-auto">
               <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-[#82F24E] text-[40px] font-black leading-none tracking-tight">₹399</span>
-                <span className="text-gray-300 text-sm font-medium">/ 365 Days</span>
+                <span className="text-[#82F24E] text-[40px] font-black leading-none tracking-tight">
+                  ₹{proAnnual ? Math.floor(proAnnual.price / 100) : 399}
+                </span>
+                <span className="text-gray-300 text-sm font-medium">
+                  / {proAnnual ? `${proAnnual.durationDays} Days` : "365 Days"}
+                </span>
               </div>
               <button
                 onClick={() => handlePlanSelect("pro_annual")}
