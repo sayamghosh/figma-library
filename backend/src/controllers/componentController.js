@@ -543,17 +543,30 @@ const getApprovedTags = asyncHandler(async (req, res) => {
 
   const tags = await Component.distinct("tags", query);
 
-  // Clean and filter tags
-  const cleanedTags = tags
-    .map((tag) => (tag ? tag.trim() : ""))
+  // Format and filter tags
+  const formattedTags = tags
+    .map((tag) => {
+      if (!tag) return "";
+      const trimmed = tag.trim();
+      const lower = trimmed.toLowerCase();
+      if (lower === "cta") return "CTA";
+      if (lower === "faq") return "FAQ";
+      return trimmed
+        .split(/\s+/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    })
     .filter((tag) => tag.length > 0);
 
+  // De-duplicate using a Set
+  const uniqueTags = Array.from(new Set(formattedTags));
+
   // Sort alphabetically (case-insensitive)
-  cleanedTags.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  uniqueTags.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
   res.json({
     success: true,
-    data: cleanedTags,
+    data: uniqueTags,
   });
 });
 
