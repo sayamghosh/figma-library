@@ -5,47 +5,55 @@ const { Plan } = require("../models/Plan");
 const seedPlans = async () => {
   await connectDatabase();
 
+  const commonFeatures = [
+    "Figma variables",
+    "Dark mode variables",
+    "Component properties",
+    "Interactive components",
+    "Auto Layout 5.0",
+    "Single user license",
+    "Design System",
+  ];
+
   const plans = [
     {
       name: "pro_starter",
-      displayName: "Pro Starter",
-      description: "Access 100 premium components",
+      displayName: "Basic",
+      description: "Ideal for individuals who need quick access to basic features.",
       price: 9900,
       durationDays: 180,
       componentLimit: 100,
-      features: ["100 Components", "180 Days Access", "Email Support"],
+      features: [
+        "100 Components",
+        ...commonFeatures,
+      ],
       sortOrder: 1,
       isActive: true,
     },
     {
       name: "pro_ultimate",
-      displayName: "Pro Ultimate",
-      description: "Access 250 premium components",
+      displayName: "Advance",
+      description: "Ideal for individuals who who need advanced features and tools for client work.",
       price: 19900,
       durationDays: 180,
       componentLimit: 250,
       features: [
         "250 Components",
-        "180 Days Access",
-        "Priority Support",
-        "New Components Included",
+        ...commonFeatures,
       ],
       sortOrder: 2,
       isActive: true,
     },
     {
       name: "pro_annual",
-      displayName: "Pro Annual",
-      description: "Unlimited components download for 365 days",
-      price: 39900,
+      displayName: "Premium+",
+      description: "Ideal for businesses who need personalized services and security for large teams.",
+      price: 49900,
       durationDays: 365,
       componentLimit: 999999,
       features: [
-        "Unlimited components",
-        "Use Free & Pro",
-        "365 Days Validity",
-        "Access all Premium+",
-        "Use all Components",
+        "Unlimited Components",
+        ...commonFeatures,
       ],
       sortOrder: 3,
       isActive: true,
@@ -53,13 +61,12 @@ const seedPlans = async () => {
   ];
 
   for (const planData of plans) {
-    const existingPlan = await Plan.findOne({ name: planData.name });
-    if (!existingPlan) {
-      await Plan.create(planData);
-      console.log(`Created plan: ${planData.displayName}`);
-    } else {
-      console.log(`Plan already exists: ${planData.displayName}`);
-    }
+    await Plan.findOneAndUpdate(
+      { name: planData.name },
+      planData,
+      { upsert: true, new: true }
+    );
+    console.log(`Seeded/Updated plan: ${planData.displayName}`);
   }
 
   console.log("Seed completed!");
