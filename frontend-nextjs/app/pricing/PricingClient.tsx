@@ -87,11 +87,11 @@ function PricingCard({ plan, highlighted, onGetStarted }: PricingCardProps) {
         onClick={onGetStarted}
         className={
           highlighted
-            ? "mt-8 w-full rounded-[12px] bg-white py-3.5 text-[14px] font-bold text-[#2563EB] shadow-md hover:bg-slate-50 transition-colors cursor-pointer"
-            : "mt-8 w-full rounded-[12px] border-2 border-[#2563EB] bg-white py-3 text-[14px] font-bold text-[#2563EB] hover:bg-blue-50/50 transition-colors cursor-pointer"
+            ? "mt-8 w-full rounded-[12px] bg-[#9FE870] py-3.5 text-[14px] font-bold text-[#054316] shadow-md hover:bg-[#8edb5f] transition-all cursor-pointer text-center"
+            : "mt-8 w-full rounded-[12px] bg-[#054316] py-3.5 text-[14px] font-bold text-white shadow-md hover:bg-[#043311] transition-all cursor-pointer text-center"
         }
       >
-        Get Started Now
+        Buy Now
       </button>
 
       <ul className="mt-8 flex flex-col gap-4">
@@ -196,9 +196,9 @@ function PricingFooter() {
             </div>
             <div className="pt-[61px]">
               <div className="flex flex-col gap-7 text-[14px] font-medium text-[#282828]">
-                <Link href="#">Privacy Policy</Link>
+                <Link href="/privacy-policy">Privacy Policy</Link>
                 <Link href="#">Careers</Link>
-                <Link href="#">Terms &amp; Conditions</Link>
+                <Link href="/terms-conditions">Terms &amp; Conditions</Link>
               </div>
             </div>
           </div>
@@ -385,6 +385,19 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
               Plans are currently unavailable. Please check back later.
             </div>
           )}
+        </div>
+
+        {/* Centered Try for free Button */}
+        <div className="mt-16 flex justify-center">
+          <Link
+            href="/components"
+            className="group inline-flex h-[56px] items-center gap-5 rounded-full border border-gray-300 bg-white pl-8 pr-2 text-[15px] font-bold text-black shadow-sm transition-all hover:bg-gray-50 hover:border-black cursor-pointer"
+          >
+            Try for free
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#9FE870] text-black transition-transform group-hover:translate-x-0.5">
+              <ArrowRight size={20} strokeWidth={2.5} />
+            </span>
+          </Link>
         </div>
       </section>
 

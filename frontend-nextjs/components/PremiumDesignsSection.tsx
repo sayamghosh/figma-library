@@ -1,9 +1,18 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { componentsApi } from "../api/components";
+import { useAuth } from "../context/AuthContext";
+import { plansApi } from "../api/plans";
+import { paymentsApi } from "../api/payments";
 import { Check, ArrowRight, Crown, Zap, ArrowUpRight, AlignLeft, Wallet, Briefcase, MoreHorizontal, RefreshCw } from "lucide-react";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 function IntegrationVisual() {
   const { data } = useQuery({
@@ -50,6 +59,20 @@ function IntegrationVisual() {
   );
 }
 
+interface PlanCardProps {
+  dark?: boolean;
+  title: string;
+  price: string;
+  period: string;
+  icon: any;
+  isSelected: boolean;
+  onClick: () => void;
+  features: string[];
+  description: string;
+  onActionClick: (e: React.MouseEvent) => void;
+  actionLoading?: boolean;
+}
+
 function PlanCard({
   dark = false,
   title,
@@ -59,20 +82,14 @@ function PlanCard({
   isSelected,
   onClick,
   features,
-}: {
-  dark?: boolean;
-  title: string;
-  price: string;
-  period: string;
-  icon: any;
-  isSelected: boolean;
-  onClick: () => void;
-  features: string[];
-}) {
+  description,
+  onActionClick,
+  actionLoading,
+}: PlanCardProps) {
   return (
     <div 
       onClick={onClick}
-      className={`relative cursor-pointer transition-all duration-500 overflow-hidden ${dark ? "bg-black text-white" : "bg-[#f5f6f8] text-[#111111]"} rounded-[20px] p-10 ${isSelected ? "ring-2 ring-[#9FE870] ring-offset-2" : "hover:scale-[1.02]"}`}
+      className={`relative cursor-pointer transition-all duration-500 overflow-hidden min-h-[380px] ${dark ? "bg-black text-white" : "bg-[#f5f6f8] text-[#111111]"} rounded-[20px] p-10 ${isSelected ? "ring-2 ring-[#9FE870] ring-offset-2" : "hover:scale-[1.02]"}`}
     >
       <div className="flex items-center gap-3">
         <Icon className={dark ? "text-[#f39c12]" : "text-[#5dade2]"} size={22} fill="currentColor" />
@@ -84,18 +101,27 @@ function PlanCard({
         </p>
         <span className={`text-[18px] font-medium ${dark ? "text-[#a0a0a0]" : "text-[#666666]"}`}>/{period}</span>
       </div>
-      <p className={`mt-10 max-w-[240px] text-[16px] leading-[1.6] font-medium ${dark ? "text-[#a0a0a0]" : "#666666"}`}>
-        For personal use & explanation of AI technology.
+      <p className={`mt-10 max-w-[240px] text-[16px] leading-[1.6] font-medium ${dark ? "text-[#a0a0a0]" : "text-[#666666]"}`}>
+        {description}
       </p>
       <div className="mt-10">
-        <Link href="/components"
-          className={`group inline-flex h-[56px] items-center gap-5 rounded-full py-2 pl-8 pr-2 text-[15px] font-bold transition-all ${dark ? "bg-[#9FE870] text-black hover:opacity-90" : "border border-[#dedede] bg-white text-black hover:border-black"}`}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onActionClick(e);
+          }}
+          disabled={actionLoading}
+          className={`group inline-flex h-[56px] items-center gap-5 rounded-full py-2 pl-8 pr-2 text-[15px] font-bold transition-all disabled:opacity-50 cursor-pointer ${
+            dark 
+              ? "bg-[#9FE870] text-black hover:bg-[#8edb5f] shadow-[0_4px_14px_rgba(159,232,112,0.3)]" 
+              : "bg-[#111111] text-white hover:bg-black shadow-[0_4px_14px_rgba(0,0,0,0.1)]"
+          }`}
         >
-          Try For Free
+          {actionLoading ? "Processing..." : "Buy Now"}
           <span className={`grid h-10 w-10 place-items-center rounded-full transition-transform group-hover:translate-x-0.5 ${dark ? "bg-white text-black" : "bg-[#9FE870] text-black"}`}>
             <ArrowRight size={20} strokeWidth={2.5} />
           </span>
-        </Link>
+        </button>
       </div>
 
       {isSelected && (
@@ -115,14 +141,134 @@ function PlanCard({
 }
 
 export function PremiumDesignsSection() {
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
-  const [selectedPlan, setSelectedPlan] = useState<"basic" | "advanced">("advanced");
+  const { user, setLoginModalOpen } = useAuth();
+  const [selectedPlanName, setSelectedPlanName] = useState<"basic" | "advanced">("advanced");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
 
-  const plans = {
-    basic: billingCycle === "monthly" ? "₹ 199.99" : "₹ 1999.99",
-    advanced: billingCycle === "monthly" ? "₹ 499.99" : "₹ 4999.99",
-    period: billingCycle === "monthly" ? "mo" : "yr",
+  // Fetch plans from DB
+  const { data: plansData } = useQuery({
+    queryKey: ["plans"],
+    queryFn: plansApi.getAllPlans,
+  });
+
+  const proStarter = plansData?.find((p) => p.name === "pro_starter");
+  const proUltimate = plansData?.find((p) => p.name === "pro_ultimate");
+
+  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+    queryKey: ["subscription", "checkAccess"],
+    queryFn: () => paymentsApi.checkAccess(),
+    enabled: !!user,
+  });
+
+  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
+
+  // Load Razorpay SDK
+  useEffect(() => {
+    if (!window.Razorpay) {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const startPayment = useCallback(async (plan: any) => {
+    if (hasActiveSubscription) {
+      const confirmUpgrade = window.confirm(
+        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
+      );
+      if (!confirmUpgrade) return;
+    }
+
+    setError("");
+    setCheckoutLoading(true);
+
+    try {
+      const orderData = await paymentsApi.createOrder(plan._id);
+
+      if (!window.Razorpay) {
+        throw new Error("Razorpay SDK not loaded");
+      }
+
+      const razorpayOptions = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Figcomponents Pro",
+        description: `Subscribe to ${orderData.planName}`,
+        order_id: orderData.orderId,
+        handler: async (response: any) => {
+          try {
+            await paymentsApi.verifyPayment(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature,
+              plan._id
+            );
+            await refetchSubscription();
+            alert("Payment successful! You now have Pro access.");
+          } catch (err) {
+            setError("Payment verification failed. Please contact support.");
+            alert("Payment verification failed. Please contact support.");
+          }
+        },
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+        },
+        theme: {
+          color: "#2563EB",
+        },
+      };
+
+      const razorpay = new window.Razorpay(razorpayOptions);
+      razorpay.open();
+
+      razorpay.on("payment.failed", (response: any) => {
+        const errMsg = `Payment failed: ${response.error.description}`;
+        setError(errMsg);
+        alert(errMsg);
+      });
+    } catch (err: any) {
+      let errMsg = "";
+      if (err.message === "SUBSCRIPTION_EXISTS") {
+        errMsg = "You already have an active subscription.";
+      } else {
+        errMsg = err.message || "Failed to create payment. Please try again.";
+      }
+      setError(errMsg);
+      alert(errMsg);
+    } finally {
+      setCheckoutLoading(false);
+    }
+  }, [hasActiveSubscription, refetchSubscription, user]);
+
+  const handlePlanSelect = async (planName: string) => {
+    const plan = plansData?.find((p) => p.name === planName);
+
+    if (!plan) {
+      alert("This plan is not available yet.");
+      return;
+    }
+
+    if (!user) {
+      setPendingPlanName(plan.name);
+      setLoginModalOpen(true);
+      return;
+    }
+
+    await startPayment(plan);
   };
+
+  useEffect(() => {
+    if (!user || !pendingPlanName || checkoutLoading) return;
+    const pendingPlan = plansData?.find((p) => p.name === pendingPlanName);
+    if (!pendingPlan) return;
+    setPendingPlanName(null);
+    startPayment(pendingPlan);
+  }, [checkoutLoading, pendingPlanName, plansData, startPayment, user]);
 
   const basicFeatures = [
     "Access to core features",
@@ -203,51 +349,56 @@ export function PremiumDesignsSection() {
             <h2 className="mt-8 font-outfit text-[clamp(2.3rem,3.6vw,4.2rem)] font-medium leading-[1.1] text-[#111111]">
               Developing strong ideas into relatable and concrete
             </h2>
-            <div className="mx-auto mt-14 inline-flex items-center gap-2 rounded-full bg-[#b4f090] p-1.5 text-[12px] font-bold uppercase tracking-wider">
-              <button
-                onClick={() => setBillingCycle("monthly")}
-                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 transition-all ${billingCycle === "monthly" ? "bg-black text-white" : "text-[#4a6b2c]"}`}
-              >
-                {billingCycle === "monthly" && <div className="h-1.5 w-1.5 rounded-full bg-[#9FE870]"></div>}
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle("yearly")}
-                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 transition-all ${billingCycle === "yearly" ? "bg-black text-white" : "text-[#4a6b2c]"}`}
-              >
-                {billingCycle === "yearly" && <div className="h-1.5 w-1.5 rounded-full bg-[#9FE870]"></div>}
-                Yearly
-              </button>
-            </div>
           </div>
 
-          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-start ${selectedPlan === "basic" ? "lg:grid-cols-[2.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_2.1fr]"}`}>
+          {error && (
+            <div className="mt-8 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center max-w-[600px] mx-auto">
+              {error}
+            </div>
+          )}
+
+          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-start ${selectedPlanName === "basic" ? "lg:grid-cols-[2.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_2.1fr]"}`}>
             <PlanCard 
               title="Basic plan" 
-              price={plans.basic} 
-              period={plans.period} 
+              price={proStarter ? `₹ ${Math.floor(proStarter.price / 100)}` : "₹ 99"}
+              period={proStarter ? `${proStarter.durationDays} Days` : "180 Days"}
               icon={Zap} 
-              isSelected={selectedPlan === "basic"}
-              onClick={() => setSelectedPlan("basic")}
-              features={basicFeatures}
+              isSelected={selectedPlanName === "basic"}
+              onClick={() => setSelectedPlanName("basic")}
+              features={proStarter?.features || basicFeatures}
+              description={proStarter?.description || "Simple structures, leading to a focus on user experience."}
+              onActionClick={() => handlePlanSelect("pro_starter")}
+              actionLoading={checkoutLoading && pendingPlanName === "pro_starter"}
             />
             <PlanCard 
               dark 
               title="Advanced plan" 
-              price={plans.advanced} 
-              period={plans.period} 
+              price={proUltimate ? `₹ ${Math.floor(proUltimate.price / 100)}` : "₹ 199"}
+              period={proUltimate ? `${proUltimate.durationDays} Days` : "180 Days"}
               icon={Crown} 
-              isSelected={selectedPlan === "advanced"}
-              onClick={() => setSelectedPlan("advanced")}
-              features={advancedFeatures}
+              isSelected={selectedPlanName === "advanced"}
+              onClick={() => setSelectedPlanName("advanced")}
+              features={proUltimate?.features || advancedFeatures}
+              description={proUltimate?.description || "Highly customized layout to help you stand out."}
+              onActionClick={() => handlePlanSelect("pro_ultimate")}
+              actionLoading={checkoutLoading && pendingPlanName === "pro_ultimate"}
             />
+          </div>
+
+          {/* Centered Try for free Button */}
+          <div className="mt-16 flex justify-center">
+            <Link
+              href="/components"
+              className="group inline-flex h-[56px] items-center gap-5 rounded-full border border-gray-300 bg-white pl-8 pr-2 text-[15px] font-bold text-black shadow-sm transition-all hover:bg-gray-50 hover:border-black cursor-pointer"
+            >
+              Try for free
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-[#9FE870] text-black transition-transform group-hover:translate-x-0.5">
+                <ArrowRight size={20} strokeWidth={2.5} />
+              </span>
+            </Link>
           </div>
         </div>
       </section>
     </>
   );
 }
-
-
-
-
