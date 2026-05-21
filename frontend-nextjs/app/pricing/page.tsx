@@ -138,7 +138,18 @@ function SpatialitySection() {
         What&apos;s our spatiality!
       </h2>
 
-      <div className="mt-12 overflow-hidden rounded-[7px] border border-[#e2e2e2] bg-[radial-gradient(circle_at_8%_85%,rgba(159,232,112,0.98)_0%,rgba(220,255,193,0.36)_22%,rgba(255,255,255,0)_38%),radial-gradient(circle_at_94%_10%,rgba(159,232,112,0.95)_0%,rgba(206,255,172,0.42)_23%,rgba(255,255,255,0)_40%),#ffffff] px-5 py-[70px] text-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] md:py-[78px]">
+      <div
+        className="mt-12 overflow-hidden rounded-[7px] border border-[#e2e2e2] px-5 py-[70px] text-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] md:py-[78px]"
+        style={{
+          backgroundColor: "#ffffff",
+          backgroundImage: [
+            "radial-gradient(ellipse 46% 67% at 100% 0%, rgba(159,232,112,0.98) 0%, rgba(171,239,127,0.9) 20%, rgba(213,255,188,0.54) 43%, rgba(255,255,255,0) 71%)",
+            "radial-gradient(ellipse 50% 72% at 0% 100%, rgba(159,232,112,0.98) 0%, rgba(176,242,134,0.84) 24%, rgba(220,255,199,0.5) 46%, rgba(255,255,255,0) 74%)",
+            "radial-gradient(ellipse 30% 45% at 18% 53%, rgba(226,255,210,0.34) 0%, rgba(255,255,255,0) 72%)",
+            "radial-gradient(ellipse 38% 50% at 80% 42%, rgba(232,255,218,0.28) 0%, rgba(255,255,255,0) 68%)",
+          ].join(", "),
+        }}
+      >
         <span className="inline-flex rounded-full border border-[#e5e5e5] bg-white px-4 py-2 text-[12px] font-bold uppercase text-[#242424] shadow-sm">
           Upload &amp; Reuse
         </span>
