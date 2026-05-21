@@ -35,6 +35,101 @@ const tocItems: TocItem[] = [
   { id: "contact", label: "11. Contact Us" },
 ];
 
+interface PlanCardProps {
+  dark?: boolean;
+  title: string;
+  price: string;
+  period: string;
+  icon: any;
+  isSelected: boolean;
+  onClick: () => void;
+  features: string[];
+  description: string;
+  actionText: string;
+  onActionClick: (e: React.MouseEvent) => void;
+  actionLoading?: boolean;
+}
+
+function PlanCard({
+  dark = false,
+  title,
+  price,
+  period,
+  icon: Icon,
+  isSelected,
+  onClick,
+  features,
+  description,
+  actionText,
+  onActionClick,
+  actionLoading,
+}: PlanCardProps) {
+  return (
+    <div 
+      onClick={onClick}
+      className={`relative cursor-pointer transition-all duration-500 overflow-hidden ${
+        dark ? "bg-black text-white" : "bg-[#f5f6f8] text-[#111111]"
+      } rounded-[20px] p-10 min-h-[380px] ${
+        isSelected ? "ring-2 ring-[#9FE870] ring-offset-2" : "hover:scale-[1.02]"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <Icon className={dark ? "text-[#f39c12]" : "text-[#5dade2]"} size={22} fill="currentColor" />
+        <h3 className="text-[22px] font-bold">{title}</h3>
+      </div>
+      <div className="mt-6 flex items-baseline gap-1">
+        <p className={`text-[clamp(2.5rem,4vw,3.8rem)] font-bold leading-none ${
+          dark ? "text-[#9FE870]" : "text-[#111111]"
+        }`}>
+          {price}
+        </p>
+        <span className={`text-[18px] font-medium ${dark ? "text-[#a0a0a0]" : "text-[#666666]"}`}>/{period}</span>
+      </div>
+      <p className={`mt-10 max-w-[240px] text-[16px] leading-[1.6] font-medium ${
+        dark ? "text-[#a0a0a0]" : "text-[#666666]"
+      }`}>
+        {description}
+      </p>
+      <div className="mt-10">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onActionClick(e);
+          }}
+          disabled={actionLoading}
+          className={`group inline-flex h-[56px] items-center gap-5 rounded-full py-2 pl-8 pr-2 text-[15px] font-bold transition-all disabled:opacity-50 cursor-pointer ${
+            dark 
+              ? "bg-[#9FE870] text-black hover:opacity-90" 
+              : "border border-[#dedede] bg-white text-black hover:border-black"
+          }`}
+        >
+          {actionLoading ? "Processing..." : actionText}
+          <span className={`grid h-10 w-10 place-items-center rounded-full transition-transform group-hover:translate-x-0.5 ${
+            dark ? "bg-white text-black" : "bg-[#9FE870] text-black"
+          }`}>
+            <ArrowRight size={20} strokeWidth={2.5} />
+          </span>
+        </button>
+      </div>
+
+      {isSelected && (
+        <div className={`mt-10 pt-10 border-t lg:absolute lg:right-12 lg:top-10 lg:mt-0 lg:w-[48%] lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0 animate-in fade-in slide-in-from-right-4 duration-500 ${
+          dark ? "border-white/10" : "border-black/10"
+        }`}>
+          <ul className={`space-y-6 text-[15px] font-medium ${dark ? "text-white/90" : "text-black/80"}`}>
+            {features.map((item) => (
+              <li key={item} className="flex items-center gap-4">
+                <Check className={dark ? "text-[#9FE870]" : "text-black"} size={18} strokeWidth={3} />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PrivacyPolicyPage() {
   const { user, setLoginModalOpen } = useAuth();
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
@@ -565,22 +660,26 @@ export default function PrivacyPolicyPage() {
             <span className="mx-auto inline-flex rounded-full border border-[#d7d7d7] bg-white px-6 py-2 text-sm font-semibold uppercase tracking-wider text-black">
               Pricing & plans
             </span>
-            <h2 className="mt-8 font-outfit text-[32px] sm:text-[42px] font-bold leading-[1.1] text-[#111111] max-w-[600px] mx-auto">
+            <h2 className="mt-8 font-outfit text-[clamp(2.3rem,3.6vw,4.2rem)] font-medium leading-[1.1] text-[#111111]">
               Developing strong ideas into relatable and concrete
             </h2>
             
             {/* Toggle Billing */}
-            <div className="mx-auto mt-12 inline-flex items-center gap-2 rounded-full bg-[#b4f090] p-1.5 text-[12px] font-bold uppercase tracking-wider">
+            <div className="mx-auto mt-14 inline-flex items-center gap-2 rounded-full bg-[#b4f090] p-1.5 text-[12px] font-bold uppercase tracking-wider">
               <button
                 onClick={() => setBillingCycle("monthly")}
-                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2 transition-all ${billingCycle === "monthly" ? "bg-black text-white" : "text-[#4a6b2c]"}`}
+                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 transition-all ${
+                  billingCycle === "monthly" ? "bg-black text-white" : "text-[#4a6b2c]"
+                }`}
               >
                 {billingCycle === "monthly" && <div className="h-1.5 w-1.5 rounded-full bg-[#9FE870]"></div>}
                 Monthly
               </button>
               <button
                 onClick={() => setBillingCycle("yearly")}
-                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2 transition-all ${billingCycle === "yearly" ? "bg-black text-white" : "text-[#4a6b2c]"}`}
+                className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 transition-all ${
+                  billingCycle === "yearly" ? "bg-black text-white" : "text-[#4a6b2c]"
+                }`}
               >
                 {billingCycle === "yearly" && <div className="h-1.5 w-1.5 rounded-full bg-[#9FE870]"></div>}
                 Yearly
@@ -589,113 +688,37 @@ export default function PrivacyPolicyPage() {
           </div>
 
           {/* Cards Wrapper */}
-          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-start max-w-[960px] mx-auto ${
-            selectedPlanName === "basic" ? "lg:grid-cols-[1.8fr_1fr]" : "lg:grid-cols-[1fr_1.8fr]"
+          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-start ${
+            selectedPlanName === "basic" ? "lg:grid-cols-[2.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_2.1fr]"
           }`}>
-            {/* BASIC Plan Card */}
-            <div
+            <PlanCard
+              title="Basic plan"
+              price={proStarter ? `₹ ${Math.floor(proStarter.price / 100)}` : "₹ 99"}
+              period={proStarter ? `${proStarter.durationDays} Days` : "180 Days"}
+              icon={Zap}
+              isSelected={selectedPlanName === "basic"}
               onClick={() => setSelectedPlanName("basic")}
-              className={`relative cursor-pointer transition-all duration-500 overflow-hidden bg-[#f5f6f8] text-[#111111] rounded-[24px] p-8 md:p-10 flex flex-col justify-between min-h-[380px] ${
-                selectedPlanName === "basic" ? "ring-2 ring-[#9FE870] ring-offset-2 shadow-lg lg:col-span-1" : "hover:scale-[1.01] opacity-90"
-              }`}
-            >
-              <div>
-                <div className="flex items-center gap-3">
-                  <Zap className="text-[#5dade2]" size={22} fill="currentColor" />
-                  <h3 className="text-[20px] font-bold">Basic plan</h3>
-                </div>
-                
-                <div className="mt-6 flex items-baseline gap-1">
-                  <p className="text-[36px] md:text-[46px] font-extrabold leading-none text-[#111111]">
-                    ₹ {proStarter ? Math.floor(proStarter.price / 100) : 99}.00
-                  </p>
-                  <span className="text-[14px] font-semibold text-[#666666]">/ 180 Days</span>
-                </div>
-                
-                <p className="mt-8 text-[15px] leading-[1.6] text-[#666666] max-w-[240px]">
-                  Simple structures, leading to a focus on user experience.
-                </p>
-              </div>
-
-              <div className="mt-8">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePlanSelect("pro_starter");
-                  }}
-                  disabled={checkoutLoading}
-                  className="group inline-flex h-[50px] w-full items-center justify-between rounded-full border border-[#dedede] bg-white px-6 text-[14px] font-bold text-black transition-all hover:border-black cursor-pointer"
-                >
-                  Get Started
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[#9FE870] text-black">
-                    <ArrowRight size={16} strokeWidth={2.5} />
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* ADVANCED Plan Card */}
-            <div
+              features={proStarter?.features || basicFeatures}
+              description={proStarter?.description || "Simple structures, leading to a focus on user experience."}
+              actionText="Get Started"
+              onActionClick={() => handlePlanSelect("pro_starter")}
+              actionLoading={checkoutLoading && pendingPlanName === "pro_starter"}
+            />
+            
+            <PlanCard
+              dark
+              title="Advanced plan"
+              price={proUltimate ? `₹ ${Math.floor(proUltimate.price / 100)}` : "₹ 199"}
+              period={proUltimate ? `${proUltimate.durationDays} Days` : "180 Days"}
+              icon={Crown}
+              isSelected={selectedPlanName === "advanced"}
               onClick={() => setSelectedPlanName("advanced")}
-              className={`relative cursor-pointer transition-all duration-500 overflow-hidden bg-black text-white rounded-[24px] p-8 md:p-10 flex flex-col min-h-[380px] ${
-                selectedPlanName === "advanced" ? "ring-2 ring-[#9FE870] ring-offset-2 shadow-lg lg:grid-cols-2" : "hover:scale-[1.01] opacity-90"
-              }`}
-            >
-              <div className="grid lg:grid-cols-[1fr_1.1fr] gap-8 h-full">
-                {/* Left Side */}
-                <div className="flex flex-col justify-between h-full">
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <Crown className="text-[#f39c12]" size={22} fill="currentColor" />
-                      <h3 className="text-[20px] font-bold">Advanced plan</h3>
-                    </div>
-                    
-                    <div className="mt-6 flex items-baseline gap-1">
-                      <p className="text-[36px] md:text-[46px] font-extrabold leading-none text-[#9FE870]">
-                        ₹ {proUltimate ? Math.floor(proUltimate.price / 100) : 199}.00
-                      </p>
-                      <span className="text-[14px] font-semibold text-[#a0a0a0]">/ 180 Days</span>
-                    </div>
-                    
-                    <p className="mt-8 text-[15px] leading-[1.6] text-[#a0a0a0] max-w-[240px]">
-                      Highly customized layout to help you stand out.
-                    </p>
-                  </div>
-
-                  <div className="mt-8">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlanSelect("pro_ultimate");
-                      }}
-                      disabled={checkoutLoading}
-                      className="group inline-flex h-[50px] w-full items-center justify-between rounded-full bg-[#9FE870] px-6 text-[14px] font-bold text-black transition-all hover:opacity-90 cursor-pointer"
-                    >
-                      Try Now
-                      <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-black">
-                        <ArrowRight size={16} strokeWidth={2.5} />
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Right Side (Features) - Shown only when selected or on wide screen */}
-                <div className={`flex flex-col justify-center lg:border-l lg:border-white/10 lg:pl-8 ${
-                  selectedPlanName === "advanced" ? "block" : "hidden lg:block"
-                }`}>
-                  <ul className="space-y-4 text-[14px] font-medium text-white/90">
-                    {(selectedPlanName === "advanced" ? advancedFeatures : basicFeatures).map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-3">
-                        <span className="grid h-5 w-5 place-items-center rounded-full bg-[#9FE870]/20 text-[#9FE870]">
-                          <Check size={12} strokeWidth={3.5} />
-                        </span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
+              features={proUltimate?.features || advancedFeatures}
+              description={proUltimate?.description || "Highly customized layout to help you stand out."}
+              actionText="Try Now"
+              onActionClick={() => handlePlanSelect("pro_ultimate")}
+              actionLoading={checkoutLoading && pendingPlanName === "pro_ultimate"}
+            />
           </div>
         </div>
       </section>
