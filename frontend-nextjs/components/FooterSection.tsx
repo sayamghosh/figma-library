@@ -64,17 +64,22 @@ export function FooterSection() {
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
               <div className="flex flex-col gap-4">
                 {companyLinks.map((link) => (
-                  <Link key={link} href="/" className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
+                  <Link key={link} href={link === "Pricing Plans" ? "/pricing" : "/"} className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
                     {link}
                   </Link>
                 ))}
               </div>
               <div className="flex flex-col gap-4">
-                {policyLinks.map((link) => (
-                  <Link key={link} href="/" className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
-                    {link}
-                  </Link>
-                ))}
+                {policyLinks.map((link) => {
+                  let href = "/";
+                  if (link === "Privacy Policy") href = "/privacy-policy";
+                  else if (link === "Terms & Conditions") href = "/terms-conditions";
+                  return (
+                    <Link key={link} href={href} className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
+                      {link}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>
