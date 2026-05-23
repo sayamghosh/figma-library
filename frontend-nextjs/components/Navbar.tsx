@@ -148,6 +148,23 @@ function UserAvatar({
             )}
 
             <Link
+              href="/dashboard"
+              onClick={() => setOpen(false)}
+              className="
+                flex items-center
+                px-3 py-3
+                rounded-xl
+                text-sm
+                text-gray-300
+                hover:bg-white/5
+                hover:text-white
+                transition-all
+              "
+            >
+              Dashboard
+            </Link>
+
+            <Link
               href="/my-components"
               onClick={() => setOpen(false)}
               className="
@@ -530,6 +547,14 @@ export default function Navbar() {
                     Get Pro
                   </button>
                 )}
+
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-center h-14 w-full rounded-2xl bg-black text-white font-dm-sans text-[14px] font-medium transition-all hover:bg-black/90 active:scale-95"
+                >
+                  Dashboard
+                </Link>
 
                 <Link
                   href="/my-components"
