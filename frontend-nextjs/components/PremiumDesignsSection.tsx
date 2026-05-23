@@ -89,7 +89,7 @@ function PlanCard({
   return (
     <div 
       onClick={onClick}
-      className={`relative cursor-pointer transition-all duration-500 overflow-hidden min-h-[380px] ${dark ? "bg-black text-white" : "bg-[#f5f6f8] text-[#111111]"} rounded-[20px] p-10 ${isSelected ? "ring-2 ring-[#9FE870] ring-offset-2" : "hover:scale-[1.02]"}`}
+      className={`relative cursor-pointer transition-all duration-500 overflow-hidden h-full min-h-[380px] ${dark ? "bg-black text-white" : "bg-[#f5f6f8] text-[#111111]"} rounded-[20px] p-10 ${isSelected ? "ring-2 ring-[#9FE870] ring-offset-2" : "hover:scale-[1.02]"}`}
     >
       <div className="flex items-center gap-3">
         <Icon className={dark ? "text-[#f39c12]" : "text-[#5dade2]"} size={22} fill="currentColor" />
@@ -357,7 +357,7 @@ export function PremiumDesignsSection() {
             </div>
           )}
 
-          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-start ${selectedPlanName === "basic" ? "lg:grid-cols-[2.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_2.1fr]"}`}>
+          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-stretch ${selectedPlanName === "basic" ? "lg:grid-cols-[2.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_2.1fr]"}`}>
             <PlanCard 
               title="Basic plan" 
               price={proStarter ? `₹ ${Math.floor(proStarter.price / 100)}` : "₹ 99"}

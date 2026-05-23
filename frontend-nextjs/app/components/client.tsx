@@ -8,7 +8,7 @@ import { paymentsApi } from "../../api/payments";
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
-import { Scaling, Frame, Copy, Layers, Component, Crown } from "lucide-react";
+import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Component, Crown } from "lucide-react";
 
 
 
@@ -406,7 +406,7 @@ function ComponentCard({
               {/* PRO */}
             </span>
           ) : (
-            <span className="text-[0.6rem] font-bold text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 shrink-0 uppercase tracking-wide">
+            <span className="text-[0.6rem] font-bold text-gray-500 px-1.5 py-0.5 rounded border border-[#a1d99b] shrink-0 uppercase tracking-wide">
               FREE
             </span>
           )}
@@ -416,9 +416,10 @@ function ComponentCard({
           <button type="button" className="hover:text-blue-500 transition-colors">
             <IconShare />
           </button>
-          <div className="flex items-center gap-1 ml-1">
+          <div className="flex items-center ml-1">
             <button type="button" className="hover:text-red-500 transition-colors">
-              <IconHeart />
+              {/* <IconHeart /> */}
+              <ArrowDownToLine size={16} strokeWidth={1.5} />
             </button>
             <span className="font-medium">10k</span>
           </div>
@@ -431,7 +432,7 @@ function ComponentCard({
           type="button"
           onClick={handleCopy}
           disabled={isCopying || isSuccess}
-          className={`w-full flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold rounded-full py-2.5 transition-all duration-300 cursor-pointer font-manrope border ${isSuccess
+          className={`w-full flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold rounded-full py-2 mt-2 transition-all duration-300 cursor-pointer font-manrope border ${isSuccess
             ? "bg-green-50 text-green-600 border-green-200"
             : showLock
               ? "bg-gray-50 text-gray-400 border-gray-200"
