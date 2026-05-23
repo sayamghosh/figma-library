@@ -17,7 +17,7 @@ export function HeroSection() {
         <h1 className="max-w-[980px] font-dm-sans text-[32px] font-bold leading-[1.2] tracking-tight text-[#001b0b] sm:text-[48px] md:text-[64px] lg:text-7xl xl:text-6xl 2xl:max-w-[1080px] 2xl:text-6xl">
           Collection of desktop and
           <br className="hidden sm:block" />
-          mobile <span className="text-[#9FE870]">figma</span> layouts
+          mobile <span className="text-[#238B45]">figma</span> layouts
         </h1>
 
         <div className="mt-8 flex flex-col gap-6 sm:mt-12 sm:flex-row sm:items-center sm:gap-10">

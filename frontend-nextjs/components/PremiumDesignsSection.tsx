@@ -290,7 +290,7 @@ export function PremiumDesignsSection() {
 
   return (
     <>
-      <section className="w-full bg-[#f3f4f6] px-5 py-24 sm:px-8 lg:py-32">
+      <section className="w-full bg-[#f3f4f6] px-5 pt-12 pb-12 sm:px-8 lg:pt-16 lg:pb-16">
         <div className="mx-auto grid w-full max-w-[1320px] items-center gap-16 lg:grid-cols-2">
           <IntegrationVisual />
           <div>
@@ -340,7 +340,7 @@ export function PremiumDesignsSection() {
         </div>
       </section>
 
-      <section id="pricing" className="w-full bg-white px-5 py-24 sm:px-8 lg:py-32">
+      <section id="pricing" className="w-full bg-white px-5 pt-12 pb-12 sm:px-8 lg:pt-16 lg:pb-16">
         <div className="mx-auto w-full max-w-[1320px]">
           <div className="mx-auto max-w-[780px] text-center">
             <p className="mx-auto inline-flex rounded-full border border-[#d7d7d7] bg-white px-6 py-2 text-sm font-semibold uppercase tracking-wider text-black">

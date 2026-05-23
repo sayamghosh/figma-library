@@ -8,7 +8,7 @@ import { paymentsApi } from "../../api/payments";
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
-import { Scaling, Frame, Copy, Component, Crown } from "lucide-react";
+import { Scaling, Frame, Copy, Layers, Component, Crown } from "lucide-react";
 
 
 
@@ -732,7 +732,7 @@ export default function ComponentsClient({
 
         {/* Components section (Fixed in Position) */}
         <div className="px-6 flex items-center gap-2 mb-3 shrink-0">
-          <span className="text-[#9FE870]"><IconLogoFourDots /></span>
+          <span className="text-[#238B45]" ><Layers size={20} strokeWidth={2.25} /></span>
           <span className="font-bold text-gray-800 text-[15px]">Components</span>
           <span className="ml-auto text-[0.65rem] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
             {total}
@@ -749,13 +749,13 @@ export default function ComponentsClient({
                 onClick={() => setActiveCategory(cat)}
                 onMouseEnter={() => prefetchCategory(cat)}
                 onFocus={() => prefetchCategory(cat)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-[0.85rem] font-medium transition-colors cursor-pointer font-manrope ${activeCategory === cat
-                  ? "text-black font-bold"
-                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-[0.85rem] font-medium transition-all cursor-pointer font-manrope border ${activeCategory === cat
+                  ? "text-[#238B45] font-bold bg-[#238B45]/5 border-[#238B45]/20 shadow-[0_1px_2px_rgba(35,139,69,0.05)]"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50 border-transparent"
                   }`}
               >
                 {cat}
-                <span className="text-gray-400"><IconChevron /></span>
+                <span className={activeCategory === cat ? "text-[#238B45]" : "text-gray-400"}><IconChevron /></span>
               </button>
             ))}
           </nav>
@@ -783,7 +783,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setViewMode("wireframe")}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${viewMode === "wireframe"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -794,7 +794,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setViewMode("ui-design")}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${viewMode === "ui-design"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -809,7 +809,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPlatformMode("all")}
                 className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "all"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -819,7 +819,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPlatformMode("web")}
                 className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "web"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -829,7 +829,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPlatformMode("app")}
                 className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "app"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -843,7 +843,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPriceMode("free")}
                 className={`px-6 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "free"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -853,11 +853,11 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPriceMode("pro")}
                 className={`flex items-center gap-1 px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "pro"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
-                <Crown size={16} color="black" strokeWidth={2} />
+                <Crown size={16} color={priceMode === "pro" ? "#e5f5e0" : "black"} strokeWidth={2} />
                 Pro
               </button>
             </div>

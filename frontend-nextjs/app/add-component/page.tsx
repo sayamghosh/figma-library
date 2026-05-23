@@ -384,7 +384,7 @@ export default function AddComponentPage({ params }: any) {
                 )}
 
                 <button 
-                  className="w-full bg-[#8A2BE2] text-white rounded-lg py-2.5 font-bold shadow-sm shadow-purple-500/20 hover:bg-[#7b22cc] hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 font-syne text-sm" 
+                  className="w-full bg-[#8A2BE2] text-white rounded-lg py-2.5 font-bold shadow-sm shadow-purple-500/20 hover:bg-[#7b22cc] hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:hover:translate-y-0 font-syne cursor-pointer text-sm" 
                   type="submit" 
                   disabled={addComponentMutation.isPending}
                 >

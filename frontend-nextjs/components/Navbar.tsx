@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import fcLogo from "../app/assets/fc-logo.png";
+import fcLogo from "../app/assets/newLogo.png";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
@@ -73,7 +73,7 @@ function UserAvatar({
           flex items-center justify-center
           w-11 h-11
           rounded-full
-          ${isMobile ? "bg-[#9FE870] text-black" : "bg-black/70 text-[#9FE870]"}
+          ${isMobile ? "bg-[#238B45] text-[#e5f5e0]" : "bg-black/70 text-[#238B45]"}
           backdrop-blur-xl
           text-[0.9rem]
           font-bold
@@ -108,7 +108,7 @@ function UserAvatar({
                 {email}
               </p>
               {isProUser && (
-                <span className="px-1.5 py-0.5 rounded-md bg-[#9FE870]/20 text-[#9FE870] text-[0.62rem] font-bold tracking-wider uppercase shrink-0">
+                <span className="px-1.5 py-0.5 rounded-md bg-[#238B45]/20 text-[#238B45] text-[0.62rem] font-bold tracking-wider uppercase shrink-0">
                   Pro
                 </span>
               )}
@@ -128,13 +128,13 @@ function UserAvatar({
                   flex items-center justify-center gap-2
                   mb-2 px-3 py-2.5
                   rounded-xl
-                  bg-[#9FE870]
-                  hover:bg-[#8edb5f]
-                  text-black
+                  bg-[#238B45]
+                  hover:bg-[#2a9d50]
+                  text-[#e5f5e0]
                   font-bold text-sm
                   transition-all duration-200
                   active:scale-[0.98]
-                  shadow-lg shadow-[#9FE870]/10
+                  shadow-lg shadow-[#238B45]/10
                   cursor-pointer
                 "
               >
@@ -310,12 +310,12 @@ export default function Navbar() {
                 priority
                 src={fcLogo}
                 alt="figma components"
-                width={42}
+                // width={42}
                 height={42}
-                className="h-[36px] w-[36px] lg:h-[42px] lg:w-[42px] object-contain"
+                className="object-contain"
               />
 
-              <span
+              {/* <span
                 className="
             font-dm-sans
             text-[16px]
@@ -327,7 +327,8 @@ export default function Navbar() {
           "
               >
                 figma components
-              </span>
+              </span> */}
+
             </Link>
           </div>
 
@@ -347,8 +348,8 @@ export default function Navbar() {
               duration-200
               tracking-tight
               ${isActive
-                      ? "text-[#54992e]"
-                      : "text-black hover:text-[#54992e]"
+                      ? "text-[#238B45]"
+                      : "text-black hover:text-[#238B45]"
                     }
             `}
                 >
@@ -380,16 +381,16 @@ export default function Navbar() {
               h-[40px]
               px-6
               rounded-full
-              bg-[#9FE870]
+              bg-[#238B45]
               font-dm-sans
               text-[14px]
               font-semibold
-              text-black
+              text-[#e5f5e0]
               transition-all
               duration-200
-              hover:bg-[#8edb5f]
+              hover:bg-[#2a9d50]
               hover:shadow-md
-              hover:shadow-[#9FE870]/10
+              hover:shadow-[#238B45]/10
               active:scale-[0.98]
               cursor-pointer
             "
@@ -416,7 +417,7 @@ export default function Navbar() {
                     {mobileOpen ? (
                       <button
                         type="button"
-                        className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#9FE870] text-black transition-all active:scale-95"
+                        className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#238B45] text-[#e5f5e0] transition-all active:scale-95"
                         onClick={() => setMobileOpen(false)}
                       >
                         <HamburgerIcon open={true} />
@@ -440,10 +441,10 @@ export default function Navbar() {
                 flex items-center justify-center
                 w-10 h-10
                 rounded-xl
-                bg-[#9FE870]
-                text-black
+                bg-[#238B45]
+                text-[#e5f5e0]
                 transition-all
-                hover:bg-[#8edb5f]
+                hover:bg-[#2a9d50]
                 active:scale-95
               "
                     onClick={() => setMobileOpen((v) => !v)}
@@ -481,7 +482,7 @@ export default function Navbar() {
                 }}
                 className={`
             font-dm-sans text-lg font-medium transition-all duration-500
-            ${isActive ? "text-[#9FE870]" : "text-black"}
+            ${isActive ? "text-[#238B45]" : "text-black"}
           `}
               >
                 {l.label}
@@ -514,10 +515,10 @@ export default function Navbar() {
                     className="
                       flex items-center justify-center gap-2
                       h-14 w-full rounded-2xl
-                      bg-[#9FE870] hover:bg-[#8edb5f]
-                      text-black font-dm-sans text-[14px] font-bold
+                      bg-[#238B45] hover:bg-[#2a9d50]
+                      text-[#e5f5e0] font-dm-sans text-[14px] font-bold
                       transition-all duration-200 active:scale-[0.98]
-                      shadow-md shadow-[#9FE870]/10
+                      shadow-md shadow-[#238B45]/10
                       cursor-pointer
                     "
                   >
@@ -563,11 +564,11 @@ export default function Navbar() {
             flex items-center justify-center
             h-14 w-full max-w-[280px]
             rounded-2xl
-            bg-[#9FE870]
+            bg-[#238B45]
             font-dm-sans text-[14px] font-medium
-            text-black
+            text-[#e5f5e0]
             transition-all duration-500
-            hover:bg-[#8edb5f]
+            hover:bg-[#2a9d50]
             active:scale-95
             cursor-pointer
           "

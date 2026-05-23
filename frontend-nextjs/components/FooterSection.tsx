@@ -29,7 +29,7 @@ const XIcon = ({ className }: { className?: string }) => (
 
 export function FooterSection() {
   return (
-    <footer className="w-full bg-[linear-gradient(180deg,#e8f9db_0%,#f3ffe8_28%,#ffffff_72%)] px-5 pt-24 font-manrope sm:px-8 lg:pt-32">
+    <footer className="w-full bg-[linear-gradient(180deg,#e8f9db_0%,#f3ffe8_28%,#ffffff_72%)] px-5 pt-12 font-manrope sm:px-8 lg:pt-16">
       <div className="mx-auto w-full max-w-[1320px]">
         <div className="grid gap-14 lg:grid-cols-[1.2fr_1.2fr_1fr]">
           {/* Brand Column */}
