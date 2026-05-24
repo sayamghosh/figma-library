@@ -1,125 +1,104 @@
-"use client";
 import Link from "next/link";
 import Image from "next/image";
-import fcLogo from "../app/assets/fc-logo.png";
-const logoImg = fcLogo;
-import { Mail, ArrowRight } from "lucide-react";
-
-const companyLinks = ["About Us", "Our Team", "Pricing Plans", "Faq", "Contact Us", "Refund Policy"];
-const policyLinks = ["404", "Features", "Privacy Policy", "Careers", "Terms & Conditions"];
-
-// Lucide style brand icons (removed in Lucide v1)
-const Facebook = ({ size = 24, strokeWidth = 2, className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-);
-
-const Linkedin = ({ size = 24, strokeWidth = 2, className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
-);
-
-const Youtube = ({ size = 24, strokeWidth = 2, className = "" }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 2-2 58.4 58.4 0 0 1 15 0 2 2 0 0 1 2 2 24.12 24.12 0 0 1 0 10 2 2 0 0 1-2 2 58.4 58.4 0 0 1-15 0 2 2 0 0 1-2-2Z"/><path d="m10 15 5-3-5-3z"/></svg>
-);
-
-const XIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
+import newLogo from "../app/assets/newLogo.png";
 
 export function FooterSection() {
   return (
-    <footer className="w-full bg-[linear-gradient(180deg,#e8f9db_0%,#f3ffe8_28%,#ffffff_72%)] px-5 pt-12 font-manrope sm:px-8 lg:pt-16">
-      <div className="mx-auto w-full max-w-[1320px]">
-        <div className="grid gap-14 lg:grid-cols-[1.2fr_1.2fr_1fr]">
-          {/* Brand Column */}
-          <div>
-            <div className="flex items-center">
-              <Image src={logoImg} alt="figma components" className="h-10 w-auto object-contain" />
-            </div>
-            <p className="mt-9 max-w-[340px] text-[16px] leading-[1.6] text-[#565656]">
-              Products & services are important. They might sell dairy, meat, maybe even eco-friendly manure compost. Including a CSA program...
-            </p>
-            <div className="mt-10 flex gap-4">
-              <a href="#" className="grid h-12 w-12 place-items-center rounded-full border border-[#e0e0e0] bg-white text-black transition-all hover:bg-black hover:text-white">
-                <Facebook size={20} strokeWidth={1.5} />
-              </a>
-              <a href="#" className="grid h-12 w-12 place-items-center rounded-full bg-black text-[#9FE870] transition-all hover:opacity-80">
-                <XIcon className="h-5 w-5" />
-              </a>
-              <a href="#" className="grid h-12 w-12 place-items-center rounded-full border border-[#e0e0e0] bg-white text-black transition-all hover:border-black">
-                <Linkedin size={20} strokeWidth={1.5} />
-              </a>
-              <a href="#" className="grid h-12 w-12 place-items-center rounded-full border border-[#e0e0e0] bg-white text-black transition-all hover:border-black">
-                <Youtube size={20} strokeWidth={1.5} />
-              </a>
-            </div>
-          </div>
-
-          {/* Company Links Column */}
-          <div>
-            <p className="mb-10 inline-flex rounded-full border border-[#e5e5e5] bg-white px-6 py-1.5 text-sm font-medium tracking-wider text-black uppercase">
-              Company
-            </p>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              <div className="flex flex-col gap-4">
-                {companyLinks.map((link) => (
-                  <Link key={link} href={link === "Pricing Plans" ? "/pricing" : "/"} className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
-                    {link}
-                  </Link>
-                ))}
-              </div>
-              <div className="flex flex-col gap-4">
-                {policyLinks.map((link) => {
-                  let href = "/";
-                  if (link === "Privacy Policy") href = "/privacy-policy";
-                  else if (link === "Terms & Conditions") href = "/terms-conditions";
-                  return (
-                    <Link key={link} href={href} className="text-[15px] font-medium text-[#4d4d4d] transition-colors hover:text-black">
-                      {link}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Newsletter Column */}
-          <div>
-            <p className="mb-10 inline-flex rounded-full border border-[#e5e5e5] bg-white px-6 py-1.5 text-sm font-medium tracking-wider text-black uppercase">
-              Weekly newsletter
-            </p>
-            <p className="max-w-[360px] text-[16px] leading-[1.6] text-[#565656]">
-              Get every single updates from our weekly newsletter.
-            </p>
-            <form className="mt-8 flex flex-col gap-5">
-              <div className="flex h-[60px] items-center rounded-full border border-[#e5e5e5] bg-white px-6 focus-within:border-black">
-                <input
-                  type="email"
-                  placeholder="Business email"
-                  className="min-w-0 flex-1 bg-transparent text-[15px] text-black outline-none placeholder:text-[#b9b9b9]"
-                />
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white">
-                  <Mail size={16} strokeWidth={2} />
-                </div>
-              </div>
-              <button type="button" className="group flex h-[50px] w-fit items-center gap-6 rounded-full bg-black py-2 pl-8 pr-2 text-[15px] font-bold text-white transition-all hover:opacity-90">
+    <footer className="w-full bg-black px-5 py-10 font-dm-sans text-white sm:px-8 lg:py-11">
+      <div className="mx-auto w-full max-w-[1386px]">
+        <div className="grid gap-9 lg:grid-cols-[minmax(420px,1fr)_160px_160px_100px] lg:gap-10 xl:grid-cols-[705px_180px_180px_76px] xl:gap-[82px]">
+          <section>
+            <Image
+              src={newLogo}
+              alt="Figma Components"
+              priority={false}
+              className="h-9 w-auto object-contain"
+            />
+            <h2 className="mt-6 max-w-[350px] text-[26px] font-semibold leading-[1.14] text-white">
+              Get Fresh Deals &amp; Travel Tips
+              <br />
+              in Your Inbox
+            </h2>
+            <form className="mt-5 flex max-w-[554px] flex-col gap-3 sm:flex-row">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="h-[51px] min-w-0 flex-1 rounded-full border-0 bg-[#292929] px-[26px] text-[16px] font-medium text-white outline-none placeholder:text-white/90"
+              />
+              <button
+                type="button"
+                className="h-[51px] rounded-full bg-white px-[28px] text-[16px] font-medium text-black"
+              >
                 Subscribe
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#9FE870] text-black transition-transform group-hover:translate-x-0.5">
-                  <ArrowRight size={20} strokeWidth={2.5} />
-                </div>
               </button>
             </form>
-          </div>
+          </section>
+
+          <section className="lg:pt-1">
+            <h3 className="text-[16px] font-semibold leading-none text-white">
+              Figma Components
+            </h3>
+            <nav className="mt-6 flex flex-col gap-4">
+              <Link href="/pricing" className="text-[16px] font-normal leading-none text-white/75">
+                Pricing Plans
+              </Link>
+              <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
+                FAQ
+              </Link>
+              <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
+                Contact Us
+              </Link>
+            </nav>
+          </section>
+
+          <section className="lg:pt-1">
+            <h3 className="text-[16px] font-semibold leading-none text-white">
+              Explore
+            </h3>
+            <nav className="mt-6 flex flex-col gap-4">
+              <Link href="/privacy-policy" className="text-[16px] font-normal leading-none text-white/75">
+                Privacy Policy
+              </Link>
+              <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
+                Careers
+              </Link>
+              <Link href="/terms-conditions" className="text-[16px] font-normal leading-none text-white/75">
+                Terms &amp; Conditions
+              </Link>
+            </nav>
+          </section>
+
+          <section className="lg:pt-1">
+            <h3 className="text-[16px] font-semibold leading-none text-white">
+              Support
+            </h3>
+            <nav className="mt-6 flex flex-col gap-4">
+              <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
+                Facebook
+              </Link>
+              <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
+                Instagram
+              </Link>
+              <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
+                YouTube
+              </Link>
+            </nav>
+          </section>
         </div>
 
-        <div className="mt-24 border-t border-[#eeeeee] py-10 text-center text-[15px] font-medium text-[#575757]">
-          Copyright & design by <span className="font-bold text-black">@figmacomponents.site</span> — 2026
+        <div className="mt-9 border-t border-white/15 pt-8">
+          <h3 className="text-[16px] font-semibold leading-none text-white">
+            Contact
+          </h3>
+          <div className="mt-6 flex flex-col gap-3 text-[16px] font-normal leading-none text-white/75 sm:flex-row sm:items-center">
+            <p>Madhyamgram, Kolkata, India</p>
+            <span className="hidden text-white/45 sm:inline">&bull;</span>
+            <a href="mailto:support@figmacomponents.site">
+              support@figmacomponents.site
+            </a>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
-
-
-

@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { plansApi } from "../../api/plans";
 import { paymentsApi } from "../../api/payments";
-import { FooterSection } from "../../components/FooterSection";
 
 declare global {
   interface Window {
@@ -607,9 +606,6 @@ export default function TermsConditionsPage() {
           </div>
         </div>
       </section>
-
-      {/* Footer Section */}
-      <FooterSection />
     </main>
   );
 }
