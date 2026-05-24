@@ -887,7 +887,7 @@ export default function ComponentsClient({
   const showStaleIndicator = isFetching && !isLoading;
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-[#FAFAFA] relative">
+    <div className="flex min-h-[calc(100dvh-60px)] bg-[#FAFAFA] relative">
       <style dangerouslySetInnerHTML={{
         __html: `
         .no-scrollbar::-webkit-scrollbar {
@@ -897,9 +897,29 @@ export default function ComponentsClient({
           -ms-overflow-style: none !important;
           scrollbar-width: none !important;
         }
+        .category-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+        .category-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .category-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .category-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border: 2px solid transparent;
+          border-radius: 999px;
+          background-clip: content-box;
+        }
+        .category-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+          background-clip: content-box;
+        }
       `}} />
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope h-full">
+      <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope sticky top-[60px] h-[calc(100dvh-60px)] self-start">
 
         {/* Unlock Premium+ Block (Fixed at Top) */}
         {isProUser ? (
@@ -953,7 +973,7 @@ export default function ComponentsClient({
         </div>
 
         {/* Scrollable Categories List Container (Hidden scrollbar) */}
-        <div className="flex-1 overflow-y-auto pb-8 select-none no-scrollbar">
+        <div className="category-scrollbar flex-1 overflow-y-auto pb-8 select-none">
           <nav className="flex flex-col px-3">
             {CATEGORIES.map((cat) => (
               <button
@@ -976,7 +996,7 @@ export default function ComponentsClient({
       </aside>
 
       {/* ── Main Area ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-[#FAFAFA]">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA]">
         {/* Page title section */}
         <div className="px-8 pt-4 pb-4">
           <h1 className="font-outfit font-bold text-[24px] text-[#161616] leading-tight">
@@ -988,7 +1008,7 @@ export default function ComponentsClient({
         </div>
 
         {/* Sticky Toolbar */}
-        <div className="sticky top-0 z-20 px-8 py-4 bg-[#FAFAFA] font-manrope">
+        <div className="sticky top-[60px] z-20 px-8 py-4 bg-[#FAFAFA] font-manrope">
           <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 xl:gap-5">
             {/* View mode segmented control */}
             <div className="flex items-center bg-white border border-gray-200/60 rounded-lg p-1 gap-1 shrink-0">
