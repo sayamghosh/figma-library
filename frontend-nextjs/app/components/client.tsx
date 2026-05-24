@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { componentsApi } from "../../api/components";
-import { paymentsApi } from "../../api/payments";
+import { paymentsApi, type CurrentSubscriptionData, type SubscriptionData } from "../../api/payments";
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
@@ -142,6 +142,105 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
         >
           <IconX />
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Pro subscription usage card ───────────────────────────────────────────────
+type SubscriptionSummary = CurrentSubscriptionData | SubscriptionData;
+
+function formatPlanPrice(price?: number, durationDays?: number) {
+  if (!price || !durationDays) return "Active plan";
+  return `₹${(price / 100).toFixed(2)} / ${durationDays} Days`;
+}
+
+function getDaysBetween(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
+  return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+}
+
+function getDaysLeft(endDate?: string) {
+  if (!endDate) return 0;
+  const end = new Date(endDate).getTime();
+  if (!Number.isFinite(end)) return 0;
+  return Math.max(0, Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24)));
+}
+
+function UsageMeter({
+  label,
+  value,
+  total,
+}: {
+  label: string;
+  value: number;
+  total: number;
+}) {
+  const isUnlimited = total >= 999999;
+  const progress = isUnlimited || total <= 0 ? 100 : Math.min(100, Math.max(0, (value / total) * 100));
+  const displayTotal = isUnlimited ? "Unlimited" : total;
+
+  return (
+    <div>
+      <div className="mb-1 flex items-end justify-between gap-2">
+        <span className="text-[0.72rem] font-bold text-slate-700">{label}</span>
+        <span className="text-[0.68rem] font-semibold text-slate-500">
+          {value} / {displayTotal}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-[#22C55E] transition-all"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ProSubscriptionCard({ subscription }: { subscription: SubscriptionSummary | null }) {
+  const plan = subscription && "plan" in subscription ? subscription.plan : undefined;
+  const planName = plan?.displayName ? `${plan.displayName} Plan` : "Pro Plan";
+  const maxComponents = subscription?.maxComponents ?? plan?.componentLimit ?? 0;
+  const downloadsUsed = Math.max(0, subscription?.componentCountUsed ?? 0);
+  const durationDays =
+    plan?.durationDays ||
+    getDaysBetween(subscription && "startDate" in subscription ? subscription.startDate : undefined, subscription?.endDate) ||
+    180;
+  const daysLeft = getDaysLeft(subscription?.endDate);
+  const daysPassed = Math.max(0, durationDays - daysLeft);
+  const expiresSoon = daysLeft <= 7;
+
+  return (
+    <div className="mx-4 mb-6 shrink-0 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[0.95rem] font-extrabold text-slate-900">{planName}</p>
+          <p className="mt-1 text-[0.72rem] font-bold text-[#238B45]">
+            {formatPlanPrice(plan?.price, plan?.durationDays)}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-md px-2 py-1 text-[0.56rem] font-extrabold uppercase tracking-wide ${
+            expiresSoon ? "bg-red-50 text-red-600" : "bg-sky-50 text-sky-700"
+          }`}
+        >
+          {daysLeft > 0 ? `${daysLeft} days left` : "Expired"}
+        </span>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-[0.75rem] font-bold text-slate-700">Plan Usage</span>
+          <span className="text-[0.65rem] font-semibold text-slate-400">Current cycle</span>
+        </div>
+        <div className="space-y-3">
+          <UsageMeter label="Downloads" value={downloadsUsed} total={maxComponents} />
+          <UsageMeter label="Days passed" value={daysPassed} total={durationDays} />
+        </div>
       </div>
     </div>
   );
@@ -559,6 +658,15 @@ export default function ComponentsClient({
 
   const isProUser = subscriptionData?.isProUser ?? user?.isProUser ?? false;
 
+  const { data: currentSubscription } = useQuery({
+    queryKey: ["subscription", "current"],
+    queryFn: () => paymentsApi.getCurrentSubscription(),
+    enabled: !!user && isProUser,
+    staleTime: 60 * 1000,
+  });
+
+  const activeSubscription = currentSubscription ?? subscriptionData?.subscription ?? null;
+
   const { data: favoriteIdData } = useQuery({
     queryKey: ["favorite-component-ids"],
     queryFn: () => componentsApi.listFavoriteIds(),
@@ -758,10 +866,11 @@ export default function ComponentsClient({
             queryKey: ["components", "data", item._id],
             queryFn: () => componentsApi.getComponentData(item._id),
             staleTime: 10 * 60 * 1000,
-          })
+      })
         ).figmaDataBase64;
       if (!payload) throw new Error("Component payload is missing.");
       await copyToFigma(payload, item.name);
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
       return true;
     } catch (error) {
       console.error("Copy failed:", error);
@@ -793,6 +902,9 @@ export default function ComponentsClient({
       <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope h-full">
 
         {/* Unlock Premium+ Block (Fixed at Top) */}
+        {isProUser ? (
+          <ProSubscriptionCard subscription={activeSubscription} />
+        ) : (
         <div className="mx-4 mb-6 bg-slate-100 rounded-xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <IconUnlock className="text-orange-500 w-5 h-5" />
@@ -829,6 +941,7 @@ export default function ComponentsClient({
             BUY NOW !
           </button>
         </div>
+        )}
 
         {/* Components section (Fixed in Position) */}
         <div className="px-6 flex items-center gap-2 mb-3 shrink-0">

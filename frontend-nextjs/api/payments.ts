@@ -21,6 +21,20 @@ export interface SubscriptionData {
   remainingComponents: number;
 }
 
+export interface SubscriptionPlan {
+  _id: string;
+  name: string;
+  displayName: string;
+  price: number;
+  durationDays: number;
+  componentLimit: number;
+}
+
+export interface CurrentSubscriptionData extends SubscriptionData {
+  plan?: SubscriptionPlan;
+  startDate?: string;
+}
+
 export interface CheckAccessResponse {
   hasAccess: boolean;
   isProUser: boolean;
@@ -53,7 +67,7 @@ export const paymentsApi = {
     return response.data.data;
   },
 
-  async getCurrentSubscription(): Promise<any> {
+  async getCurrentSubscription(): Promise<CurrentSubscriptionData | null> {
     const response = await apiClient.get("/subscriptions/current");
     return response.data.data;
   },
