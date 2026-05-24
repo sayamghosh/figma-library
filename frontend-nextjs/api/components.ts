@@ -60,6 +60,11 @@ export const componentsApi = {
     return response.data.data;
   },
 
+  async getTags(): Promise<string[]> {
+    const response = await apiClient.get("/components/tags");
+    return response.data.data;
+  },
+
   async getById(id: string): Promise<ComponentItem> {
     const response = await apiClient.get(`/components/${id}`);
     return response.data.data;
