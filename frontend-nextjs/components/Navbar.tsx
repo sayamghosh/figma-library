@@ -298,8 +298,8 @@ export default function Navbar() {
   const navLinks = [
     { label: "Components", href: "/components" },
     { label: "Pricing", href: "/pricing" },
-    { label: "FAQs", href: "#" },
-    { label: "Blog", href: "#" },
+    { label: "FAQs", href: "/faq" },
+    { label: "Blog", href: "/blog" },
     { label: "Contact Us", href: "#" },
   ];
 

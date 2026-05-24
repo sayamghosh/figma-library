@@ -42,7 +42,7 @@ export function FooterSection() {
               <Link href="/pricing" className="text-[16px] font-normal leading-none text-white/75">
                 Pricing Plans
               </Link>
-              <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
+              <Link href="/faq" className="text-[16px] font-normal leading-none text-white/75">
                 FAQ
               </Link>
               <Link href="#" className="text-[16px] font-normal leading-none text-white/75">
