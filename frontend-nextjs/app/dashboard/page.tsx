@@ -2,12 +2,17 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { paymentsApi, type PurchasedSubscriptionRecord } from "../../api/payments";
 import { componentsApi } from "../../api/components";
+import { uploadApi } from "../../api/upload";
 import { copyToFigma } from "../../lib/clipboard";
+import {
+  ComponentEditorModal,
+  type ComponentEditorValues,
+} from "../../components/ComponentEditorModal";
 import { 
   ArrowUpRight, 
   Copy, 
@@ -73,11 +78,17 @@ function DeleteConfirmModal({
 }
 
 function MyComponentsPanel() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
+  const [editorStatus, setEditorStatus] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const editorMode = searchParams.get("modal") === "add" ? "create" : searchParams.get("edit") ? "edit" : null;
+  const editId = searchParams.get("edit");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["my-components", search],
@@ -88,6 +99,59 @@ function MyComponentsPanel() {
   const items = useMemo(() => data?.items ?? [], [data]);
   const total = data?.pagination?.total ?? items.length;
 
+  const { data: editingComponent, isLoading: isEditorLoading } = useQuery({
+    queryKey: ["components", "editor", editId],
+    queryFn: () => componentsApi.getById(editId || ""),
+    enabled: !!editId,
+  });
+
+  const editingInitialValues = useMemo<Partial<ComponentEditorValues> | undefined>(() => {
+    if (!editingComponent) return undefined;
+    const existingTags = editingComponent.tags || [];
+    const platformTag = existingTags.some((tag) => tag.toLowerCase() === "app") ? "app" : "web";
+
+    return {
+      name: editingComponent.name || "",
+      description: editingComponent.description || "",
+      tags: existingTags.filter((tag) => !["web", "app"].includes(tag.toLowerCase())),
+      figmaDataBase64: editingComponent.figmaDataBase64 || "",
+      designType: editingComponent.designType || "UI Design",
+      pricingType: editingComponent.pricingType || "Free",
+      platformTag,
+    };
+  }, [editingComponent]);
+
+  function updatePanelQuery(next: Record<string, string | null>) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", "my-components");
+    params.delete("tab");
+
+    Object.entries(next).forEach(([key, value]) => {
+      if (value === null) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+  }
+
+  function openAddEditor() {
+    setEditorStatus("");
+    updatePanelQuery({ modal: "add", edit: null });
+  }
+
+  function openEditEditor(id: string) {
+    setEditorStatus("");
+    updatePanelQuery({ modal: null, edit: id });
+  }
+
+  function closeEditor() {
+    setEditorStatus("");
+    updatePanelQuery({ modal: null, edit: null });
+  }
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => componentsApi.delete(id),
     onSuccess: () => {
@@ -95,6 +159,77 @@ function MyComponentsPanel() {
       setDeleteTarget(null);
     },
   });
+
+  const createMutation = useMutation({
+    mutationFn: async (input: ComponentEditorValues) => {
+      if (!input.previewFile) {
+        throw new Error("Please select a preview image file.");
+      }
+
+      const previewImageUrl = await uploadApi.uploadImage(input.previewFile);
+      return componentsApi.create({
+        name: input.name,
+        description: input.description,
+        tags: input.tags,
+        previewImageUrl,
+        figmaDataBase64: input.figmaDataBase64,
+        designType: input.designType,
+        pricingType: input.pricingType,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["components"] });
+      queryClient.invalidateQueries({ queryKey: ["my-components"] });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (input: ComponentEditorValues & { id: string }) => {
+      let previewImageUrl: string | undefined;
+      if (input.previewFile) {
+        previewImageUrl = await uploadApi.uploadImage(input.previewFile);
+      }
+
+      return componentsApi.update(input.id, {
+        name: input.name,
+        description: input.description,
+        tags: input.tags,
+        ...(previewImageUrl ? { previewImageUrl } : {}),
+        figmaDataBase64: input.figmaDataBase64,
+        designType: input.designType,
+        pricingType: input.pricingType,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["components"] });
+      queryClient.invalidateQueries({ queryKey: ["my-components"] });
+      queryClient.invalidateQueries({ queryKey: ["components", "editor", editId] });
+    },
+  });
+
+  async function handleEditorSubmit(values: ComponentEditorValues) {
+    if (!values.figmaDataBase64.trim()) {
+      setEditorStatus("Paste a Figma component in the payload area first.");
+      return;
+    }
+
+    try {
+      if (editorMode === "create") {
+        setEditorStatus("Uploading preview image...");
+        await createMutation.mutateAsync(values);
+        closeEditor();
+        return;
+      }
+
+      if (editorMode === "edit" && editId) {
+        setEditorStatus(values.previewFile ? "Uploading new preview image..." : "Updating component...");
+        await updateMutation.mutateAsync({ ...values, id: editId });
+        closeEditor();
+      }
+    } catch (error) {
+      setEditorStatus(error instanceof Error ? error.message : "Could not save component.");
+    }
+  }
 
   async function handleCopy(id: string, name: string, figmaDataBase64?: string) {
     setCopyStatus("");
@@ -130,13 +265,14 @@ function MyComponentsPanel() {
           </p>
         </div>
 
-        <Link
-          href="/add-component"
+        <button
+          type="button"
+          onClick={openAddEditor}
           className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#238B45] px-4 text-sm font-bold text-white shadow-md shadow-[#238B45]/10 transition hover:bg-[#2a9d50]"
         >
           <Plus size={16} strokeWidth={2.5} />
           Add Component
-        </Link>
+        </button>
       </div>
 
       <div className="rounded-3xl border border-gray-200/80 bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
@@ -177,13 +313,14 @@ function MyComponentsPanel() {
             <Package size={30} strokeWidth={1.8} />
           </div>
           <p className="font-semibold text-gray-700">You haven&apos;t uploaded any components yet.</p>
-          <Link
-            href="/add-component"
+          <button
+            type="button"
+            onClick={openAddEditor}
             className="mt-5 inline-flex h-11 items-center gap-2 rounded-xl bg-[#238B45] px-5 text-sm font-bold text-white transition hover:bg-[#2a9d50]"
           >
             <Plus size={16} strokeWidth={2.5} />
             Upload your first component
-          </Link>
+          </button>
         </div>
       )}
 
@@ -249,13 +386,14 @@ function MyComponentsPanel() {
                     <Copy size={14} />
                     {copyingId === item._id ? "Copying..." : "Copy"}
                   </button>
-                  <Link
-                    href={`/edit-component/${item._id}`}
+                  <button
+                    type="button"
+                    onClick={() => openEditEditor(item._id)}
                     className="flex items-center justify-center rounded-xl border border-blue-100 bg-blue-50 px-3 text-blue-500 transition hover:bg-blue-100"
                     aria-label="Edit component"
                   >
                     <Pencil size={14} />
-                  </Link>
+                  </button>
                   <button
                     type="button"
                     onClick={() => setDeleteTarget({ id: item._id, name: item.name })}
@@ -278,6 +416,40 @@ function MyComponentsPanel() {
           onCancel={() => setDeleteTarget(null)}
           isDeleting={deleteMutation.isPending}
         />
+      )}
+
+      {editorMode === "create" && (
+        <ComponentEditorModal
+          mode="create"
+          status={editorStatus}
+          isSubmitting={createMutation.isPending}
+          allowPro={user?.role === "admin"}
+          onClose={closeEditor}
+          onSubmit={handleEditorSubmit}
+        />
+      )}
+
+      {editorMode === "edit" && editId && (
+        isEditorLoading || !editingComponent || !editingInitialValues ? (
+          <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 text-sm font-bold text-slate-600 shadow-2xl">
+              <Loader2 className="h-5 w-5 animate-spin text-[#238B45]" />
+              Loading component editor...
+            </div>
+          </div>
+        ) : (
+          <ComponentEditorModal
+            key={editingComponent._id}
+            mode="edit"
+            initialValues={editingInitialValues}
+            currentPreviewImageUrl={editingComponent.previewImageUrl}
+            status={editorStatus}
+            isSubmitting={updateMutation.isPending}
+            allowPro={user?.role === "admin"}
+            onClose={closeEditor}
+            onSubmit={handleEditorSubmit}
+          />
+        )
       )}
     </div>
   );
@@ -661,16 +833,43 @@ function BillingPanel() {
 
 function DashboardContent() {
   const { user, loading: authLoading, setLoginModalOpen } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   
   // Sidebar state (active tab)
   const [activeTab, setActiveTab] = useState("Overview");
 
   useEffect(() => {
-    if (searchParams.get("tab") === "my-components") {
+    const page = searchParams.get("page");
+    if (page === "my-components" || searchParams.get("tab") === "my-components") {
       window.setTimeout(() => setActiveTab("My Components"), 0);
+    } else if (page === "favorites") {
+      window.setTimeout(() => setActiveTab("Favorites"), 0);
+    } else if (page === "plans-billing") {
+      window.setTimeout(() => setActiveTab("Plans & Billing"), 0);
     }
   }, [searchParams]);
+
+  function handleSidebarSelect(label: string) {
+    setActiveTab(label);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("tab");
+    params.delete("modal");
+    params.delete("edit");
+
+    if (label === "My Components") {
+      params.set("page", "my-components");
+    } else if (label === "Favorites") {
+      params.set("page", "favorites");
+    } else if (label === "Plans & Billing") {
+      params.set("page", "plans-billing");
+    } else {
+      params.delete("page");
+    }
+
+    const query = params.toString();
+    router.replace(query ? `/dashboard?${query}` : "/dashboard", { scroll: false });
+  }
 
   // Fetch current subscription details
   const { data: subscriptionResponse, isLoading: subLoading } = useQuery({
@@ -751,6 +950,7 @@ function DashboardContent() {
             <div className="flex items-center gap-3.5 mb-6">
               <div className="w-10 h-10 rounded-full bg-[#238B45] text-white flex items-center justify-center font-bold text-sm shadow-sm">
                 {user.profilePicture ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={user.profilePicture}
                     alt={user.name}
@@ -798,7 +998,7 @@ function DashboardContent() {
                   <button
                     key={item.label}
                     type="button"
-                    onClick={() => setActiveTab(item.label)}
+                    onClick={() => handleSidebarSelect(item.label)}
                     className={className}
                   >
                     {content}
