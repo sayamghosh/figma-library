@@ -25,7 +25,10 @@ export const authApi = {
       id: user._id || user.id,
       name: user.name,
       email: user.email,
+      profilePicture: user.profilePicture,
       role: user.role,
+      isProUser: user.isProUser,
+      subscription: user.subscription,
     };
   },
 };

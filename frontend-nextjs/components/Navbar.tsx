@@ -73,11 +73,11 @@ function UserAvatar({
         }}
         className={`
           flex items-center justify-center
-          w-11 h-11
+          w-9 h-9
           rounded-full
           ${isMobile ? "bg-[#238B45] text-[#e5f5e0]" : "bg-black/70 text-[#238B45]"}
           backdrop-blur-xl
-          text-[0.9rem]
+          text-[0.78rem]
           font-bold
           border border-white/10
           transition-all
