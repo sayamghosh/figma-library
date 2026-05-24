@@ -5,14 +5,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
-import { paymentsApi } from "../../api/payments";
+import { paymentsApi, type PurchasedSubscriptionRecord } from "../../api/payments";
 import { componentsApi } from "../../api/components";
 import { copyToFigma } from "../../lib/clipboard";
 import { 
   ArrowUpRight, 
-  Zap, 
   Copy, 
-  Clock, 
   ShieldCheck, 
   Loader2, 
   LayoutDashboard, 
@@ -473,6 +471,194 @@ function FavoriteComponentsPanel() {
   );
 }
 
+function formatDate(value?: string) {
+  if (!value) return "Not available";
+  return new Date(value).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatCurrency(amount?: number, currency = "INR") {
+  if (typeof amount !== "number") return "Not available";
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount / 100);
+}
+
+function getDaysLeft(endDate?: string) {
+  if (!endDate) return 0;
+  const diffTime = new Date(endDate).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+}
+
+function BillingPanel() {
+  const { data: purchases = [], isLoading, isError } = useQuery({
+    queryKey: ["subscription", "history"],
+    queryFn: () => paymentsApi.getSubscriptionHistory(),
+  });
+
+  const getPlanName = (purchase: PurchasedSubscriptionRecord) =>
+    purchase.planId?.displayName || purchase.planId?.name || "Purchased Plan";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-[#1E293B]">Plans & Billing</h1>
+          <p className="mt-1 text-sm font-medium text-gray-500">
+            Your purchased plans, validity, credits, and payment records.
+          </p>
+        </div>
+
+        <Link
+          href="/pricing"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#238B45] px-4 text-sm font-bold text-white shadow-md shadow-[#238B45]/10 transition hover:bg-[#2a9d50]"
+        >
+          Buy New Plan
+          <ArrowUpRight size={16} strokeWidth={2.5} />
+        </Link>
+      </div>
+
+      {isLoading && (
+        <div className="flex items-center justify-center rounded-3xl border border-gray-200/80 bg-white py-24 text-sm font-semibold text-gray-400">
+          Loading purchased plans...
+        </div>
+      )}
+
+      {isError && (
+        <div className="flex items-center justify-center rounded-3xl border border-red-100 bg-red-50 py-24 text-sm font-semibold text-red-500">
+          Could not load billing information.
+        </div>
+      )}
+
+      {!isLoading && !isError && purchases.length === 0 && (
+        <div className="rounded-3xl border border-gray-200/80 bg-white p-8 text-center shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#238B45]/10 text-[#238B45]">
+            <CreditCard size={26} strokeWidth={1.8} />
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">No purchased plans yet</h2>
+          <p className="mt-2 text-sm font-medium text-gray-500">
+            Purchased plan details will appear here after checkout.
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !isError && purchases.length > 0 && (
+        <div className="space-y-4">
+          {purchases.map((purchase) => {
+            const transaction = purchase.transactions?.[0];
+            const remaining = Math.max(
+              (purchase.maxComponents ?? 0) - (purchase.componentCountUsed ?? 0),
+              0
+            );
+
+            return (
+              <article
+                key={purchase._id}
+                className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
+              >
+                <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                      Purchased Plan
+                    </span>
+                    <h2 className="mt-1 text-xl font-extrabold text-[#1E293B]">
+                      {getPlanName(purchase)}
+                    </h2>
+                  </div>
+                  <span
+                    className={`w-fit rounded-full px-3 py-1 text-xs font-extrabold uppercase ${
+                      purchase.status === "active"
+                        ? "bg-[#238B45]/10 text-[#238B45]"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {purchase.status}
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                      Purchase Date
+                    </span>
+                    <p className="mt-1 text-sm font-bold text-slate-700">
+                      {formatDate(purchase.startDate || purchase.createdAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                      Valid Until
+                    </span>
+                    <p className="mt-1 text-sm font-bold text-slate-700">
+                      {formatDate(purchase.endDate)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                      Components
+                    </span>
+                    <p className="mt-1 text-sm font-bold text-slate-700">
+                      {purchase.componentCountUsed} used / {purchase.maxComponents} total
+                    </p>
+                    <p className="mt-0.5 text-xs font-semibold text-gray-400">
+                      {remaining} remaining
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                      Plan Price
+                    </span>
+                    <p className="mt-1 text-sm font-bold text-slate-700">
+                      {formatCurrency(purchase.planId?.price)}
+                    </p>
+                    <p className="mt-0.5 text-xs font-semibold text-gray-400">
+                      {purchase.planId?.durationDays ?? 0} days validity
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        Paid Amount
+                      </span>
+                      <p className="mt-1 text-sm font-bold text-slate-700">
+                        {formatCurrency(transaction?.amount, transaction?.currency)}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        Payment Method
+                      </span>
+                      <p className="mt-1 text-sm font-bold capitalize text-slate-700">
+                        {transaction?.paymentMethod || "Not available"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                        Payment ID
+                      </span>
+                      <p className="mt-1 truncate text-sm font-bold text-slate-700">
+                        {transaction?.razorpayPaymentId || "Not available"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DashboardContent() {
   const { user, loading: authLoading, setLoginModalOpen } = useAuth();
   const searchParams = useSearchParams();
@@ -482,7 +668,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (searchParams.get("tab") === "my-components") {
-      setActiveTab("My Components");
+      window.setTimeout(() => setActiveTab("My Components"), 0);
     }
   }, [searchParams]);
 
@@ -506,10 +692,7 @@ function DashboardContent() {
   let durationDays = 0;
 
   if (subscription && subscription.endDate) {
-    const end = new Date(subscription.endDate).getTime();
-    const now = Date.now();
-    const diffTime = end - now;
-    daysLeft = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    daysLeft = getDaysLeft(subscription.endDate);
     durationDays = subscription.plan?.durationDays ?? 30;
   }
 
@@ -552,7 +735,7 @@ function DashboardContent() {
     { label: "Overview", icon: LayoutDashboard },
     { label: "My Components", icon: Package },
     { label: "Favorites", icon: Heart },
-    { label: "Billing & Invoice", icon: CreditCard, href: "/pricing" },
+    { label: "Plans & Billing", icon: CreditCard },
     { label: "Contact Us", icon: Mail }
   ];
 
@@ -611,14 +794,6 @@ function DashboardContent() {
                     : "text-[#64748B] hover:bg-slate-50 hover:text-[#1E293B]"
                 }`;
 
-                if (item.href) {
-                  return (
-                    <Link key={item.label} href={item.href} className={className}>
-                      {content}
-                    </Link>
-                  );
-                }
-
                 return (
                   <button
                     key={item.label}
@@ -641,6 +816,8 @@ function DashboardContent() {
             <MyComponentsPanel />
           ) : activeTab === "Favorites" ? (
             <FavoriteComponentsPanel />
+          ) : activeTab === "Plans & Billing" ? (
+            <BillingPanel />
           ) : (
           <>
           
