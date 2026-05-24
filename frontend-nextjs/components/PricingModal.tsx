@@ -74,7 +74,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
   const proUltimate = plans?.find((p) => p.name === "pro_ultimate");
   const proAnnual = plans?.find((p) => p.name === "pro_annual");
 
-  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+  const { refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: isOpen && !!user,
@@ -100,16 +100,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     }
   }, [isOpen]);
 
-  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
-
   const startPayment = useCallback(async (plan: Plan) => {
-    if (hasActiveSubscription) {
-      const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Unused component credits will carry forward, but remaining validity days will be replaced by the new plan validity. Continue?"
-      );
-      if (!confirmUpgrade) return;
-    }
-
     setSelectedPlan(plan);
     setError("");
     setLoading(true);
@@ -160,16 +151,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      if (message === "SUBSCRIPTION_EXISTS") {
-        setError("You already have an active subscription.");
-      } else {
-        setError(message || "Failed to create payment. Please try again.");
-      }
+      setError(
+        message === "SUBSCRIPTION_EXISTS"
+          ? "Failed to create payment. Please try again."
+          : message || "Failed to create payment. Please try again."
+      );
     } finally {
       setLoading(false);
       setSelectedPlan(null);
     }
-  }, [hasActiveSubscription, onClose, refetchSubscription, user]);
+  }, [onClose, refetchSubscription, user]);
 
   const handlePlanSelect = async (planName: string) => {
     const plan = plans?.find((p) => p.name === planName);
@@ -215,15 +206,6 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     >
       <div className="relative w-full max-w-[950px] bg-white rounded-[32px] shadow-2xl p-6 md:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <button
-          type="button"
-          onClick={() => setTermsOpen(true)}
-          className="absolute right-11 top-2 z-10 grid h-9 w-9 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
-          aria-label="View plan purchase terms"
-          title="Plan purchase terms"
-        >
-          <Info size={18} />
-        </button>
-        <button
           onClick={onClose}
           className="absolute right-2 top-2 z-10 p-2 text-gray-400 hover:text-gray-900 cursor-pointer"
           aria-label="Close modal"
@@ -268,7 +250,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
             {/* Right Column - Cards */}
             <div className="flex-[1.4] w-full grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* BASIC Card */}
-              <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+              <div className="relative bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-[#238B45] hover:text-[#238B45]"
+                  aria-label="View basic plan purchase terms"
+                  title="Plan purchase terms"
+                >
+                  <Info size={16} />
+                </button>
                 <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-center mb-1 text-gray-900">
                   {proStarter?.displayName || "BASIC"}
                 </h3>
@@ -312,7 +303,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
               </div>
 
               {/* ADVANCE Card */}
-              <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+              <div className="relative bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-[#238B45] hover:text-[#238B45]"
+                  aria-label="View advance plan purchase terms"
+                  title="Plan purchase terms"
+                >
+                  <Info size={16} />
+                </button>
                 <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-center mb-1 text-gray-900">
                   {proUltimate?.displayName || "ADVANCE"}
                 </h3>
@@ -358,7 +358,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
           </div>
 
           {/* Bottom Dark Card */}
-          <div className="bg-[#111111] rounded-[24px] px-6 md:px-8 py-6 text-white flex flex-col md:flex-row items-center justify-between shadow-xl">
+          <div className="relative bg-[#111111] rounded-[24px] px-6 md:px-8 py-6 text-white flex flex-col md:flex-row items-center justify-between shadow-xl">
+            <button
+              type="button"
+              onClick={() => setTermsOpen(true)}
+              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              aria-label="View annual plan purchase terms"
+              title="Plan purchase terms"
+            >
+              <Info size={16} />
+            </button>
             <div className="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 mb-6 md:mb-0">
               {(proAnnual?.features || [
                 "Unlimited components",

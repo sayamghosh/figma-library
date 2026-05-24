@@ -143,13 +143,11 @@ export default function TermsConditionsPage() {
   const proStarter = plans?.find((p) => p.name === "pro_starter");
   const proUltimate = plans?.find((p) => p.name === "pro_ultimate");
 
-  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+  const { refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: !!user,
   });
-
-  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
 
   // Load Razorpay SDK
   useEffect(() => {
@@ -186,13 +184,6 @@ export default function TermsConditionsPage() {
   }, []);
 
   const startPayment = useCallback(async (plan: any) => {
-    if (hasActiveSubscription) {
-      const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
-      );
-      if (!confirmUpgrade) return;
-    }
-
     setError("");
     setCheckoutLoading(true);
 
@@ -244,17 +235,15 @@ export default function TermsConditionsPage() {
       });
     } catch (err: any) {
       let errMsg = "";
-      if (err.message === "SUBSCRIPTION_EXISTS") {
-        errMsg = "You already have an active subscription.";
-      } else {
-        errMsg = err.message || "Failed to create payment. Please try again.";
-      }
+      errMsg = err.message === "SUBSCRIPTION_EXISTS"
+        ? "Failed to create payment. Please try again."
+        : err.message || "Failed to create payment. Please try again.";
       setError(errMsg);
       alert(errMsg);
     } finally {
       setCheckoutLoading(false);
     }
-  }, [hasActiveSubscription, refetchSubscription, user]);
+  }, [refetchSubscription, user]);
 
   const handlePlanSelect = async (planName: string) => {
     const plan = plans?.find((p) => p.name === planName);

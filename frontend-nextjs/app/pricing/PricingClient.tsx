@@ -55,9 +55,10 @@ interface PricingCardProps {
   plan: Plan;
   highlighted: boolean;
   onGetStarted: () => void;
+  onShowTerms: () => void;
 }
 
-function PricingCard({ plan, highlighted, onGetStarted }: PricingCardProps) {
+function PricingCard({ plan, highlighted, onGetStarted, onShowTerms }: PricingCardProps) {
   const price = Math.floor(plan.price / 100);
   const duration = `${plan.durationDays} Days`;
   const displayName = plan.displayName || plan.name;
@@ -67,10 +68,24 @@ function PricingCard({ plan, highlighted, onGetStarted }: PricingCardProps) {
     <article
       className={
         highlighted
-          ? "flex min-h-[600px] flex-col rounded-[24px] bg-[#054316] p-8 text-white shadow-[0_20px_40px_rgba(5,67,22,0.3)] md:-mt-8 border border-[#06501a] relative transition-transform hover:scale-[1.02] duration-300"
-          : "flex min-h-[560px] flex-col rounded-[24px] bg-white p-8 text-[#0B1527] border border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-transform hover:scale-[1.02] duration-300"
+          ? "relative flex min-h-[600px] flex-col rounded-[24px] bg-[#054316] p-8 text-white shadow-[0_20px_40px_rgba(5,67,22,0.3)] md:-mt-8 border border-[#06501a] transition-transform hover:scale-[1.02] duration-300"
+          : "relative flex min-h-[560px] flex-col rounded-[24px] bg-white p-8 text-[#0B1527] border border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-transform hover:scale-[1.02] duration-300"
       }
     >
+      <button
+        type="button"
+        onClick={onShowTerms}
+        className={
+          highlighted
+            ? "absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            : "absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-[#0B1527] transition hover:border-[#054316] hover:text-[#054316]"
+        }
+        aria-label={`View ${displayName} purchase terms`}
+        title="Plan purchase terms"
+      >
+        <Info size={17} />
+      </button>
+
       <h2 className="text-[24px] font-bold tracking-tight">{displayName}</h2>
       <p
         className={
@@ -179,7 +194,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
   const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
   const [termsOpen, setTermsOpen] = useState(false);
 
-  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+  const { refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: !!user,
@@ -194,16 +209,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
     }
   }, []);
 
-  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
-
   const startPayment = useCallback(async (plan: Plan) => {
-    if (hasActiveSubscription) {
-      const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Unused component credits will carry forward, but remaining validity days will be replaced by the new plan validity. Continue?"
-      );
-      if (!confirmUpgrade) return;
-    }
-
     setLoading(true);
 
     try {
@@ -253,16 +259,14 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       let errMsg = "";
-      if (message === "SUBSCRIPTION_EXISTS") {
-        errMsg = "You already have an active subscription.";
-      } else {
-        errMsg = message || "Failed to create payment. Please try again.";
-      }
+      errMsg = message === "SUBSCRIPTION_EXISTS"
+        ? "Failed to create payment. Please try again."
+        : message || "Failed to create payment. Please try again.";
       alert(errMsg);
     } finally {
       setLoading(false);
     }
-  }, [hasActiveSubscription, refetchSubscription, user]);
+  }, [refetchSubscription, user]);
 
   const handlePlanSelect = async (planName: string) => {
     const plan = initialPlans?.find((p) => p.name === planName);
@@ -294,16 +298,6 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
   return (
     <main className="min-h-screen bg-white text-[#111111]">
       <section className="relative mx-auto w-full max-w-[1180px] px-5 pb-10 pt-[80px]">
-        <button
-          type="button"
-          onClick={() => setTermsOpen(true)}
-          className="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full border border-gray-200 bg-white text-[#0B1527] shadow-sm transition hover:border-[#054316] hover:text-[#054316]"
-          aria-label="View plan purchase terms"
-          title="Plan purchase terms"
-        >
-          <Info size={18} />
-        </button>
-
         <div className="text-center">
           <h1 className="text-[42px] font-medium leading-[1.18] tracking-[-0.045em] text-[#161616] md:text-[54px]">
             Powerful features for
@@ -325,6 +319,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
                 plan={plan}
                 highlighted={index === 1}
                 onGetStarted={() => handlePlanSelect(plan.name)}
+                onShowTerms={() => setTermsOpen(true)}
               />
             ))
           ) : (
