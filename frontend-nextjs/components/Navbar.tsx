@@ -297,11 +297,10 @@ export default function Navbar() {
 
   const navLinks = [
     { label: "Components", href: "/components" },
-    { label: "Template", href: "#" },
     { label: "Pricing", href: "/pricing" },
     { label: "FAQs", href: "#" },
     { label: "Blog", href: "#" },
-    { label: "Hire Us", href: "#" },
+    { label: "Contact Us", href: "#" },
   ];
 
   const isComponentsPage = pathname === "/components";
