@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import newLogo from "../app/assets/newLogo.png";
+import footerLogo from "../app/assets/footer-logo.png";
 
 export function FooterSection() {
   return (
@@ -9,15 +9,15 @@ export function FooterSection() {
         <div className="grid gap-9 lg:grid-cols-[minmax(420px,1fr)_160px_160px_100px] lg:gap-10 xl:grid-cols-[705px_180px_180px_76px] xl:gap-[82px]">
           <section>
             <Image
-              src={newLogo}
+              src={footerLogo}
               alt="Figma Components"
               priority={false}
               className="h-9 w-auto object-contain"
             />
             <h2 className="mt-6 max-w-[350px] text-[26px] font-semibold leading-[1.14] text-white">
-              Get Fresh Deals &amp; Travel Tips
+              Discover Modern Figma Components &amp; UI Kits
               <br />
-              in Your Inbox
+              Weekly
             </h2>
             <form className="mt-5 flex w-full max-w-[554px] flex-col gap-3 sm:flex-row">
               <input
