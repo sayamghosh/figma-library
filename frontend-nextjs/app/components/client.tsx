@@ -101,20 +101,7 @@ function IconLogoFourDots() {
 
 // ── constants ─────────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  "All",
-  "Navigation",
-  "Hero",
-  "Icon Section",
-  "Content",
-  "Rich Content",
-  "Process",
-  "Metrics",
-  "Pricing",
-  "Testimonials",
-  "CTA",
-  "Footer",
-] as const;
+// CATEGORIES are now loaded dynamically from the backend
 
 type ViewMode = "wireframe" | "ui-design";
 type PriceMode = "free" | "pro" | "all";
@@ -643,11 +630,23 @@ function buildQueryOptions(search: string, tag: string, viewMode: ViewMode, pric
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function ComponentsClient({
   initialPage,
+  initialTags = [],
 }: {
   initialPage: PaginatedComponentResponse | null;
+  initialTags?: string[];
 }) {
   const { user, setLoginModalOpen, setPricingModalOpen } = useAuth();
   const queryClient = useQueryClient();
+
+  const { data: tags = [] } = useQuery({
+    queryKey: ["components", "tags"],
+    queryFn: () => componentsApi.getTags(),
+    initialData: initialTags,
+    staleTime: STALE_TIME,
+    gcTime: GC_TIME,
+  });
+
+  const categories = useMemo(() => ["All", ...tags], [tags]);
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
@@ -1012,7 +1011,7 @@ export default function ComponentsClient({
         {/* Scrollable Categories List Container (Hidden scrollbar) */}
         <div className="category-scrollbar flex-1 overflow-y-auto pb-8 select-none">
           <nav className="flex flex-col px-3">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"

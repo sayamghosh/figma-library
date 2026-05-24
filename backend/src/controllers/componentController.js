@@ -678,6 +678,45 @@ const getTopCreators = asyncHandler(async (req, res) => {
   });
 });
 
+// ─── GET /api/components/tags ─────────────────────────────────────────────────
+const getApprovedTags = asyncHandler(async (req, res) => {
+  const query = {
+    $or: [
+      { status: "approved" },
+      { status: { $exists: false } },
+      { status: null },
+    ],
+  };
+
+  const tags = await Component.distinct("tags", query);
+
+  // Format and filter tags
+  const formattedTags = tags
+    .map((tag) => {
+      if (!tag) return "";
+      const trimmed = tag.trim();
+      const lower = trimmed.toLowerCase();
+      if (lower === "cta") return "CTA";
+      if (lower === "faq") return "FAQ";
+      return trimmed
+        .split(/\s+/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    })
+    .filter((tag) => tag.length > 0);
+
+  // De-duplicate using a Set
+  const uniqueTags = Array.from(new Set(formattedTags));
+
+  // Sort alphabetically (case-insensitive)
+  uniqueTags.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
+  res.json({
+    success: true,
+    data: uniqueTags,
+  });
+});
+
 module.exports = {
   listComponents,
   listMyComponents,
@@ -693,4 +732,6 @@ module.exports = {
   getTopCreators,
   updateComponentStatus,
   listComponentsAdmin,
+  getApprovedTags,
 };
+
