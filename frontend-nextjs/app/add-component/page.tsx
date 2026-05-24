@@ -154,7 +154,7 @@ export default function AddComponentPage({ params }: any) {
         router.push("/components");
       } else {
         setStatus("Component submitted! It will be public after admin review.");
-        setTimeout(() => router.push("/my-components"), 2500);
+        setTimeout(() => router.push("/dashboard?tab=my-components"), 2500);
       }
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not add component.");

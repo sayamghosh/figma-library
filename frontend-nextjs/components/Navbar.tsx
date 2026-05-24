@@ -165,7 +165,7 @@ function UserAvatar({
             </Link>
 
             <Link
-              href="/my-components"
+              href="/dashboard?tab=my-components"
               onClick={() => setOpen(false)}
               className="
                 flex items-center
@@ -556,7 +556,7 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href="/my-components"
+                  href="/dashboard?tab=my-components"
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center justify-center h-14 w-full rounded-2xl bg-black text-white font-dm-sans text-[14px] font-medium transition-all hover:bg-black/90 active:scale-95"
                 >

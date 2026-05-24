@@ -183,7 +183,7 @@ export default function EditComponentPage({ params }: { params: Promise<{ id: st
         pricingType,
       });
       setStatus("Component updated successfully.");
-      router.push("/my-components");
+      router.push("/dashboard?tab=my-components");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Could not update component.");
     }
