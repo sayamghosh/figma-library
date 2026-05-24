@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { componentsApi } from "../../api/components";
 import { paymentsApi } from "../../api/payments";
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
-import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Component, Crown } from "lucide-react";
+import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Crown, Heart } from "lucide-react";
 
 
 
@@ -70,16 +70,6 @@ function IconX() {
   return (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
       <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconShare() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <circle cx="12" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="4" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M5.5 7l5-2.5M5.5 9l5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -200,11 +190,17 @@ function PreviewModal({
   onClose,
   onCopy,
   isCopying,
+  isFavorite,
+  onFavoriteToggle,
+  isFavoritePending,
 }: {
   item: ComponentItem;
   onClose: () => void;
   onCopy: (item: ComponentItem, closePreview: () => void) => Promise<boolean>;
   isCopying: boolean;
+  isFavorite: boolean;
+  onFavoriteToggle: (item: ComponentItem) => void;
+  isFavoritePending: boolean;
 }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -252,7 +248,7 @@ function PreviewModal({
 
         {/* Content - Image Preview */}
         <div className="px-6 py-4 relative overflow-hidden flex flex-col items-center">
-          <div className="relative w-full h-[35vh] sm:h-[42vh] md:h-[46vh] max-h-[460px] min-h-[240px] rounded-xl border border-gray-100 overflow-hidden bg-[#FAFBFD] flex items-center justify-center">
+          <div className="relative group/preview w-full h-[35vh] sm:h-[42vh] md:h-[46vh] max-h-[460px] min-h-[240px] rounded-xl border border-gray-100 overflow-hidden bg-[#FAFBFD] flex items-center justify-center">
             {item.previewImageUrl ? (
               <Image
                 src={item.previewImageUrl}
@@ -266,6 +262,22 @@ function PreviewModal({
                 No preview available
               </div>
             )}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onFavoriteToggle(item);
+              }}
+              disabled={isFavoritePending}
+              aria-pressed={isFavorite}
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-700 shadow-sm backdrop-blur transition-all hover:scale-105 hover:text-red-500 disabled:cursor-wait disabled:opacity-70 ${
+                isFavorite ? "opacity-100 text-red-500" : "opacity-0 group-hover/preview:opacity-100"
+              }`}
+            >
+              <Heart size={18} strokeWidth={2} fill={isFavorite ? "currentColor" : "none"} />
+            </button>
           </div>
         </div>
 
@@ -286,25 +298,6 @@ function PreviewModal({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="text-gray-700 hover:text-black hover:scale-105 active:scale-95 transition-all p-1"
-              title="Share Component"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3"></circle>
-                <circle cx="6" cy="12" r="3"></circle>
-                <circle cx="18" cy="19" r="3"></circle>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-              </svg>
-            </button>
-            <div className="flex items-center gap-1.5 text-gray-700 hover:text-black hover:scale-105 transition-all cursor-pointer p-1">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-              <span className="font-semibold text-sm">10K</span>
-            </div>
             <button
               type="button"
               onClick={handleCopy}
@@ -349,13 +342,19 @@ function ComponentCard({
   isCopying,
   onCopy,
   onPreview,
+  isFavorite,
+  onFavoriteToggle,
+  isFavoritePending,
   isProUser = false,
   priority = false,
 }: {
-  item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string; pricingType?: "Free" | "Pro"; designType?: "Wireframe" | "UI Design" };
+  item: ComponentItem;
   isCopying: boolean;
   onCopy: () => Promise<boolean>;
   onPreview: () => void;
+  isFavorite: boolean;
+  onFavoriteToggle: () => void;
+  isFavoritePending: boolean;
   isProUser?: boolean;
   priority?: boolean;
 }) {
@@ -394,6 +393,22 @@ function ComponentCard({
             No preview
           </div>
         )}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onFavoriteToggle();
+          }}
+          disabled={isFavoritePending}
+          aria-pressed={isFavorite}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-700 shadow-sm backdrop-blur transition-all hover:scale-105 hover:text-red-500 disabled:cursor-wait disabled:opacity-70 ${
+            isFavorite ? "opacity-100 text-red-500" : "opacity-0 group-hover/preview:opacity-100"
+          }`}
+        >
+          <Heart size={18} strokeWidth={2} fill={isFavorite ? "currentColor" : "none"} />
+        </button>
       </div>
 
       {/* Footer row */}
@@ -413,9 +428,6 @@ function ComponentCard({
         </div>
 
         <div className="flex items-center gap-1 text-gray-500 text-[0.75rem]">
-          <button type="button" className="hover:text-blue-500 transition-colors">
-            <IconShare />
-          </button>
           <div className="flex items-center ml-1">
             <button type="button" className="hover:text-red-500 transition-colors">
               {/* <IconHeart /> */}
@@ -517,7 +529,7 @@ export default function ComponentsClient({
 }: {
   initialPage: PaginatedComponentResponse | null;
 }) {
-  const { user, setPricingModalOpen } = useAuth();
+  const { user, setLoginModalOpen, setPricingModalOpen } = useAuth();
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -546,6 +558,18 @@ export default function ComponentsClient({
   });
 
   const isProUser = subscriptionData?.isProUser ?? user?.isProUser ?? false;
+
+  const { data: favoriteIdData } = useQuery({
+    queryKey: ["favorite-component-ids"],
+    queryFn: () => componentsApi.listFavoriteIds(),
+    enabled: !!user,
+    staleTime: 60 * 1000,
+  });
+
+  const favoriteIds = useMemo(
+    () => new Set(favoriteIdData ?? []),
+    [favoriteIdData]
+  );
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -587,6 +611,81 @@ export default function ComponentsClient({
   const total = data?.pages[0]?.pagination?.total ?? (initialPage?.pagination?.total || 0);
 
   // ── Prefetch a category on hover ───────────────────────────────────────────
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: (componentId: string) => componentsApi.toggleFavorite(componentId),
+    onMutate: async (componentId) => {
+      await queryClient.cancelQueries({ queryKey: ["favorite-components"] });
+      await queryClient.cancelQueries({ queryKey: ["favorite-component-ids"] });
+      const previous = queryClient.getQueryData<PaginatedComponentResponse>(["favorite-components"]);
+      const previousIds = queryClient.getQueryData<string[]>(["favorite-component-ids"]);
+      const fallbackItem = items.find((item) => item._id === componentId);
+      const isFavoriteId = previousIds?.includes(componentId) ?? favoriteIds.has(componentId);
+
+      queryClient.setQueryData<string[]>(
+        ["favorite-component-ids"],
+        isFavoriteId
+          ? (previousIds ?? []).filter((id) => id !== componentId)
+          : [componentId, ...(previousIds ?? [])]
+      );
+
+      if (previous || fallbackItem) {
+        const current = previous ?? {
+          items: [],
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+        const alreadyFavorite = current.items.some((item) => item._id === componentId);
+        const nextItems = alreadyFavorite
+          ? current.items.filter((item) => item._id !== componentId)
+          : fallbackItem
+            ? [{ ...fallbackItem, isFavorite: true }, ...current.items]
+            : current.items;
+        const totalFavorites = Math.max(0, current.pagination.total + (alreadyFavorite ? -1 : 1));
+
+        queryClient.setQueryData<PaginatedComponentResponse>(["favorite-components"], {
+          items: nextItems,
+          pagination: {
+            ...current.pagination,
+            total: totalFavorites,
+            totalPages: Math.ceil(totalFavorites / current.pagination.limit),
+          },
+        });
+      }
+
+      return { previous, previousIds };
+    },
+    onError: (_error, _componentId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["favorite-components"], context.previous);
+      }
+      if (context?.previousIds) {
+        queryClient.setQueryData(["favorite-component-ids"], context.previousIds);
+      }
+      showToast("Could not update favorite. Please try again.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["favorite-components"] });
+      queryClient.invalidateQueries({ queryKey: ["favorite-component-ids"] });
+    },
+  });
+
+  const handleFavoriteToggle = useCallback(
+    (item: ComponentItem) => {
+      if (!user) {
+        setLoginModalOpen(true);
+        showToast("Sign in to save favorites.");
+        return;
+      }
+
+      toggleFavoriteMutation.mutate(item._id);
+    },
+    [setLoginModalOpen, showToast, toggleFavoriteMutation, user]
+  );
+
   const prefetchCategory = useCallback(
     (cat: string) => {
       const tag = cat === "All" ? "" : cat;
@@ -940,6 +1039,9 @@ export default function ComponentsClient({
                   onPreview={() =>
                     setPreviewItem(item)
                   }
+                  isFavorite={favoriteIds.has(item._id)}
+                  onFavoriteToggle={() => handleFavoriteToggle(item)}
+                  isFavoritePending={toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === item._id}
                   isProUser={isProUser}
                 />
               ))}
@@ -973,6 +1075,9 @@ export default function ComponentsClient({
           onClose={() => setPreviewItem(null)}
           onCopy={onCopy}
           isCopying={activeId === previewItem._id}
+          isFavorite={favoriteIds.has(previewItem._id)}
+          onFavoriteToggle={handleFavoriteToggle}
+          isFavoritePending={toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === previewItem._id}
         />
       )}
 
