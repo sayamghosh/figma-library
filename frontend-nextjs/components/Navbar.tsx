@@ -311,7 +311,7 @@ export default function Navbar() {
     { label: "Pricing", href: "/pricing" },
     { label: "FAQs", href: "/faq" },
     { label: "Blog", href: "/blog" },
-    { label: "Contact Us", href: "#" },
+    { label: "Contact Us", href: "/dashboard?page=contact" },
   ];
 
   const isComponentsPage = pathname === "/components";
