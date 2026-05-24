@@ -13,15 +13,8 @@ import {
   ShieldCheck, 
   Loader2, 
   LayoutDashboard, 
-  Unlock, 
-  Layers, 
   Heart, 
-  Users, 
-  BarChart3, 
   CreditCard, 
-  User as UserIcon, 
-  FileSpreadsheet, 
-  BookOpen, 
   Mail, 
   ChevronDown 
 } from "lucide-react";
@@ -96,15 +89,8 @@ export default function DashboardPage() {
   // Sidebar Menu Config
   const sidebarLinks = [
     { label: "Overview", icon: LayoutDashboard },
-    { label: "Unlocked Templates", icon: Unlock },
-    { label: "Figma Library", icon: Layers, href: "/components" },
     { label: "Favorites", icon: Heart },
-    { label: "Teams", icon: Users },
-    { label: "Usage", icon: BarChart3 },
-    { label: "Billing & Invoices", icon: CreditCard, href: "/pricing" },
-    { label: "Profile", icon: UserIcon },
-    { label: "Changelog", icon: FileSpreadsheet },
-    { label: "Documentation", icon: BookOpen },
+    { label: "Billing & Invoice", icon: CreditCard, href: "/pricing" },
     { label: "Contact Us", icon: Mail }
   ];
 
