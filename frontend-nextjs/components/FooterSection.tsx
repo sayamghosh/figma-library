@@ -19,15 +19,15 @@ export function FooterSection() {
               <br />
               in Your Inbox
             </h2>
-            <form className="mt-5 flex max-w-[554px] flex-col gap-3 sm:flex-row">
+            <form className="mt-5 flex w-full max-w-[554px] flex-col gap-3 sm:flex-row">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="h-[51px] min-w-0 flex-1 rounded-full border-0 bg-[#292929] px-[26px] text-[16px] font-medium text-white outline-none placeholder:text-white/90"
+                className="h-[51px] w-full min-w-0 rounded-full border-0 bg-[#292929] px-[26px] text-[16px] font-medium text-white outline-none placeholder:text-white/90 sm:flex-1"
               />
               <button
                 type="button"
-                className="h-[51px] rounded-full bg-white px-[28px] text-[16px] font-medium text-black"
+                className="h-[51px] w-full rounded-full bg-white px-[28px] text-[16px] font-medium text-black sm:w-auto"
               >
                 Subscribe
               </button>
@@ -93,7 +93,7 @@ export function FooterSection() {
           <div className="mt-6 flex flex-col gap-3 text-[16px] font-normal leading-none text-white/75 sm:flex-row sm:items-center">
             <p>Madhyamgram, Kolkata, India</p>
             <span className="hidden text-white/45 sm:inline">&bull;</span>
-            <a href="mailto:support@figmacomponents.site">
+            <a href="mailto:support@figmacomponents.site" className="break-all sm:break-normal">
               support@figmacomponents.site
             </a>
           </div>
