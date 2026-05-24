@@ -25,6 +25,7 @@ function getInitials(name: string) {
 function UserAvatar({
   name,
   email,
+  profilePicture,
   onLogout,
   onClick,
   isMobile = false,
@@ -33,6 +34,7 @@ function UserAvatar({
 }: {
   name: string;
   email: string;
+  profilePicture?: string;
   onLogout: () => void;
   onClick?: () => void;
   isMobile?: boolean;
@@ -82,7 +84,16 @@ function UserAvatar({
           active:scale-95
         `}
       >
-        {getInitials(name)}
+        {profilePicture ? (
+          <img
+            src={profilePicture}
+            alt={name}
+            className="h-full w-full rounded-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          getInitials(name)
+        )}
       </button>
 
       {!isMobile && open && (
@@ -418,6 +429,7 @@ export default function Navbar() {
                   <UserAvatar
                     name={user.name}
                     email={user.email}
+                    profilePicture={user.profilePicture}
                     onLogout={logout}
                     isProUser={isProUser}
                     onGetPro={() => setPricingModalOpen(true)}
@@ -442,6 +454,7 @@ export default function Navbar() {
                       <UserAvatar
                         name={user.name}
                         email={user.email}
+                        profilePicture={user.profilePicture}
                         onLogout={logout}
                         isMobile={true}
                         onClick={() => setMobileOpen(true)}

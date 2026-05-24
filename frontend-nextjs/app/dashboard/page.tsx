@@ -379,7 +379,16 @@ function DashboardContent() {
             {/* User Profile Info */}
             <div className="flex items-center gap-3.5 mb-6">
               <div className="w-10 h-10 rounded-full bg-[#238B45] text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                {user.name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("")}
+                {user.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={user.name}
+                    className="h-full w-full rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  user.name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("")
+                )}
               </div>
               <div className="truncate">
                 <h4 className="text-sm font-bold text-[#1E293B] truncate leading-tight">{user.name}</h4>
