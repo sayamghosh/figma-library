@@ -19,6 +19,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const planRoutes = require("./routes/planRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -63,6 +64,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/plans", planRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/contacts", contactRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

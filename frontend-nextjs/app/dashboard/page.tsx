@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { paymentsApi, type PurchasedSubscriptionRecord } from "../../api/payments";
 import { componentsApi } from "../../api/components";
 import { uploadApi } from "../../api/upload";
+import { contactApi, type ContactInput } from "../../api/contact";
 import { copyToFigma } from "../../lib/clipboard";
 import {
   ComponentEditorModal,
@@ -455,6 +456,221 @@ function MyComponentsPanel() {
   );
 }
 
+function ContactPanel() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [statusMessage, setStatusMessage] = useState("");
+  const [form, setForm] = useState<ContactInput>({
+    name: user?.name || "",
+    email: user?.email || "",
+    company: "",
+    country: "Indonesia",
+    message: "",
+  });
+
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || user?.name || "",
+      email: prev.email || user?.email || "",
+    }));
+  }, [user]);
+
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: ["contact-history"],
+    queryFn: () => contactApi.listMine(),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (payload: ContactInput) => contactApi.create(payload),
+    onSuccess: () => {
+      setStatusMessage("Thanks! Your message has been sent.");
+      setForm((prev) => ({
+        ...prev,
+        company: "",
+        message: "",
+      }));
+      queryClient.invalidateQueries({ queryKey: ["contact-history"] });
+    },
+    onError: (error) => {
+      setStatusMessage(error instanceof Error ? error.message : "Could not send your message.");
+    },
+  });
+
+  function handleChange<K extends keyof ContactInput>(key: K, value: ContactInput[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatusMessage("");
+
+    if (!form.name || !form.email || !form.country || !form.message) {
+      setStatusMessage("Please complete the required fields.");
+      return;
+    }
+
+    createMutation.mutate({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      company: form.company?.trim() || "",
+      country: form.country.trim(),
+      message: form.message.trim(),
+    });
+  }
+
+  const countries = [
+    "Indonesia",
+    "India",
+    "United States",
+    "United Kingdom",
+    "Australia",
+    "Canada",
+    "Germany",
+    "Singapore",
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="rounded-3xl border border-gray-200/80 bg-white p-8 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="text-2xl font-extrabold text-gray-900">Contact Us</h1>
+          <p className="mt-3 text-sm text-gray-500">
+            If you need our help, have questions about how to use the platform or are experiencing technical
+            difficulties, please do not hesitate to contact us.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-10 grid gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <label className="space-y-2 text-sm font-semibold text-gray-700">
+              Your name<span className="text-red-500">*</span>
+              <input
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-800 outline-none transition focus:border-[#238B45] focus:ring-2 focus:ring-[#238B45]/10"
+                placeholder="Julia William"
+                value={form.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+              />
+            </label>
+            <label className="space-y-2 text-sm font-semibold text-gray-700">
+              Contact email<span className="text-red-500">*</span>
+              <input
+                type="email"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-800 outline-none transition focus:border-[#238B45] focus:ring-2 focus:ring-[#238B45]/10"
+                placeholder="you@example.com"
+                value={form.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+              />
+            </label>
+            <label className="space-y-2 text-sm font-semibold text-gray-700">
+              Company name
+              <input
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-800 outline-none transition focus:border-[#238B45] focus:ring-2 focus:ring-[#238B45]/10"
+                placeholder="Company name"
+                value={form.company || ""}
+                onChange={(e) => handleChange("company", e.target.value)}
+              />
+            </label>
+            <label className="space-y-2 text-sm font-semibold text-gray-700">
+              Country<span className="text-red-500">*</span>
+              <select
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-800 outline-none transition focus:border-[#238B45] focus:ring-2 focus:ring-[#238B45]/10"
+                value={form.country}
+                onChange={(e) => handleChange("country", e.target.value)}
+              >
+                {countries.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <label className="space-y-2 text-sm font-semibold text-gray-700">
+            Your message<span className="text-red-500">*</span>
+            <textarea
+              className="min-h-[160px] w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none transition focus:border-[#238B45] focus:ring-2 focus:ring-[#238B45]/10"
+              placeholder="Type your message..."
+              value={form.message}
+              onChange={(e) => handleChange("message", e.target.value)}
+            />
+          </label>
+
+          <p className="text-xs text-gray-400">
+            By submitting this form you agree to our terms and conditions and our Privacy Policy which explains how we
+            may collect, use and disclose your personal information including to third parties.
+          </p>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="h-11 w-full rounded-xl bg-[#0b2f1b] px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0e3a21] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+            >
+              {createMutation.isPending ? "Sending..." : "Submit"}
+            </button>
+            {statusMessage && (
+              <span className="text-xs font-semibold text-gray-500">{statusMessage}</span>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Previous contact history</h2>
+            <p className="text-sm text-gray-500">All messages you have sent from the dashboard.</p>
+          </div>
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-2xl border border-gray-100">
+          {historyLoading ? (
+            <div className="flex items-center justify-center py-12 text-sm font-semibold text-gray-400">
+              Loading contact history...
+            </div>
+          ) : !history || history.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm font-semibold text-gray-400">
+              No contact messages yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {history.map((item) => (
+                <div key={item._id} className="grid gap-2 px-5 py-4 sm:grid-cols-[1.4fr_1fr_0.6fr] sm:items-center">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{item.message}</p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      {new Date(item.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    <p className="font-semibold text-gray-600">{item.country}</p>
+                    <p className="mt-1">{item.company || "Personal"}</p>
+                  </div>
+                  <div>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+                        item.status === "emailed"
+                          ? "bg-emerald-50 text-emerald-600"
+                          : item.status === "failed"
+                          ? "bg-red-50 text-red-500"
+                          : "bg-slate-100 text-slate-500"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FavoriteComponentsPanel() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
@@ -847,6 +1063,8 @@ function DashboardContent() {
       window.setTimeout(() => setActiveTab("Favorites"), 0);
     } else if (page === "plans-billing") {
       window.setTimeout(() => setActiveTab("Plans & Billing"), 0);
+    } else if (page === "contact") {
+      window.setTimeout(() => setActiveTab("Contact Us"), 0);
     }
   }, [searchParams]);
 
@@ -863,6 +1081,8 @@ function DashboardContent() {
       params.set("page", "favorites");
     } else if (label === "Plans & Billing") {
       params.set("page", "plans-billing");
+    } else if (label === "Contact Us") {
+      params.set("page", "contact");
     } else {
       params.delete("page");
     }
@@ -1018,6 +1238,8 @@ function DashboardContent() {
             <FavoriteComponentsPanel />
           ) : activeTab === "Plans & Billing" ? (
             <BillingPanel />
+          ) : activeTab === "Contact Us" ? (
+            <ContactPanel />
           ) : (
           <>
           
