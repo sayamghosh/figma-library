@@ -805,6 +805,14 @@ export default function ComponentsClient({
     [debouncedSearch, priceMode, queryClient, viewMode]
   );
 
+  const selectCategory = useCallback((cat: string) => {
+    setActiveCategory((current) => (cat === "All" || current === cat ? "All" : cat));
+  }, []);
+
+  const togglePriceMode = useCallback((mode: Exclude<PriceMode, "all">) => {
+    setPriceMode((current) => (current === mode ? "all" : mode));
+  }, []);
+
   // ── Client-side filters ────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     let out = items;
@@ -979,7 +987,7 @@ export default function ComponentsClient({
               <button
                 key={cat}
                 type="button"
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => selectCategory(cat)}
                 onMouseEnter={() => prefetchCategory(cat)}
                 onFocus={() => prefetchCategory(cat)}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-[0.85rem] font-medium transition-all cursor-pointer font-manrope border ${activeCategory === cat
@@ -1074,7 +1082,7 @@ export default function ComponentsClient({
             <div className="flex items-center bg-white border border-gray-200/60 rounded-lg p-1 gap-1 shrink-0">
               <button
                 type="button"
-                onClick={() => setPriceMode("free")}
+                onClick={() => togglePriceMode("free")}
                 className={`px-6 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "free"
                   ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
@@ -1084,7 +1092,7 @@ export default function ComponentsClient({
               </button>
               <button
                 type="button"
-                onClick={() => setPriceMode("pro")}
+                onClick={() => togglePriceMode("pro")}
                 className={`flex items-center gap-1 px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "pro"
                   ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
