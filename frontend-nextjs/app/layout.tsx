@@ -7,6 +7,10 @@ import { FooterSection } from "../components/FooterSection";
 export const metadata: Metadata = {
   title: "FigComponents",
   description: "Figma Components in Code",
+  icons: {
+    icon: "/logo.ico",
+    shortcut: "/logo.ico",
+  },
 };
 
 export default function RootLayout({
