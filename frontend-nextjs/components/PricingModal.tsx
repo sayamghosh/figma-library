@@ -4,12 +4,51 @@ import { useAuth } from "../context/AuthContext";
 import { plansApi, type Plan } from "../api/plans";
 import { paymentsApi } from "../api/payments";
 import { useQuery } from "@tanstack/react-query";
+import { Info, X } from "lucide-react";
+import { PlanTermsModal } from "./PlanTermsModal";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: RazorpayConstructor;
   }
 }
+
+interface RazorpayPaymentResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayFailureResponse {
+  error: {
+    description: string;
+  };
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  on: (
+    event: "payment.failed",
+    callback: (response: RazorpayFailureResponse) => void
+  ) => void;
+}
+
+type RazorpayConstructor = new (options: {
+  key: string | undefined;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayPaymentResponse) => Promise<void>;
+  prefill: {
+    name: string | undefined;
+    email: string | undefined;
+  };
+  theme: {
+    color: string;
+  };
+}) => RazorpayInstance;
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -23,8 +62,9 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
   const [error, setError] = useState("");
   const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
   const [showLoginNotice, setShowLoginNotice] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
-  const { data: plans, isLoading } = useQuery({
+  const { data: plans } = useQuery({
     queryKey: ["plans"],
     queryFn: plansApi.getAllPlans,
     enabled: isOpen,
@@ -51,20 +91,21 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
 
   useEffect(() => {
     if (!isOpen) {
-      setPendingPlanName(null);
-      setShowLoginNotice(false);
-      setError("");
+      window.setTimeout(() => {
+        setPendingPlanName(null);
+        setShowLoginNotice(false);
+        setError("");
+        setTermsOpen(false);
+      }, 0);
     }
   }, [isOpen]);
-
-  if (!isOpen) return null;
 
   const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
 
   const startPayment = useCallback(async (plan: Plan) => {
     if (hasActiveSubscription) {
       const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
+        "You already have an active subscription. Unused component credits will carry forward, but remaining validity days will be replaced by the new plan validity. Continue?"
       );
       if (!confirmUpgrade) return;
     }
@@ -87,7 +128,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
         name: "Figcomponents Pro",
         description: `Subscribe to ${orderData.planName}`,
         order_id: orderData.orderId,
-        handler: async (response: any) => {
+        handler: async (response: RazorpayPaymentResponse) => {
           try {
             await paymentsApi.verifyPayment(
               response.razorpay_order_id,
@@ -98,7 +139,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
             await refetchSubscription();
             alert("Payment successful! You now have Pro access.");
             onClose();
-          } catch (err) {
+          } catch {
             setError("Payment verification failed. Please contact support.");
           }
         },
@@ -114,14 +155,15 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
       const razorpay = new window.Razorpay(razorpayOptions);
       razorpay.open();
 
-      razorpay.on("payment.failed", (response: any) => {
+      razorpay.on("payment.failed", (response) => {
         setError(`Payment failed: ${response.error.description}`);
       });
-    } catch (err: any) {
-      if (err.message === "SUBSCRIPTION_EXISTS") {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (message === "SUBSCRIPTION_EXISTS") {
         setError("You already have an active subscription.");
       } else {
-        setError(err.message || "Failed to create payment. Please try again.");
+        setError(message || "Failed to create payment. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -151,9 +193,11 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     if (!user || !pendingPlanName || loading) return;
     const pendingPlan = plans?.find((p) => p.name === pendingPlanName);
     if (!pendingPlan) return;
-    setPendingPlanName(null);
-    setShowLoginNotice(false);
-    startPayment(pendingPlan);
+    window.setTimeout(() => {
+      setPendingPlanName(null);
+      setShowLoginNotice(false);
+      startPayment(pendingPlan);
+    }, 0);
   }, [loading, pendingPlanName, plans, startPayment, user]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -162,6 +206,8 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto"
@@ -169,13 +215,20 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     >
       <div className="relative w-full max-w-[950px] bg-white rounded-[32px] shadow-2xl p-6 md:p-8 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <button
+          type="button"
+          onClick={() => setTermsOpen(true)}
+          className="absolute right-11 top-2 z-10 grid h-9 w-9 place-items-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
+          aria-label="View plan purchase terms"
+          title="Plan purchase terms"
+        >
+          <Info size={18} />
+        </button>
+        <button
           onClick={onClose}
           className="absolute right-2 top-2 z-10 p-2 text-gray-400 hover:text-gray-900 cursor-pointer"
           aria-label="Close modal"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <X size={20} />
         </button>
 
         {error && (
@@ -344,6 +397,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
           </div>
         </div>
       </div>
+      <PlanTermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />
     </div>
   );
 }

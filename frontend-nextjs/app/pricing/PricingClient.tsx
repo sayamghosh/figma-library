@@ -1,17 +1,55 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import type { Plan } from "../../api/plans";
 import { paymentsApi } from "../../api/payments";
+import { PlanTermsModal } from "../../components/PlanTermsModal";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: RazorpayConstructor;
   }
 }
+
+interface RazorpayPaymentResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayFailureResponse {
+  error: {
+    description: string;
+  };
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  on: (
+    event: "payment.failed",
+    callback: (response: RazorpayFailureResponse) => void
+  ) => void;
+}
+
+type RazorpayConstructor = new (options: {
+  key: string | undefined;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayPaymentResponse) => Promise<void>;
+  prefill: {
+    name: string | undefined;
+    email: string | undefined;
+  };
+  theme: {
+    color: string;
+  };
+}) => RazorpayInstance;
 
 interface PricingCardProps {
   plan: Plan;
@@ -137,10 +175,9 @@ function SpatialitySection() {
 
 export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }) {
   const { user, setLoginModalOpen } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
@@ -162,13 +199,11 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
   const startPayment = useCallback(async (plan: Plan) => {
     if (hasActiveSubscription) {
       const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
+        "You already have an active subscription. Unused component credits will carry forward, but remaining validity days will be replaced by the new plan validity. Continue?"
       );
       if (!confirmUpgrade) return;
     }
 
-    setSelectedPlan(plan);
-    setError("");
     setLoading(true);
 
     try {
@@ -185,7 +220,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
         name: "Figcomponents Pro",
         description: `Subscribe to ${orderData.planName}`,
         order_id: orderData.orderId,
-        handler: async (response: any) => {
+        handler: async (response: RazorpayPaymentResponse) => {
           try {
             await paymentsApi.verifyPayment(
               response.razorpay_order_id,
@@ -195,8 +230,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
             );
             await refetchSubscription();
             alert("Payment successful! You now have Pro access.");
-          } catch (err) {
-            setError("Payment verification failed. Please contact support.");
+          } catch {
             alert("Payment verification failed. Please contact support.");
           }
         },
@@ -212,23 +246,21 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
       const razorpay = new window.Razorpay(razorpayOptions);
       razorpay.open();
 
-      razorpay.on("payment.failed", (response: any) => {
+      razorpay.on("payment.failed", (response) => {
         const errMsg = `Payment failed: ${response.error.description}`;
-        setError(errMsg);
         alert(errMsg);
       });
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
       let errMsg = "";
-      if (err.message === "SUBSCRIPTION_EXISTS") {
+      if (message === "SUBSCRIPTION_EXISTS") {
         errMsg = "You already have an active subscription.";
       } else {
-        errMsg = err.message || "Failed to create payment. Please try again.";
+        errMsg = message || "Failed to create payment. Please try again.";
       }
-      setError(errMsg);
       alert(errMsg);
     } finally {
       setLoading(false);
-      setSelectedPlan(null);
     }
   }, [hasActiveSubscription, refetchSubscription, user]);
 
@@ -253,13 +285,25 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
     if (!user || !pendingPlanName || loading) return;
     const pendingPlan = initialPlans?.find((p) => p.name === pendingPlanName);
     if (!pendingPlan) return;
-    setPendingPlanName(null);
-    startPayment(pendingPlan);
+    window.setTimeout(() => {
+      setPendingPlanName(null);
+      startPayment(pendingPlan);
+    }, 0);
   }, [loading, pendingPlanName, initialPlans, startPayment, user]);
 
   return (
     <main className="min-h-screen bg-white text-[#111111]">
-      <section className="mx-auto w-full max-w-[1180px] px-5 pb-10 pt-[80px]">
+      <section className="relative mx-auto w-full max-w-[1180px] px-5 pb-10 pt-[80px]">
+        <button
+          type="button"
+          onClick={() => setTermsOpen(true)}
+          className="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full border border-gray-200 bg-white text-[#0B1527] shadow-sm transition hover:border-[#054316] hover:text-[#054316]"
+          aria-label="View plan purchase terms"
+          title="Plan purchase terms"
+        >
+          <Info size={18} />
+        </button>
+
         <div className="text-center">
           <h1 className="text-[42px] font-medium leading-[1.18] tracking-[-0.045em] text-[#161616] md:text-[54px]">
             Powerful features for
@@ -305,6 +349,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
       </section>
 
       <SpatialitySection />
+      <PlanTermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />
     </main>
   );
 }
