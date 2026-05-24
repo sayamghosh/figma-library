@@ -46,7 +46,7 @@ function PricingCard({ plan, highlighted, onGetStarted }: PricingCardProps) {
   const price = Math.floor(plan.price / 100);
   const duration = `${plan.durationDays} Days`;
   const displayName = plan.displayName || plan.name;
-  const items = plan.features || [];
+  const items = (plan.features || []).slice(0, 6);
 
   return (
     <article

@@ -125,9 +125,9 @@ function PlanCard({
       </div>
 
       {isSelected && (
-        <div className={`mt-10 pt-10 border-t lg:absolute lg:right-12 lg:top-10 lg:mt-0 lg:w-[48%] lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0 animate-in fade-in slide-in-from-right-4 duration-500 ${dark ? "border-white/10" : "border-black/10"}`}>
+        <div className={`mt-10 pt-10 border-t lg:absolute lg:right-12 lg:top-1/2 lg:mt-0 lg:w-[48%] lg:-translate-y-1/2 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0 animate-in fade-in slide-in-from-right-4 duration-500 ${dark ? "border-white/10" : "border-black/10"}`}>
           <ul className={`space-y-6 text-[15px] font-medium ${dark ? "text-white/90" : "text-black/80"}`}>
-            {features.map((item) => (
+            {features.slice(0, 6).map((item) => (
               <li key={item} className="flex items-center gap-4">
                 <Check className={dark ? "text-[#9FE870]" : "text-black"} size={18} strokeWidth={3} />
                 {item}
