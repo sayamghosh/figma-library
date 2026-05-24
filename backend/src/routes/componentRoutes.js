@@ -11,6 +11,7 @@ const {
   listFavoriteComponents,
   listFavoriteComponentIds,
   toggleFavoriteComponent,
+  getApprovedTags,
 } = require("../controllers/componentController");
 const { protect, optionalProtect } = require("../middleware/auth");
 
