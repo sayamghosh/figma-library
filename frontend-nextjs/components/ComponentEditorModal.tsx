@@ -469,7 +469,15 @@ export function ComponentEditorModal({
                       <span className="rounded-xl bg-slate-50 p-2.5">
                         <span className="mb-1 block text-slate-400">Access</span>
                         <span className="inline-flex items-center gap-1">
-                          {pricingType === "Pro" && <Crown size={13} className="text-[#238B45]" />}
+                          <span className="inline-grid h-[13px] w-[13px] place-items-center">
+                            <Crown
+                              size={13}
+                              className={`text-[#238B45] transition-opacity ${
+                                pricingType === "Pro" ? "opacity-100" : "opacity-0"
+                              }`}
+                              aria-hidden={pricingType !== "Pro"}
+                            />
+                          </span>
                           {pricingType}
                         </span>
                       </span>
