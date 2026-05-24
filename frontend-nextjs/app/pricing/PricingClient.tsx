@@ -10,7 +10,7 @@ import { PlanTermsModal } from "../../components/PlanTermsModal";
 
 declare global {
   interface Window {
-    Razorpay?: RazorpayConstructor;
+    Razorpay?: any;
   }
 }
 
@@ -252,7 +252,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
       const razorpay = new window.Razorpay(razorpayOptions);
       razorpay.open();
 
-      razorpay.on("payment.failed", (response) => {
+      razorpay.on("payment.failed", (response: RazorpayFailureResponse) => {
         const errMsg = `Payment failed: ${response.error.description}`;
         alert(errMsg);
       });

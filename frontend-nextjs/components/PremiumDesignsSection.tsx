@@ -10,7 +10,7 @@ import { Check, ArrowRight, Crown, Zap, ArrowUpRight, AlignLeft, Wallet, Briefca
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: any;
   }
 }
 

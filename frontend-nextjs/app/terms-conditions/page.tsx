@@ -10,7 +10,7 @@ import { paymentsApi } from "../../api/payments";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: any;
   }
 }
 
