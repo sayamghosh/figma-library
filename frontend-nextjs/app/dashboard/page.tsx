@@ -1,15 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { paymentsApi, type PurchasedSubscriptionRecord } from "../../api/payments";
 import { componentsApi } from "../../api/components";
 import { uploadApi } from "../../api/upload";
 import { contactApi, type ContactInput } from "../../api/contact";
 import { copyToFigma } from "../../lib/clipboard";
+import type { PaginatedComponentResponse } from "../../lib/types";
 import {
   ComponentEditorModal,
   type ComponentEditorValues,
@@ -79,10 +80,12 @@ function DeleteConfirmModal({
 }
 
 function MyComponentsPanel() {
+  const MY_COMPONENTS_PAGE_SIZE = 9;
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = useState("");
   const [copyingId, setCopyingId] = useState<string | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
@@ -91,14 +94,46 @@ function MyComponentsPanel() {
   const editorMode = searchParams.get("modal") === "add" ? "create" : searchParams.get("edit") ? "edit" : null;
   const editId = searchParams.get("edit");
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["my-components", search],
-    queryFn: () => componentsApi.listMine(search),
+  const {
+    data,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["my-components", search, MY_COMPONENTS_PAGE_SIZE],
+    queryFn: ({ pageParam }: { pageParam: { skip: number; limit: number } }) =>
+      componentsApi.listMine(search, 1, pageParam.limit, pageParam.skip),
+    initialPageParam: { skip: 0, limit: MY_COMPONENTS_PAGE_SIZE },
+    getNextPageParam: (lastPage: PaginatedComponentResponse, allPages: PaginatedComponentResponse[]) => {
+      const totalLoaded = allPages.reduce((acc, page) => acc + page.items.length, 0);
+      return totalLoaded < lastPage.pagination.total
+        ? { skip: totalLoaded, limit: MY_COMPONENTS_PAGE_SIZE }
+        : undefined;
+    },
     staleTime: 60 * 1000,
   });
 
-  const items = useMemo(() => data?.items ?? [], [data]);
-  const total = data?.pagination?.total ?? items.length;
+  const items = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
+  const total = data?.pages[0]?.pagination?.total ?? items.length;
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { root: null, rootMargin: "500px 0px", threshold: 0 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const { data: editingComponent, isLoading: isEditorLoading } = useQuery({
     queryKey: ["components", "editor", editId],
@@ -326,88 +361,103 @@ function MyComponentsPanel() {
       )}
 
       {!isLoading && !isError && items.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => (
-            <article
-              key={item._id}
-              className="overflow-hidden rounded-3xl border border-gray-200/80 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)]"
-            >
-              <div
-                className="relative h-[180px] bg-[#F3F6F4] bg-contain bg-center bg-no-repeat"
-                style={item.previewImageUrl ? { backgroundImage: `url(${item.previewImageUrl})` } : {}}
-                aria-label={item.name}
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {items.map((item) => (
+              <article
+                key={item._id}
+                className="overflow-hidden rounded-3xl border border-gray-200/80 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] transition hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)]"
               >
-                {!item.previewImageUrl && (
-                  <div className="flex h-full items-center justify-center text-xs font-semibold text-gray-400">
-                    No preview
-                  </div>
-                )}
-                {item.status && (
-                  <span
-                    className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[0.65rem] font-extrabold uppercase tracking-wider text-white shadow-sm ${
-                      item.status === "approved"
-                        ? "bg-green-500"
-                        : item.status === "rejected"
-                        ? "bg-red-500"
-                        : "bg-yellow-500"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                )}
-              </div>
-
-              <div className="p-4">
-                <p className="truncate text-sm font-bold text-gray-900">{item.name}</p>
-                {item.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {item.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-slate-100 px-2 py-1 text-[0.68rem] font-semibold text-gray-500"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {item.tags.length > 3 && (
-                      <span className="px-1 py-1 text-[0.68rem] font-semibold text-gray-400">
-                        +{item.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(item._id, item.name, item.figmaDataBase64)}
-                    disabled={copyingId === item._id}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-slate-50 py-2 text-xs font-bold text-gray-700 transition hover:bg-slate-100 disabled:opacity-60"
-                  >
-                    <Copy size={14} />
-                    {copyingId === item._id ? "Copying..." : "Copy"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => openEditEditor(item._id)}
-                    className="flex items-center justify-center rounded-xl border border-blue-100 bg-blue-50 px-3 text-blue-500 transition hover:bg-blue-100"
-                    aria-label="Edit component"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget({ id: item._id, name: item.name })}
-                    className="flex items-center justify-center rounded-xl border border-red-100 bg-red-50 px-3 text-red-500 transition hover:bg-red-100"
-                    aria-label="Delete component"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                <div
+                  className="relative h-[180px] bg-[#F3F6F4] bg-contain bg-center bg-no-repeat"
+                  style={item.previewImageUrl ? { backgroundImage: `url(${item.previewImageUrl})` } : {}}
+                  aria-label={item.name}
+                >
+                  {!item.previewImageUrl && (
+                    <div className="flex h-full items-center justify-center text-xs font-semibold text-gray-400">
+                      No preview
+                    </div>
+                  )}
+                  {item.status && (
+                    <span
+                      className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[0.65rem] font-extrabold uppercase tracking-wider text-white shadow-sm ${
+                        item.status === "approved"
+                          ? "bg-green-500"
+                          : item.status === "rejected"
+                          ? "bg-red-500"
+                          : "bg-yellow-500"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  )}
                 </div>
-              </div>
-            </article>
-          ))}
-        </div>
+
+                <div className="p-4">
+                  <p className="truncate text-sm font-bold text-gray-900">{item.name}</p>
+                  {item.tags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {item.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-slate-100 px-2 py-1 text-[0.68rem] font-semibold text-gray-500"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {item.tags.length > 3 && (
+                        <span className="px-1 py-1 text-[0.68rem] font-semibold text-gray-400">
+                          +{item.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(item._id, item.name, item.figmaDataBase64)}
+                      disabled={copyingId === item._id}
+                      className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-slate-50 py-2 text-xs font-bold text-gray-700 transition hover:bg-slate-100 disabled:opacity-60"
+                    >
+                      <Copy size={14} />
+                      {copyingId === item._id ? "Copying..." : "Copy"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openEditEditor(item._id)}
+                      className="flex items-center justify-center rounded-xl border border-blue-100 bg-blue-50 px-3 text-blue-500 transition hover:bg-blue-100"
+                      aria-label="Edit component"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget({ id: item._id, name: item.name })}
+                      className="flex items-center justify-center rounded-xl border border-red-100 bg-red-50 px-3 text-red-500 transition hover:bg-red-100"
+                      aria-label="Delete component"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div ref={loadMoreRef} className="flex min-h-12 items-center justify-center py-2">
+            {isFetchingNextPage ? (
+              <span className="inline-flex items-center gap-2 text-xs font-bold text-gray-400">
+                <Loader2 className="h-4 w-4 animate-spin text-[#238B45]" />
+                Loading more components...
+              </span>
+            ) : hasNextPage ? (
+              <span className="sr-only">Load more components</span>
+            ) : (
+              <span className="text-xs font-bold text-gray-300">All components loaded</span>
+            )}
+          </div>
+        </>
       )}
 
       {deleteTarget && (

@@ -27,10 +27,13 @@ export const componentsApi = {
     return response.data.data;
   },
 
-  async listMine(search = ""): Promise<PaginatedComponentResponse> {
+  async listMine(search = "", page = 1, limit = 20, skip?: number): Promise<PaginatedComponentResponse> {
     const response = await apiClient.get("/components/my", {
       params: {
         q: search || undefined,
+        page,
+        limit,
+        skip,
       },
     });
     return response.data.data;
