@@ -935,7 +935,7 @@ export default function ComponentsClient({
         }
         .category-scrollbar {
           scrollbar-width: thin;
-          scrollbar-color: #cbd5e1 transparent;
+          scrollbar-color: transparent transparent;
         }
         .category-scrollbar::-webkit-scrollbar {
           width: 8px;
@@ -944,9 +944,18 @@ export default function ComponentsClient({
           background: transparent;
         }
         .category-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
+          background: transparent;
           border: 2px solid transparent;
           border-radius: 999px;
+          background-clip: content-box;
+        }
+        .category-scrollbar:hover,
+        .category-scrollbar:focus-within {
+          scrollbar-color: #cbd5e1 transparent;
+        }
+        .category-scrollbar:hover::-webkit-scrollbar-thumb,
+        .category-scrollbar:focus-within::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
           background-clip: content-box;
         }
         .category-scrollbar::-webkit-scrollbar-thumb:hover {
