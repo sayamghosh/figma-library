@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { ChevronRight, Calendar, User, ArrowRight } from "lucide-react";
+import { ArrowRight, Calendar, Clock, Sparkles } from "lucide-react";
 
 interface BlogPost {
   id: string;
@@ -23,13 +22,13 @@ const blogPosts: BlogPost[] = [
     date: "December 22, 2024",
     author: "Alex Rivera",
     category: "Development",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=1200",
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=1400",
     excerpt: "Discover how reusable components are changing the landscape of modern web development and saving teams countless hours.",
     content: [
-      "Component-driven development (CDD) is no longer just a buzzword—it is the foundational methodology for modern web development. By breaking down complex interfaces into manageable, reusable building blocks, teams can scale their applications with unprecedented speed and consistency.",
-      "The primary advantage of CDD is reusability. Instead of rewriting the same button or navigation bar code across multiple pages, developers create a single, robust component. This component serves as a single source of truth, meaning any design updates or bug fixes only need to be applied in one place.",
-      "As tools like Next.js and React continue to evolve, the integration between design files and code components is becoming seamless. Designers design components, and developers build them. The future lies in minimizing the friction between these two states."
-    ]
+      "Component-driven development is no longer just a buzzword. It is the foundational methodology for modern web development. By breaking down complex interfaces into reusable building blocks, teams can scale applications with speed and consistency.",
+      "The primary advantage is reusability. Instead of rewriting the same button or navigation pattern across multiple pages, teams create a single reliable component. Design updates and bug fixes only need to happen in one place.",
+      "As tools like Next.js, React, and Figma continue to evolve, the connection between design files and code components is becoming smoother. The future belongs to teams that reduce friction between design intent and production code.",
+    ],
   },
   {
     id: "auto-layout",
@@ -37,13 +36,13 @@ const blogPosts: BlogPost[] = [
     date: "December 18, 2024",
     author: "Sarah Chen",
     category: "Design",
-    image: "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&q=80&w=1200",
-    excerpt: "A deep dive into creating responsive, fluid designs using Figma's powerful Auto Layout features.",
+    image: "https://images.unsplash.com/photo-1522542550221-31fd19575a2d?auto=format&fit=crop&q=80&w=1400",
+    excerpt: "A practical guide to creating responsive, fluid designs using Figma's most important layout tools.",
     content: [
-      "Auto Layout is arguably Figma's most powerful feature for UI/UX designers. It allows you to create designs that grow, shrink, and reflow as their contents change. This closely mirrors how Flexbox works in CSS, making handoff to developers incredibly smooth.",
-      "To truly master Auto Layout, you need to understand the relationship between fixed, hugging, and filling containers. A parent container set to 'Hug' will wrap tightly around its children, while a child set to 'Fill container' will expand to take up any available space.",
-      "When you start nesting Auto Layout frames, you unlock the ability to build complex, responsive components like data tables and navigation menus that behave predictably across any screen size."
-    ]
+      "Auto Layout is one of Figma's most powerful features for UI designers. It lets frames grow, shrink, and reflow as content changes, closely mirroring how flexible layouts behave in production.",
+      "To master Auto Layout, understand the relationship between fixed, hugging, and filling containers. A parent set to hug wraps around its children, while a child set to fill expands into available space.",
+      "Nested Auto Layout frames unlock complex components like menus, tables, and cards that behave predictably across screen sizes. This makes developer handoff cleaner and less fragile.",
+    ],
   },
   {
     id: "design-systems",
@@ -51,13 +50,13 @@ const blogPosts: BlogPost[] = [
     date: "December 15, 2024",
     author: "Marcus Johnson",
     category: "Strategy",
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=1200",
-    excerpt: "Scaling consistency across products is impossible without a centralized design system. Here is how to get started.",
+    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=1400",
+    excerpt: "Scaling consistency across products is difficult without a central system. Here is how to start with clarity.",
     content: [
-      "A design system is more than just a UI kit; it's a complete set of standards intended to manage design at scale using reusable components and patterns. It bridges the gap between design and development by providing a shared language.",
-      "Without a design system, as your product grows and your team expands, inconsistencies inevitably creep in. You might end up with dozens of slightly different button styles or conflicting color hex codes. This not only confuses users but drastically slows down the development process.",
-      "Building a design system requires an upfront investment of time, but the long-term ROI is massive. Start small: audit your current UI, establish a core color palette, typography scale, and build your most fundamental components first."
-    ]
+      "A design system is more than a UI kit. It is a shared set of standards for managing design at scale through reusable components, patterns, tokens, and documented decisions.",
+      "Without a system, inconsistencies creep in as products and teams grow. You end up with duplicate buttons, conflicting color values, and slower development cycles.",
+      "Start small. Audit the current UI, define a core color palette and typography scale, then build the components that appear most often. Momentum matters more than perfection at the beginning.",
+    ],
   },
   {
     id: "dark-mode",
@@ -65,13 +64,13 @@ const blogPosts: BlogPost[] = [
     date: "December 10, 2024",
     author: "Elena Rodriguez",
     category: "UX/UI",
-    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1200",
-    excerpt: "Creating accessible and beautiful dark themes goes beyond simply inverting your colors.",
+    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1400",
+    excerpt: "Creating accessible and beautiful dark themes takes more care than simply inverting your colors.",
     content: [
-      "Dark mode is no longer an optional feature—it's an expectation. However, designing a great dark mode is trickier than just turning white backgrounds black and black text white. True dark mode requires a carefully considered color palette.",
-      "Avoid pure black (#000000). Pure black backgrounds with pure white text cause high contrast that can strain the eyes. Instead, use dark grays (like #121212) which allow you to express elevation and depth through subtle shadows and lighter gray surface colors.",
-      "When transitioning your brand colors to dark mode, you'll often need to desaturate them. Highly saturated colors vibrate against dark backgrounds, causing visual fatigue. Softer, pastel-leaning tones work much better for accents and interactive states."
-    ]
+      "Dark mode is now an expected feature in many products, but great dark themes need more than black backgrounds and white text. They require a carefully considered palette.",
+      "Avoid pure black for large surfaces. Deep grays are easier on the eyes and allow elevation, borders, and shadows to remain visible.",
+      "Brand colors often need adjustment in dark mode. Highly saturated accents can vibrate against dark backgrounds, so softer tones usually work better for long sessions.",
+    ],
   },
   {
     id: "design-code-gap",
@@ -79,166 +78,269 @@ const blogPosts: BlogPost[] = [
     date: "December 05, 2024",
     author: "David Kim",
     category: "Collaboration",
-    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1200",
-    excerpt: "How modern tooling and standardized processes are bringing designers and developers closer than ever.",
+    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=1400",
+    excerpt: "Modern tooling and shared systems are bringing designers and developers closer than ever.",
     content: [
-      "The handoff process from design to development has historically been a point of friction. Designers toss static images over the wall, and developers struggle to interpret the exact specifications, leading to endless feedback loops.",
-      "Today, tools are breaking down this wall. With design tokens, we can define our core design decisions (colors, spacing, typography) as data. When a designer changes a token in Figma, it can automatically update the corresponding CSS variable in the codebase.",
-      "By adopting a shared vocabulary and utilizing platforms that translate design constraints into code structure, teams can spend less time arguing over pixel nudges and more time building delightful user experiences."
-    ]
-  }
+      "Design handoff has historically been a friction point. Static screens get passed to developers, specs are interpreted manually, and feedback loops become expensive.",
+      "Design tokens help bridge that gap by turning visual decisions into reusable data. Colors, spacing, typography, and radius values can travel from design systems into code with less ambiguity.",
+      "The best teams build a shared vocabulary. When designers and developers discuss constraints, behavior, states, and reusable patterns together, product quality rises quickly.",
+    ],
+  },
 ];
 
+const categories = ["All", ...Array.from(new Set(blogPosts.map((post) => post.category)))];
+
+function getReadingTime(post: BlogPost) {
+  const words = [post.title, post.excerpt, ...post.content].join(" ").split(/\s+/).length;
+  return `${Math.max(2, Math.ceil(words / 180))} min read`;
+}
+
 export default function BlogPage() {
-  const [activeSection, setActiveSection] = useState(blogPosts[0].id);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedPostId, setSelectedPostId] = useState(blogPosts[0].id);
+  const readerRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 200; // Offset for header
+  const filteredPosts = useMemo(() => {
+    if (activeCategory === "All") return blogPosts;
+    return blogPosts.filter((post) => post.category === activeCategory);
+  }, [activeCategory]);
 
-      for (const post of blogPosts) {
-        const el = document.getElementById(post.id);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          const top = rect.top + window.scrollY;
-          if (scrollPosition >= top) {
-            setActiveSection(post.id);
-          }
-        }
-      }
-    };
+  const featuredPost = blogPosts[0];
+  const selectedPost = blogPosts.find((post) => post.id === selectedPostId) || featuredPost;
 
-    window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Initial check
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const handleScrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 100; // 100px offset for sticky nav
-      window.scrollTo({
-        top: top,
-        behavior: "smooth"
+  const openPost = (postId: string) => {
+    setSelectedPostId(postId);
+    window.requestAnimationFrame(() => {
+      readerRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
       });
-    }
+    });
   };
 
   return (
-    <main className="w-full bg-[#fcfdfa] text-[#111111] font-sans">
-      {/* Main Content Layout Container */}
-      <div className="w-full max-w-[1344px] mx-auto bg-white border-x border-[#e5e7eb] grid lg:grid-cols-[280px_1fr] items-start relative min-h-screen">
-        
-        {/* Sticky Sidebar for Recent Posts/Navigation */}
-        <aside className="hidden lg:block sticky top-[60px] h-[calc(100vh-60px)] bg-white border-r border-[#e5e7eb] py-8 px-6 overflow-y-auto self-start">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">Recent Articles</p>
-          <nav className="flex flex-col gap-2">
-            {blogPosts.map((post) => (
-              <button
-                key={post.id}
-                onClick={() => handleScrollTo(post.id)}
-                className={`text-left text-[14px] font-medium py-3 px-3 rounded-lg transition-all flex flex-col gap-1 ${
-                  activeSection === post.id
-                    ? "bg-[#9FE870]/20 text-[#2c5114]"
-                    : "text-gray-600 hover:text-black hover:bg-gray-50"
-                }`}
-              >
-                <span className={`line-clamp-2 ${activeSection === post.id ? 'font-bold' : 'font-medium'}`}>
-                  {post.title}
-                </span>
-                <span className="text-[12px] opacity-70">{post.date}</span>
-              </button>
-            ))}
-          </nav>
-        </aside>
+    <main className="w-full bg-[#fbfcfb] text-[#0b1510]">
+      <section className="border-b border-black/5 bg-[linear-gradient(180deg,#ffffff_0%,#f6faf5_100%)] px-5 pb-16 pt-16 sm:px-8 lg:pb-20 lg:pt-20">
+        <div className="mx-auto w-full max-w-[1320px]">
+          <div className="grid items-end gap-10 lg:grid-cols-[0.95fr_0.65fr]">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#dfe8db] bg-white px-4 py-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[#238B45] shadow-sm">
+                <Sparkles size={14} />
+                Insights & News
+              </span>
+              <h1 className="mt-8 max-w-[820px] text-[48px] font-semibold leading-[1.04] tracking-normal text-[#08150d] md:text-[70px]">
+                Practical ideas for better interfaces.
+              </h1>
+              <p className="mt-6 max-w-[650px] text-[17px] font-medium leading-[1.75] text-[#526052]">
+                Guides, notes, and product thinking for designers and developers building with components, systems, and modern frontend workflows.
+              </p>
+            </div>
 
-        {/* Blog Content */}
-        <div className="p-6 md:p-12 lg:p-16 space-y-24 max-w-[900px] w-full mx-auto">
-          
-          {/* Header */}
-          <div className="space-y-4 pb-4">
-            <span className="text-[12px] font-bold text-[#54992e] uppercase tracking-wider bg-[#54992e]/10 px-3.5 py-1.5 rounded-full inline-block">
-              Insights & News
-            </span>
-            <h1 className="font-outfit text-[38px] md:text-[50px] font-bold tracking-tight text-[#111111] leading-none mt-2">
-              Our Blog
-            </h1>
-            <p className="text-[16px] md:text-[18px] leading-[1.6] text-[#565656] mt-4 max-w-2xl">
-              Thoughts, tutorials, and insights about design systems, component-driven development, and the future of front-end engineering.
-            </p>
+            <div className="rounded-[8px] border border-[#e4ebe1] bg-white p-5 shadow-[0_18px_50px_rgba(23,42,28,0.06)]">
+              <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#238B45]">
+                Editor&apos;s note
+              </p>
+              <p className="mt-4 text-[20px] font-semibold leading-[1.35] text-black">
+                Start with reusable decisions, not one-off screens.
+              </p>
+              <p className="mt-4 text-[14px] font-medium leading-[1.7] text-[#647064]">
+                A premium component library should feel calm, organized, and immediately useful. This blog now follows that same idea.
+              </p>
+            </div>
           </div>
 
-          <hr className="border-gray-100" />
+          <article className="mt-14 grid overflow-hidden rounded-[8px] border border-[#dde8d8] bg-white shadow-[0_24px_80px_rgba(16,42,24,0.08)] lg:grid-cols-[1.08fr_0.92fr]">
+            <div className="relative min-h-[320px] lg:min-h-[460px]">
+              <Image
+                src={featuredPost.image}
+                alt={featuredPost.title}
+                fill
+                priority
+                className="object-cover"
+              />
+            </div>
+            <div className="flex flex-col justify-between p-7 md:p-10">
+              <div>
+                <div className="flex flex-wrap items-center gap-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#238B45]">
+                  <span>{featuredPost.category}</span>
+                  <span className="h-1 w-1 rounded-full bg-[#238B45]" />
+                  <span>{getReadingTime(featuredPost)}</span>
+                </div>
+                <h2 className="mt-5 text-[32px] font-semibold leading-[1.12] text-black md:text-[42px]">
+                  {featuredPost.title}
+                </h2>
+                <p className="mt-5 text-[16px] font-medium leading-[1.75] text-[#596459]">
+                  {featuredPost.excerpt}
+                </p>
+              </div>
 
-          {/* Blog Posts List */}
-          <div className="space-y-24">
-            {blogPosts.map((post, idx) => (
-              <article key={post.id} id={post.id} className="scroll-mt-32 space-y-8 group">
-                
-                {/* Image Container */}
-                <div className="w-full h-[300px] sm:h-[400px] relative rounded-3xl overflow-hidden shadow-lg border border-gray-100 transition-transform duration-500 group-hover:shadow-xl">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-white/90 backdrop-blur-md text-black text-[13px] font-bold px-4 py-2 rounded-full shadow-sm">
+              <button
+                type="button"
+                onClick={() => openPost(featuredPost.id)}
+                className="mt-10 inline-flex h-[46px] w-fit items-center gap-4 rounded-full bg-black py-1.5 pl-6 pr-1.5 text-[13px] font-bold text-white"
+              >
+                Read featured
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[#9FE870] text-black">
+                  <ArrowRight size={17} strokeWidth={2.5} />
+                </span>
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="px-5 py-16 sm:px-8 lg:py-20">
+        <div className="mx-auto w-full max-w-[1320px]">
+          <div className="flex flex-col justify-between gap-6 border-b border-black/10 pb-8 lg:flex-row lg:items-end">
+            <div>
+              <p className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#238B45]">
+                Latest writing
+              </p>
+              <h2 className="mt-3 text-[34px] font-semibold leading-tight text-black md:text-[44px]">
+                Read by topic
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => {
+                const active = category === activeCategory;
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setActiveCategory(category)}
+                    className={`h-10 rounded-full px-5 text-[13px] font-bold transition-colors ${
+                      active
+                        ? "bg-black text-white"
+                        : "border border-[#dfe5dc] bg-white text-[#4f5d50] hover:border-black hover:text-black"
+                    }`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {filteredPosts.map((post) => (
+              <article
+                key={post.id}
+                className="group overflow-hidden rounded-[8px] border border-[#e3e8e0] bg-white shadow-[0_10px_34px_rgba(16,42,24,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(16,42,24,0.1)]"
+              >
+                <button
+                  type="button"
+                  onClick={() => openPost(post.id)}
+                  className="block w-full text-left"
+                >
+                  <div className="relative h-[220px] overflow-hidden bg-[#edf3eb]">
+                    <Image
+                      src={post.image}
+                      alt={post.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.07em] text-black backdrop-blur">
                       {post.category}
                     </span>
                   </div>
-                </div>
 
-                {/* Article Header */}
-                <div className="space-y-4">
-                  <h2 className="font-outfit text-[28px] md:text-[36px] font-bold text-black leading-tight transition-colors group-hover:text-[#2c5114]">
-                    {post.title}
-                  </h2>
-                  <div className="flex flex-wrap items-center gap-4 text-[14px] text-gray-500 font-medium">
-                    <div className="flex items-center gap-1.5">
-                      <User size={16} />
-                      {post.author}
+                  <div className="p-6">
+                    <div className="flex flex-wrap items-center gap-3 text-[12px] font-semibold text-[#697568]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Calendar size={14} />
+                        {post.date}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock size={14} />
+                        {getReadingTime(post)}
+                      </span>
                     </div>
-                    <span className="w-1 h-1 rounded-full bg-gray-300" />
-                    <div className="flex items-center gap-1.5">
-                      <Calendar size={16} />
-                      {post.date}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Article Content */}
-                <div className="space-y-6">
-                  <p className="text-[18px] leading-[1.6] text-black font-medium border-l-4 border-[#9FE870] pl-5 italic">
-                    {post.excerpt}
-                  </p>
-                  
-                  {post.content.map((paragraph, pIdx) => (
-                    <p key={pIdx} className="text-[16px] md:text-[17px] leading-[1.8] text-[#4d4d4d]">
-                      {paragraph}
+                    <h3 className="mt-4 min-h-[64px] text-[22px] font-semibold leading-[1.25] text-black">
+                      {post.title}
+                    </h3>
+                    <p className="mt-4 line-clamp-3 text-[14px] font-medium leading-[1.7] text-[#647064]">
+                      {post.excerpt}
                     </p>
-                  ))}
-                </div>
-
-                {/* Article Footer */}
-                <div className="pt-8 flex items-center justify-between border-t border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 text-gray-600 hover:bg-[#9FE870] hover:text-black transition-colors">
-                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                    </button>
-                    <span className="text-[14px] font-medium text-gray-500">Share this article</span>
+                    <span className="mt-6 inline-flex items-center gap-2 text-[13px] font-bold text-[#238B45]">
+                      Read article
+                      <ArrowRight size={15} strokeWidth={2.5} />
+                    </span>
                   </div>
-                  <button className="text-[15px] font-bold text-[#2c5114] hover:text-black flex items-center gap-1 transition-colors">
-                    Read more articles <ArrowRight size={18} className="ml-1" />
-                  </button>
-                </div>
+                </button>
               </article>
             ))}
           </div>
-
         </div>
-      </div>
+      </section>
+
+      <section ref={readerRef} className="scroll-mt-24 px-5 pb-20 sm:px-8 lg:pb-24">
+        <div className="mx-auto grid w-full max-w-[1320px] gap-8 lg:grid-cols-[320px_1fr]">
+          <aside className="lg:sticky lg:top-[84px] lg:h-fit">
+            <div className="rounded-[8px] border border-[#e2e8df] bg-white p-5 shadow-[0_14px_40px_rgba(16,42,24,0.05)]">
+              <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#238B45]">
+                Reading queue
+              </p>
+              <div className="mt-5 flex flex-col gap-2">
+                {blogPosts.map((post) => {
+                  const active = post.id === selectedPost.id;
+                  return (
+                    <button
+                      key={post.id}
+                      type="button"
+                      onClick={() => openPost(post.id)}
+                      className={`rounded-[7px] px-4 py-3 text-left transition-colors ${
+                        active ? "bg-[#eaffdf] text-black" : "text-[#657064] hover:bg-[#f5f7f4] hover:text-black"
+                      }`}
+                    >
+                      <span className="block text-[13px] font-semibold leading-[1.45]">
+                        {post.title}
+                      </span>
+                      <span className="mt-1 block text-[11px] font-medium opacity-70">
+                        {post.category} - {getReadingTime(post)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
+
+          <article className="rounded-[8px] border border-[#e2e8df] bg-white p-6 shadow-[0_18px_60px_rgba(16,42,24,0.05)] md:p-10 lg:p-12">
+            <div className="relative mb-9 h-[280px] overflow-hidden rounded-[7px] bg-[#edf3eb] md:h-[430px]">
+              <Image
+                src={selectedPost.image}
+                alt={selectedPost.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#238B45]">
+              <span>{selectedPost.category}</span>
+              <span className="h-1 w-1 rounded-full bg-[#238B45]" />
+              <span>{selectedPost.author}</span>
+              <span className="h-1 w-1 rounded-full bg-[#238B45]" />
+              <span>{selectedPost.date}</span>
+            </div>
+
+            <h2 className="mt-5 max-w-[840px] text-[34px] font-semibold leading-[1.12] text-black md:text-[48px]">
+              {selectedPost.title}
+            </h2>
+            <p className="mt-6 border-l-4 border-[#9FE870] pl-5 text-[19px] font-medium leading-[1.75] text-[#263126]">
+              {selectedPost.excerpt}
+            </p>
+
+            <div className="mt-9 max-w-[840px] space-y-6">
+              {selectedPost.content.map((paragraph) => (
+                <p key={paragraph} className="text-[17px] font-medium leading-[1.9] text-[#4f5b4f]">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </article>
+        </div>
+      </section>
     </main>
   );
 }
