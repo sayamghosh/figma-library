@@ -1,61 +1,91 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
-import fcLogo from "../assets/fc-logo.png";
 import type { Plan } from "../../api/plans";
 import { paymentsApi } from "../../api/payments";
+import { PlanTermsModal } from "../../components/PlanTermsModal";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: any;
   }
 }
 
-const FacebookIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-  </svg>
-);
+interface RazorpayPaymentResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
 
-const InstagramIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect width="18" height="18" x="3" y="3" rx="5" />
-    <circle cx="12" cy="12" r="3.8" />
-    <path d="M17.5 6.5h.01" />
-  </svg>
-);
+interface RazorpayFailureResponse {
+  error: {
+    description: string;
+  };
+}
 
-const YoutubeIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M2.5 17a24 24 0 0 1 0-10 2 2 0 0 1 2-2 58 58 0 0 1 15 0 2 2 0 0 1 2 2 24 24 0 0 1 0 10 2 2 0 0 1-2 2 58 58 0 0 1-15 0 2 2 0 0 1-2-2Z" />
-    <path d="m10 15 5-3-5-3z" />
-  </svg>
-);
+interface RazorpayInstance {
+  open: () => void;
+  on: (
+    event: "payment.failed",
+    callback: (response: RazorpayFailureResponse) => void
+  ) => void;
+}
+
+type RazorpayConstructor = new (options: {
+  key: string | undefined;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayPaymentResponse) => Promise<void>;
+  prefill: {
+    name: string | undefined;
+    email: string | undefined;
+  };
+  theme: {
+    color: string;
+  };
+}) => RazorpayInstance;
 
 interface PricingCardProps {
   plan: Plan;
   highlighted: boolean;
   onGetStarted: () => void;
+  onShowTerms: () => void;
 }
 
-function PricingCard({ plan, highlighted, onGetStarted }: PricingCardProps) {
+function PricingCard({ plan, highlighted, onGetStarted, onShowTerms }: PricingCardProps) {
   const price = Math.floor(plan.price / 100);
   const duration = `${plan.durationDays} Days`;
   const displayName = plan.displayName || plan.name;
-  const items = plan.features || [];
+  const items = (plan.features || []).slice(0, 6);
 
   return (
     <article
       className={
         highlighted
-          ? "flex min-h-[600px] flex-col rounded-[24px] bg-[#054316] p-8 text-white shadow-[0_20px_40px_rgba(5,67,22,0.3)] md:-mt-8 border border-[#06501a] relative transition-transform hover:scale-[1.02] duration-300"
-          : "flex min-h-[560px] flex-col rounded-[24px] bg-white p-8 text-[#0B1527] border border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-transform hover:scale-[1.02] duration-300"
+          ? "relative flex min-h-[600px] flex-col rounded-[24px] bg-[#054316] p-8 text-white shadow-[0_20px_40px_rgba(5,67,22,0.3)] md:-mt-8 border border-[#06501a] transition-transform hover:scale-[1.02] duration-300"
+          : "relative flex min-h-[560px] flex-col rounded-[24px] bg-white p-8 text-[#0B1527] border border-gray-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-transform hover:scale-[1.02] duration-300"
       }
     >
+      <button
+        type="button"
+        onClick={onShowTerms}
+        className={
+          highlighted
+            ? "absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+            : "absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-full border border-gray-200 bg-white text-[#0B1527] transition hover:border-[#054316] hover:text-[#054316]"
+        }
+        aria-label={`View ${displayName} purchase terms`}
+        title="Plan purchase terms"
+      >
+        <Info size={17} />
+      </button>
+
       <h2 className="text-[24px] font-bold tracking-tight">{displayName}</h2>
       <p
         className={
@@ -118,7 +148,7 @@ function PricingCard({ plan, highlighted, onGetStarted }: PricingCardProps) {
 
 function SpatialitySection() {
   return (
-    <section className="mx-auto mt-[150px] w-full max-w-[1320px] px-5">
+    <section className="mx-auto mb-20 mt-[150px] w-full max-w-[1320px] px-5 lg:mb-24">
       <h2 className="text-center text-[34px] font-extrabold tracking-[-0.035em] text-black md:text-[42px]">
         What&apos;s our spatiality!
       </h2>
@@ -158,88 +188,13 @@ function SpatialitySection() {
   );
 }
 
-function PricingFooter() {
-  return (
-    <footer className="mt-[105px] bg-[linear-gradient(180deg,#a9f17b_0%,#eaffdf_34%,#ffffff_72%)] px-5 pt-[118px]">
-      <div className="mx-auto max-w-[1320px]">
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr_1.25fr]">
-          <div>
-            <Link href="/" className="inline-flex items-center">
-              <Image src={fcLogo} alt="figma components" className="h-[42px] w-auto object-contain" />
-            </Link>
-            <p className="mt-8 max-w-[300px] text-[14px] font-medium leading-[1.8] text-[#6b6b6b]">
-              Clarity gives you the blocks &amp; components you need to create a truly professional website, landing page or admin panel for your SaaS.
-            </p>
-            <div className="mt-6 flex gap-3">
-              {[FacebookIcon, InstagramIcon, YoutubeIcon].map((Icon, index) => (
-                <a
-                  key={index}
-                  href="#"
-                  className="grid h-10 w-10 place-items-center rounded-full border border-[#e5e5e5] bg-white text-black"
-                >
-                  <Icon className="h-[17px] w-[17px]" />
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-16">
-            <div>
-              <p className="mb-8 inline-flex rounded-[8px] border border-[#e5e5e5] bg-white px-5 py-2 text-[13px] font-medium text-black">
-                Company
-              </p>
-              <div className="flex flex-col gap-7 text-[14px] font-medium text-[#282828]">
-                <Link href="/pricing">Pricing Plans</Link>
-                <Link href="#">FAQ</Link>
-                <Link href="#">Contact Us</Link>
-              </div>
-            </div>
-            <div className="pt-[61px]">
-              <div className="flex flex-col gap-7 text-[14px] font-medium text-[#282828]">
-                <Link href="/privacy-policy">Privacy Policy</Link>
-                <Link href="#">Careers</Link>
-                <Link href="/terms-conditions">Terms &amp; Conditions</Link>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-8 inline-flex rounded-[8px] border border-[#e5e5e5] bg-white px-5 py-2 text-[13px] font-medium text-black">
-              Monthly Newsletter
-            </p>
-            <h3 className="max-w-[410px] text-[18px] font-medium leading-[1.35] tracking-[-0.02em] text-[#222222]">
-              Level Up Your Workflow and Boost Results With <span className="font-extrabold">figma components</span>
-            </h3>
-            <form className="mt-8 flex h-[48px] w-full max-w-[420px] rounded-[8px] border border-[#e5e5e5] bg-white p-1">
-              <input
-                className="min-w-0 flex-1 px-4 text-[14px] outline-none placeholder:text-[#b9b9b9]"
-                placeholder="Email Address"
-                type="email"
-                required
-              />
-              <button className="rounded-[6px] bg-black px-5 text-[13px] font-medium text-white">
-                Subscribe
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div className="mt-[72px] border-t border-[#e6e6e6] py-6 text-center text-[15px] font-medium text-[#737373]">
-          Copyright &amp; design by <span className="font-bold text-[#1c1c1c]">@figmacomponents.site</span> - 2026
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }) {
   const { user, setLoginModalOpen } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
+  const [termsOpen, setTermsOpen] = useState(false);
 
-  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+  const { refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: !!user,
@@ -254,18 +209,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
     }
   }, []);
 
-  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
-
   const startPayment = useCallback(async (plan: Plan) => {
-    if (hasActiveSubscription) {
-      const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
-      );
-      if (!confirmUpgrade) return;
-    }
-
-    setSelectedPlan(plan);
-    setError("");
     setLoading(true);
 
     try {
@@ -282,7 +226,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
         name: "Figcomponents Pro",
         description: `Subscribe to ${orderData.planName}`,
         order_id: orderData.orderId,
-        handler: async (response: any) => {
+        handler: async (response: RazorpayPaymentResponse) => {
           try {
             await paymentsApi.verifyPayment(
               response.razorpay_order_id,
@@ -292,8 +236,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
             );
             await refetchSubscription();
             alert("Payment successful! You now have Pro access.");
-          } catch (err) {
-            setError("Payment verification failed. Please contact support.");
+          } catch {
             alert("Payment verification failed. Please contact support.");
           }
         },
@@ -309,25 +252,21 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
       const razorpay = new window.Razorpay(razorpayOptions);
       razorpay.open();
 
-      razorpay.on("payment.failed", (response: any) => {
+      razorpay.on("payment.failed", (response: RazorpayFailureResponse) => {
         const errMsg = `Payment failed: ${response.error.description}`;
-        setError(errMsg);
         alert(errMsg);
       });
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
       let errMsg = "";
-      if (err.message === "SUBSCRIPTION_EXISTS") {
-        errMsg = "You already have an active subscription.";
-      } else {
-        errMsg = err.message || "Failed to create payment. Please try again.";
-      }
-      setError(errMsg);
+      errMsg = message === "SUBSCRIPTION_EXISTS"
+        ? "Failed to create payment. Please try again."
+        : message || "Failed to create payment. Please try again.";
       alert(errMsg);
     } finally {
       setLoading(false);
-      setSelectedPlan(null);
     }
-  }, [hasActiveSubscription, refetchSubscription, user]);
+  }, [refetchSubscription, user]);
 
   const handlePlanSelect = async (planName: string) => {
     const plan = initialPlans?.find((p) => p.name === planName);
@@ -350,13 +289,15 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
     if (!user || !pendingPlanName || loading) return;
     const pendingPlan = initialPlans?.find((p) => p.name === pendingPlanName);
     if (!pendingPlan) return;
-    setPendingPlanName(null);
-    startPayment(pendingPlan);
+    window.setTimeout(() => {
+      setPendingPlanName(null);
+      startPayment(pendingPlan);
+    }, 0);
   }, [loading, pendingPlanName, initialPlans, startPayment, user]);
 
   return (
     <main className="min-h-screen bg-white text-[#111111]">
-      <section className="mx-auto w-full max-w-[1180px] px-5 pb-10 pt-[80px]">
+      <section className="relative mx-auto w-full max-w-[1180px] px-5 pb-10 pt-[80px]">
         <div className="text-center">
           <h1 className="text-[42px] font-medium leading-[1.18] tracking-[-0.045em] text-[#161616] md:text-[54px]">
             Powerful features for
@@ -378,6 +319,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
                 plan={plan}
                 highlighted={index === 1}
                 onGetStarted={() => handlePlanSelect(plan.name)}
+                onShowTerms={() => setTermsOpen(true)}
               />
             ))
           ) : (
@@ -402,7 +344,7 @@ export default function PricingClient({ initialPlans }: { initialPlans: Plan[] }
       </section>
 
       <SpatialitySection />
-      <PricingFooter />
+      <PlanTermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />
     </main>
   );
 }

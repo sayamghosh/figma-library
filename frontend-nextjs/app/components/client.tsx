@@ -1,14 +1,14 @@
 "use client";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { componentsApi } from "../../api/components";
-import { paymentsApi } from "../../api/payments";
+import { paymentsApi, type CurrentSubscriptionData, type SubscriptionData } from "../../api/payments";
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
-import { Scaling, Frame, Copy, Component, Crown } from "lucide-react";
+import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Crown, Heart } from "lucide-react";
 
 
 
@@ -73,16 +73,6 @@ function IconX() {
     </svg>
   );
 }
-function IconShare() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <circle cx="12" cy="4" r="2" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="4" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="12" cy="12" r="2" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M5.5 7l5-2.5M5.5 9l5 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
 function IconUnlock({ className }: { className?: string }) {
   return (
     <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,6 +116,12 @@ function isProComponent(item: Pick<ComponentItem, "pricingType" | "tags">) {
   return item.pricingType === "Pro" || item.tags.some((t) => /pro/i.test(t));
 }
 
+function formatCompactCount(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}m`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}k`;
+  return String(value);
+}
+
 function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   return (
     <div className="fixed bottom-5 right-5 z-[220]">
@@ -139,6 +135,105 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
         >
           <IconX />
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Pro subscription usage card ───────────────────────────────────────────────
+type SubscriptionSummary = CurrentSubscriptionData | SubscriptionData;
+
+function formatPlanPrice(price?: number, durationDays?: number) {
+  if (!price || !durationDays) return "Active plan";
+  return `₹${(price / 100).toFixed(2)} / ${durationDays} Days`;
+}
+
+function getDaysBetween(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return 0;
+  return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+}
+
+function getDaysLeft(endDate?: string) {
+  if (!endDate) return 0;
+  const end = new Date(endDate).getTime();
+  if (!Number.isFinite(end)) return 0;
+  return Math.max(0, Math.ceil((end - Date.now()) / (1000 * 60 * 60 * 24)));
+}
+
+function UsageMeter({
+  label,
+  value,
+  total,
+}: {
+  label: string;
+  value: number;
+  total: number;
+}) {
+  const isUnlimited = total >= 999999;
+  const progress = isUnlimited || total <= 0 ? 100 : Math.min(100, Math.max(0, (value / total) * 100));
+  const displayTotal = isUnlimited ? "Unlimited" : total;
+
+  return (
+    <div>
+      <div className="mb-1 flex items-end justify-between gap-2">
+        <span className="text-[0.72rem] font-bold text-slate-700">{label}</span>
+        <span className="text-[0.68rem] font-semibold text-slate-500">
+          {value} / {displayTotal}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-[#22C55E] transition-all"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ProSubscriptionCard({ subscription }: { subscription: SubscriptionSummary | null }) {
+  const plan = subscription && "plan" in subscription ? subscription.plan : undefined;
+  const planName = plan?.displayName ? `${plan.displayName} Plan` : "Pro Plan";
+  const maxComponents = subscription?.maxComponents ?? plan?.componentLimit ?? 0;
+  const downloadsUsed = Math.max(0, subscription?.componentCountUsed ?? 0);
+  const durationDays =
+    plan?.durationDays ||
+    getDaysBetween(subscription && "startDate" in subscription ? subscription.startDate : undefined, subscription?.endDate) ||
+    180;
+  const daysLeft = getDaysLeft(subscription?.endDate);
+  const daysPassed = Math.max(0, durationDays - daysLeft);
+  const expiresSoon = daysLeft <= 7;
+
+  return (
+    <div className="mx-4 mb-6 shrink-0 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-[0.95rem] font-extrabold text-slate-900">{planName}</p>
+          <p className="mt-1 text-[0.72rem] font-bold text-[#238B45]">
+            {formatPlanPrice(plan?.price, plan?.durationDays)}
+          </p>
+        </div>
+        <span
+          className={`shrink-0 rounded-md px-2 py-1 text-[0.56rem] font-extrabold uppercase tracking-wide ${
+            expiresSoon ? "bg-red-50 text-red-600" : "bg-sky-50 text-sky-700"
+          }`}
+        >
+          {daysLeft > 0 ? `${daysLeft} days left` : "Expired"}
+        </span>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-[0.75rem] font-bold text-slate-700">Plan Usage</span>
+          <span className="text-[0.65rem] font-semibold text-slate-400">Current cycle</span>
+        </div>
+        <div className="space-y-3">
+          <UsageMeter label="Downloads" value={downloadsUsed} total={maxComponents} />
+          <UsageMeter label="Days passed" value={daysPassed} total={durationDays} />
+        </div>
       </div>
     </div>
   );
@@ -187,11 +282,19 @@ function PreviewModal({
   onClose,
   onCopy,
   isCopying,
+  isFavorite,
+  onFavoriteToggle,
+  isFavoritePending,
+  onDownloadRecorded,
 }: {
   item: ComponentItem;
   onClose: () => void;
   onCopy: (item: ComponentItem, closePreview: () => void) => Promise<boolean>;
   isCopying: boolean;
+  isFavorite: boolean;
+  onFavoriteToggle: (item: ComponentItem) => void;
+  isFavoritePending: boolean;
+  onDownloadRecorded: (item: ComponentItem) => Promise<number | null>;
 }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -201,6 +304,7 @@ function PreviewModal({
     if (success) {
       setIsSuccess(true);
       setTimeout(() => setIsSuccess(false), 2000);
+      void onDownloadRecorded(item);
     }
   }
 
@@ -239,7 +343,7 @@ function PreviewModal({
 
         {/* Content - Image Preview */}
         <div className="px-6 py-4 relative overflow-hidden flex flex-col items-center">
-          <div className="relative w-full h-[35vh] sm:h-[42vh] md:h-[46vh] max-h-[460px] min-h-[240px] rounded-xl border border-gray-100 overflow-hidden bg-[#FAFBFD] flex items-center justify-center">
+          <div className="relative group/preview w-full h-[35vh] sm:h-[42vh] md:h-[46vh] max-h-[460px] min-h-[240px] rounded-xl border border-gray-100 overflow-hidden bg-[#FAFBFD] flex items-center justify-center">
             {item.previewImageUrl ? (
               <Image
                 src={item.previewImageUrl}
@@ -253,6 +357,22 @@ function PreviewModal({
                 No preview available
               </div>
             )}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onFavoriteToggle(item);
+              }}
+              disabled={isFavoritePending}
+              aria-pressed={isFavorite}
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-700 shadow-sm backdrop-blur transition-all hover:scale-105 hover:text-red-500 disabled:cursor-wait disabled:opacity-70 ${
+                isFavorite ? "opacity-100 text-red-500" : "opacity-0 group-hover/preview:opacity-100"
+              }`}
+            >
+              <Heart size={18} strokeWidth={2} fill={isFavorite ? "currentColor" : "none"} />
+            </button>
           </div>
         </div>
 
@@ -273,25 +393,6 @@ function PreviewModal({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="text-gray-700 hover:text-black hover:scale-105 active:scale-95 transition-all p-1"
-              title="Share Component"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3"></circle>
-                <circle cx="6" cy="12" r="3"></circle>
-                <circle cx="18" cy="19" r="3"></circle>
-                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-              </svg>
-            </button>
-            <div className="flex items-center gap-1.5 text-gray-700 hover:text-black hover:scale-105 transition-all cursor-pointer p-1">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
-              <span className="font-semibold text-sm">10K</span>
-            </div>
             <button
               type="button"
               onClick={handleCopy}
@@ -335,27 +436,42 @@ function ComponentCard({
   item,
   isCopying,
   onCopy,
+  onDownloadRecorded,
   onPreview,
+  isFavorite,
+  onFavoriteToggle,
+  isFavoritePending,
   isProUser = false,
   priority = false,
 }: {
-  item: { _id: string; name: string; previewImageUrl: string; tags: string[]; figmaDataBase64?: string; pricingType?: "Free" | "Pro"; designType?: "Wireframe" | "UI Design" };
+  item: ComponentItem;
   isCopying: boolean;
   onCopy: () => Promise<boolean>;
+  onDownloadRecorded: () => Promise<number | null>;
   onPreview: () => void;
+  isFavorite: boolean;
+  onFavoriteToggle: () => void;
+  isFavoritePending: boolean;
   isProUser?: boolean;
   priority?: boolean;
 }) {
   const isPro = isProComponent(item);
   const showLock = isPro && !isProUser;
   const [isSuccess, setIsSuccess] = useState(false);
+  const [downloadCountOverride, setDownloadCountOverride] = useState<number | null>(null);
+  const downloadCount = downloadCountOverride ?? item.downloadCount ?? 0;
 
   async function handleCopy() {
     if (isCopying || isSuccess) return;
     const success = await onCopy();
     if (success) {
+      setDownloadCountOverride(downloadCount + 1);
       setIsSuccess(true);
       setTimeout(() => setIsSuccess(false), 2000);
+      const serverDownloadCount = await onDownloadRecorded();
+      if (typeof serverDownloadCount === "number") {
+        setDownloadCountOverride(serverDownloadCount);
+      }
     }
   }
 
@@ -381,6 +497,22 @@ function ComponentCard({
             No preview
           </div>
         )}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onFavoriteToggle();
+          }}
+          disabled={isFavoritePending}
+          aria-pressed={isFavorite}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-700 shadow-sm backdrop-blur transition-all hover:scale-105 hover:text-red-500 disabled:cursor-wait disabled:opacity-70 ${
+            isFavorite ? "opacity-100 text-red-500" : "opacity-0 group-hover/preview:opacity-100"
+          }`}
+        >
+          <Heart size={18} strokeWidth={2} fill={isFavorite ? "currentColor" : "none"} />
+        </button>
       </div>
 
       {/* Footer row */}
@@ -393,21 +525,19 @@ function ComponentCard({
               {/* PRO */}
             </span>
           ) : (
-            <span className="text-[0.6rem] font-bold text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 shrink-0 uppercase tracking-wide">
+            <span className="text-[0.6rem] font-bold text-gray-500 px-1.5 py-0.5 rounded border border-[#a1d99b] shrink-0 uppercase tracking-wide">
               FREE
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-1 text-gray-500 text-[0.75rem]">
-          <button type="button" className="hover:text-blue-500 transition-colors">
-            <IconShare />
-          </button>
-          <div className="flex items-center gap-1 ml-1">
+          <div className="flex items-center ml-1">
             <button type="button" className="hover:text-red-500 transition-colors">
-              <IconHeart />
+              {/* <IconHeart /> */}
+              <ArrowDownToLine size={16} strokeWidth={1.5} />
             </button>
-            <span className="font-medium">10k</span>
+            <span className="font-medium">{formatCompactCount(downloadCount)}</span>
           </div>
         </div>
       </div>
@@ -418,7 +548,7 @@ function ComponentCard({
           type="button"
           onClick={handleCopy}
           disabled={isCopying || isSuccess}
-          className={`w-full flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold rounded-full py-2.5 transition-all duration-300 cursor-pointer font-manrope border ${isSuccess
+          className={`w-full flex items-center justify-center gap-1.5 text-[0.85rem] font-semibold rounded-full py-2 mt-2 transition-all duration-300 cursor-pointer font-manrope border ${isSuccess
             ? "bg-green-50 text-green-600 border-green-200"
             : showLock
               ? "bg-gray-50 text-gray-400 border-gray-200"
@@ -505,7 +635,7 @@ export default function ComponentsClient({
   initialPage: PaginatedComponentResponse | null;
   initialTags?: string[];
 }) {
-  const { user, setPricingModalOpen } = useAuth();
+  const { user, setLoginModalOpen, setPricingModalOpen } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: tags = [] } = useQuery({
@@ -544,6 +674,27 @@ export default function ComponentsClient({
   });
 
   const isProUser = subscriptionData?.isProUser ?? user?.isProUser ?? false;
+
+  const { data: currentSubscription } = useQuery({
+    queryKey: ["subscription", "current"],
+    queryFn: () => paymentsApi.getCurrentSubscription(),
+    enabled: !!user && isProUser,
+    staleTime: 60 * 1000,
+  });
+
+  const activeSubscription = currentSubscription ?? subscriptionData?.subscription ?? null;
+
+  const { data: favoriteIdData } = useQuery({
+    queryKey: ["favorite-component-ids"],
+    queryFn: () => componentsApi.listFavoriteIds(),
+    enabled: !!user,
+    staleTime: 60 * 1000,
+  });
+
+  const favoriteIds = useMemo(
+    () => new Set(favoriteIdData ?? []),
+    [favoriteIdData]
+  );
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -585,6 +736,81 @@ export default function ComponentsClient({
   const total = data?.pages[0]?.pagination?.total ?? (initialPage?.pagination?.total || 0);
 
   // ── Prefetch a category on hover ───────────────────────────────────────────
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: (componentId: string) => componentsApi.toggleFavorite(componentId),
+    onMutate: async (componentId) => {
+      await queryClient.cancelQueries({ queryKey: ["favorite-components"] });
+      await queryClient.cancelQueries({ queryKey: ["favorite-component-ids"] });
+      const previous = queryClient.getQueryData<PaginatedComponentResponse>(["favorite-components"]);
+      const previousIds = queryClient.getQueryData<string[]>(["favorite-component-ids"]);
+      const fallbackItem = items.find((item) => item._id === componentId);
+      const isFavoriteId = previousIds?.includes(componentId) ?? favoriteIds.has(componentId);
+
+      queryClient.setQueryData<string[]>(
+        ["favorite-component-ids"],
+        isFavoriteId
+          ? (previousIds ?? []).filter((id) => id !== componentId)
+          : [componentId, ...(previousIds ?? [])]
+      );
+
+      if (previous || fallbackItem) {
+        const current = previous ?? {
+          items: [],
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+        const alreadyFavorite = current.items.some((item) => item._id === componentId);
+        const nextItems = alreadyFavorite
+          ? current.items.filter((item) => item._id !== componentId)
+          : fallbackItem
+            ? [{ ...fallbackItem, isFavorite: true }, ...current.items]
+            : current.items;
+        const totalFavorites = Math.max(0, current.pagination.total + (alreadyFavorite ? -1 : 1));
+
+        queryClient.setQueryData<PaginatedComponentResponse>(["favorite-components"], {
+          items: nextItems,
+          pagination: {
+            ...current.pagination,
+            total: totalFavorites,
+            totalPages: Math.ceil(totalFavorites / current.pagination.limit),
+          },
+        });
+      }
+
+      return { previous, previousIds };
+    },
+    onError: (_error, _componentId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["favorite-components"], context.previous);
+      }
+      if (context?.previousIds) {
+        queryClient.setQueryData(["favorite-component-ids"], context.previousIds);
+      }
+      showToast("Could not update favorite. Please try again.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["favorite-components"] });
+      queryClient.invalidateQueries({ queryKey: ["favorite-component-ids"] });
+    },
+  });
+
+  const handleFavoriteToggle = useCallback(
+    (item: ComponentItem) => {
+      if (!user) {
+        setLoginModalOpen(true);
+        showToast("Sign in to save favorites.");
+        return;
+      }
+
+      toggleFavoriteMutation.mutate(item._id);
+    },
+    [setLoginModalOpen, showToast, toggleFavoriteMutation, user]
+  );
+
   const prefetchCategory = useCallback(
     (cat: string) => {
       const tag = cat === "All" ? "" : cat;
@@ -595,6 +821,14 @@ export default function ComponentsClient({
     },
     [debouncedSearch, priceMode, queryClient, viewMode]
   );
+
+  const selectCategory = useCallback((cat: string) => {
+    setActiveCategory((current) => (cat === "All" || current === cat ? "All" : cat));
+  }, []);
+
+  const togglePriceMode = useCallback((mode: Exclude<PriceMode, "all">) => {
+    setPriceMode((current) => (current === mode ? "all" : mode));
+  }, []);
 
   // ── Client-side filters ────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -657,16 +891,28 @@ export default function ComponentsClient({
             queryKey: ["components", "data", item._id],
             queryFn: () => componentsApi.getComponentData(item._id),
             staleTime: 10 * 60 * 1000,
-          })
+      })
         ).figmaDataBase64;
       if (!payload) throw new Error("Component payload is missing.");
       await copyToFigma(payload, item.name);
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
       return true;
     } catch (error) {
       console.error("Copy failed:", error);
       return false;
     } finally {
       setActiveId(null);
+    }
+  }
+
+  async function recordDownload(item: ComponentItem): Promise<number | null> {
+    try {
+      const result = await componentsApi.recordDownload(item._id);
+      queryClient.invalidateQueries({ queryKey: ["components", "list"] });
+      return result.downloadCount;
+    } catch (error) {
+      console.error("Download count update failed:", error);
+      return null;
     }
   }
 
@@ -677,7 +923,7 @@ export default function ComponentsClient({
   const showStaleIndicator = isFetching && !isLoading;
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-[#FAFAFA] relative">
+    <div className="flex min-h-[calc(100dvh-60px)] bg-[#FAFAFA] relative">
       <style dangerouslySetInnerHTML={{
         __html: `
         .no-scrollbar::-webkit-scrollbar {
@@ -687,11 +933,34 @@ export default function ComponentsClient({
           -ms-overflow-style: none !important;
           scrollbar-width: none !important;
         }
+        .category-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+        .category-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .category-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .category-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border: 2px solid transparent;
+          border-radius: 999px;
+          background-clip: content-box;
+        }
+        .category-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+          background-clip: content-box;
+        }
       `}} />
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope h-full">
+      <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope sticky top-[60px] h-[calc(100dvh-60px)] self-start">
 
         {/* Unlock Premium+ Block (Fixed at Top) */}
+        {isProUser ? (
+          <ProSubscriptionCard subscription={activeSubscription} />
+        ) : (
         <div className="mx-4 mb-6 bg-slate-100 rounded-xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0">
           <div className="flex items-center gap-2 mb-4 justify-center">
             <IconUnlock className="text-orange-500 w-5 h-5" />
@@ -728,10 +997,11 @@ export default function ComponentsClient({
             BUY NOW !
           </button>
         </div>
+        )}
 
         {/* Components section (Fixed in Position) */}
         <div className="px-6 flex items-center gap-2 mb-3 shrink-0">
-          <span className="text-[#9FE870]"><IconLogoFourDots /></span>
+          <span className="text-[#238B45]" ><Layers size={20} strokeWidth={2.25} /></span>
           <span className="font-bold text-gray-800 text-[15px]">Components</span>
           <span className="ml-auto text-[0.65rem] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
             {total}
@@ -739,22 +1009,22 @@ export default function ComponentsClient({
         </div>
 
         {/* Scrollable Categories List Container (Hidden scrollbar) */}
-        <div className="flex-1 overflow-y-auto pb-8 select-none no-scrollbar">
+        <div className="category-scrollbar flex-1 overflow-y-auto pb-8 select-none">
           <nav className="flex flex-col px-3">
             {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => selectCategory(cat)}
                 onMouseEnter={() => prefetchCategory(cat)}
                 onFocus={() => prefetchCategory(cat)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-[0.85rem] font-medium transition-colors cursor-pointer font-manrope ${activeCategory === cat
-                  ? "text-black font-bold"
-                  : "text-gray-500 hover:text-black hover:bg-gray-50"
+                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-[0.85rem] font-medium transition-all cursor-pointer font-manrope border ${activeCategory === cat
+                  ? "text-[#238B45] font-bold bg-[#238B45]/5 border-[#238B45]/20 shadow-[0_1px_2px_rgba(35,139,69,0.05)]"
+                  : "text-gray-500 hover:text-black hover:bg-gray-50 border-transparent"
                   }`}
               >
                 {cat}
-                <span className="text-gray-400"><IconChevron /></span>
+                <span className={activeCategory === cat ? "text-[#238B45]" : "text-gray-400"}><IconChevron /></span>
               </button>
             ))}
           </nav>
@@ -762,7 +1032,7 @@ export default function ComponentsClient({
       </aside>
 
       {/* ── Main Area ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-[#FAFAFA]">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#FAFAFA]">
         {/* Page title section */}
         <div className="px-8 pt-4 pb-4">
           <h1 className="font-outfit font-bold text-[24px] text-[#161616] leading-tight">
@@ -774,7 +1044,7 @@ export default function ComponentsClient({
         </div>
 
         {/* Sticky Toolbar */}
-        <div className="sticky top-0 z-20 px-8 py-4 bg-[#FAFAFA] font-manrope">
+        <div className="sticky top-[60px] z-20 px-8 py-4 bg-[#FAFAFA] font-manrope">
           <div className="flex flex-wrap lg:flex-nowrap items-center gap-3 xl:gap-5">
             {/* View mode segmented control */}
             <div className="flex items-center bg-white border border-gray-200/60 rounded-lg p-1 gap-1 shrink-0">
@@ -782,7 +1052,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setViewMode("wireframe")}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${viewMode === "wireframe"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -793,7 +1063,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setViewMode("ui-design")}
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${viewMode === "ui-design"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -808,7 +1078,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPlatformMode("all")}
                 className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "all"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -818,7 +1088,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPlatformMode("web")}
                 className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "web"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -828,7 +1098,7 @@ export default function ComponentsClient({
                 type="button"
                 onClick={() => setPlatformMode("app")}
                 className={`px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${platformMode === "app"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -840,9 +1110,9 @@ export default function ComponentsClient({
             <div className="flex items-center bg-white border border-gray-200/60 rounded-lg p-1 gap-1 shrink-0">
               <button
                 type="button"
-                onClick={() => setPriceMode("free")}
+                onClick={() => togglePriceMode("free")}
                 className={`px-6 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "free"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
@@ -850,13 +1120,13 @@ export default function ComponentsClient({
               </button>
               <button
                 type="button"
-                onClick={() => setPriceMode("pro")}
+                onClick={() => togglePriceMode("pro")}
                 className={`flex items-center gap-1 px-5 py-1.5 rounded-md text-[0.82rem] font-bold transition-all cursor-pointer ${priceMode === "pro"
-                  ? "bg-[#79e041] text-black shadow-sm"
+                  ? "bg-[#238B45] text-[#e5f5e0] shadow-sm"
                   : "text-gray-500 hover:text-black hover:bg-gray-50"
                   }`}
               >
-                <Crown size={16} color="black" strokeWidth={2} />
+                <Crown size={16} color={priceMode === "pro" ? "#e5f5e0" : "black"} strokeWidth={2} />
                 Pro
               </button>
             </div>
@@ -935,9 +1205,13 @@ export default function ComponentsClient({
                   priority={index < 15}
                   isCopying={activeId === item._id}
                   onCopy={() => onCopy(item)}
+                  onDownloadRecorded={() => recordDownload(item)}
                   onPreview={() =>
                     setPreviewItem(item)
                   }
+                  isFavorite={favoriteIds.has(item._id)}
+                  onFavoriteToggle={() => handleFavoriteToggle(item)}
+                  isFavoritePending={toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === item._id}
                   isProUser={isProUser}
                 />
               ))}
@@ -971,6 +1245,10 @@ export default function ComponentsClient({
           onClose={() => setPreviewItem(null)}
           onCopy={onCopy}
           isCopying={activeId === previewItem._id}
+          isFavorite={favoriteIds.has(previewItem._id)}
+          onFavoriteToggle={handleFavoriteToggle}
+          isFavoritePending={toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === previewItem._id}
+          onDownloadRecorded={recordDownload}
         />
       )}
 

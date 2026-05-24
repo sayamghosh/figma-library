@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "./providers";
 import Navbar from "../components/Navbar";
+import { FooterSection } from "../components/FooterSection";
 
 export const metadata: Metadata = {
   title: "FigComponents",
@@ -23,6 +23,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {children}
+          <FooterSection />
         </Providers>
       </body>
     </html>

@@ -193,6 +193,126 @@ const listMyComponents = asyncHandler(async (req, res) => {
   res.json(responseBody);
 });
 
+// GET /api/components/favorites
+const listFavoriteComponents = asyncHandler(async (req, res) => {
+  const { q = "", page = 1, limit = 20, skip: skipQuery = "" } = req.query;
+  const pageNumber = Math.max(Number(page) || 1, 1);
+  const perPage = Math.min(Math.max(Number(limit) || 20, 1), 100);
+  const skip = skipQuery !== "" ? Math.max(Number(skipQuery) || 0, 0) : (pageNumber - 1) * perPage;
+
+  const user = await User.findById(req.user.userId).select("favoriteComponents").lean();
+  const favoriteIds = user?.favoriteComponents || [];
+
+  if (favoriteIds.length === 0) {
+    return res.json({
+      success: true,
+      data: {
+        items: [],
+        pagination: {
+          page: pageNumber,
+          limit: perPage,
+          total: 0,
+          totalPages: 0,
+        },
+      },
+    });
+  }
+
+  const query = {
+    _id: { $in: favoriteIds },
+    $and: [
+      {
+        $or: [
+          { status: "approved" },
+          { status: { $exists: false } },
+          { status: null },
+        ],
+      },
+    ],
+  };
+
+  if (q) {
+    const safeSearch = escapeRegex(q);
+    query.$or = [
+      { name: { $regex: safeSearch, $options: "i" } },
+      { tags: { $regex: safeSearch, $options: "i" } },
+    ];
+  }
+
+  const [items, total] = await Promise.all([
+    Component.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(perPage)
+      .select("-figmaDataBase64")
+      .populate({ path: "createdBy", select: "name email" })
+      .lean(),
+    Component.countDocuments(query),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      items: items.map((item) => ({ ...item, isFavorite: true })),
+      pagination: {
+        page: pageNumber,
+        limit: perPage,
+        total,
+        totalPages: Math.ceil(total / perPage),
+      },
+    },
+  });
+});
+
+// GET /api/components/favorites/ids
+const listFavoriteComponentIds = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.userId).select("favoriteComponents").lean();
+
+  res.json({
+    success: true,
+    data: {
+      ids: (user?.favoriteComponents || []).map((id) => id.toString()),
+    },
+  });
+});
+
+// PATCH /api/components/:id/favorite
+const toggleFavoriteComponent = asyncHandler(async (req, res) => {
+  const component = await Component.findById(req.params.id).select("_id").lean();
+
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  const user = await User.findById(req.user.userId).select("favoriteComponents");
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const componentId = component._id.toString();
+  const isAlreadyFavorite = user.favoriteComponents.some(
+    (id) => id.toString() === componentId
+  );
+
+  if (isAlreadyFavorite) {
+    user.favoriteComponents.pull(component._id);
+  } else {
+    user.favoriteComponents.addToSet(component._id);
+  }
+
+  await user.save();
+
+  res.json({
+    success: true,
+    data: {
+      componentId,
+      isFavorite: !isAlreadyFavorite,
+    },
+  });
+});
+
 // ─── GET /api/components/admin ────────────────────────────────────────────────
 const listComponentsAdmin = asyncHandler(async (req, res) => {
   if (req.user.role !== "admin") {
@@ -428,6 +548,33 @@ const getComponentData = asyncHandler(async (req, res) => {
 });
 
 // ─── PATCH /api/components/:id ────────────────────────────────────────────────
+// POST /api/components/:id/download
+const recordComponentDownload = asyncHandler(async (req, res) => {
+  const component = await Component.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { downloadCount: 1 } },
+    { new: true, select: "downloadCount" }
+  ).lean();
+
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  await Promise.all([
+    cacheInvalidate(componentKey(req.params.id)),
+    bumpListVersion(),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      componentId: req.params.id,
+      downloadCount: component.downloadCount || 0,
+    },
+  });
+});
+
 const updateComponent = asyncHandler(async (req, res) => {
   const component = await Component.findById(req.params.id);
   if (!component) {
@@ -576,8 +723,12 @@ module.exports = {
   createComponent,
   getComponent,
   getComponentData,
+  recordComponentDownload,
   updateComponent,
   deleteComponent,
+  listFavoriteComponents,
+  listFavoriteComponentIds,
+  toggleFavoriteComponent,
   getTopCreators,
   updateComponentStatus,
   listComponentsAdmin,

@@ -4,12 +4,51 @@ import { useAuth } from "../context/AuthContext";
 import { plansApi, type Plan } from "../api/plans";
 import { paymentsApi } from "../api/payments";
 import { useQuery } from "@tanstack/react-query";
+import { Info, X } from "lucide-react";
+import { PlanTermsModal } from "./PlanTermsModal";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: any;
   }
 }
+
+interface RazorpayPaymentResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayFailureResponse {
+  error: {
+    description: string;
+  };
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  on: (
+    event: "payment.failed",
+    callback: (response: RazorpayFailureResponse) => void
+  ) => void;
+}
+
+type RazorpayConstructor = new (options: {
+  key: string | undefined;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: RazorpayPaymentResponse) => Promise<void>;
+  prefill: {
+    name: string | undefined;
+    email: string | undefined;
+  };
+  theme: {
+    color: string;
+  };
+}) => RazorpayInstance;
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -23,8 +62,9 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
   const [error, setError] = useState("");
   const [pendingPlanName, setPendingPlanName] = useState<string | null>(null);
   const [showLoginNotice, setShowLoginNotice] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
-  const { data: plans, isLoading } = useQuery({
+  const { data: plans } = useQuery({
     queryKey: ["plans"],
     queryFn: plansApi.getAllPlans,
     enabled: isOpen,
@@ -34,7 +74,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
   const proUltimate = plans?.find((p) => p.name === "pro_ultimate");
   const proAnnual = plans?.find((p) => p.name === "pro_annual");
 
-  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+  const { refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: isOpen && !!user,
@@ -51,24 +91,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
 
   useEffect(() => {
     if (!isOpen) {
-      setPendingPlanName(null);
-      setShowLoginNotice(false);
-      setError("");
+      window.setTimeout(() => {
+        setPendingPlanName(null);
+        setShowLoginNotice(false);
+        setError("");
+        setTermsOpen(false);
+      }, 0);
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
-
   const startPayment = useCallback(async (plan: Plan) => {
-    if (hasActiveSubscription) {
-      const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
-      );
-      if (!confirmUpgrade) return;
-    }
-
     setSelectedPlan(plan);
     setError("");
     setLoading(true);
@@ -87,7 +119,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
         name: "Figcomponents Pro",
         description: `Subscribe to ${orderData.planName}`,
         order_id: orderData.orderId,
-        handler: async (response: any) => {
+        handler: async (response: RazorpayPaymentResponse) => {
           try {
             await paymentsApi.verifyPayment(
               response.razorpay_order_id,
@@ -98,7 +130,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
             await refetchSubscription();
             alert("Payment successful! You now have Pro access.");
             onClose();
-          } catch (err) {
+          } catch {
             setError("Payment verification failed. Please contact support.");
           }
         },
@@ -114,20 +146,21 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
       const razorpay = new window.Razorpay(razorpayOptions);
       razorpay.open();
 
-      razorpay.on("payment.failed", (response: any) => {
+      razorpay.on("payment.failed", (response: RazorpayFailureResponse) => {
         setError(`Payment failed: ${response.error.description}`);
       });
-    } catch (err: any) {
-      if (err.message === "SUBSCRIPTION_EXISTS") {
-        setError("You already have an active subscription.");
-      } else {
-        setError(err.message || "Failed to create payment. Please try again.");
-      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      setError(
+        message === "SUBSCRIPTION_EXISTS"
+          ? "Failed to create payment. Please try again."
+          : message || "Failed to create payment. Please try again."
+      );
     } finally {
       setLoading(false);
       setSelectedPlan(null);
     }
-  }, [hasActiveSubscription, onClose, refetchSubscription, user]);
+  }, [onClose, refetchSubscription, user]);
 
   const handlePlanSelect = async (planName: string) => {
     const plan = plans?.find((p) => p.name === planName);
@@ -151,9 +184,11 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
     if (!user || !pendingPlanName || loading) return;
     const pendingPlan = plans?.find((p) => p.name === pendingPlanName);
     if (!pendingPlan) return;
-    setPendingPlanName(null);
-    setShowLoginNotice(false);
-    startPayment(pendingPlan);
+    window.setTimeout(() => {
+      setPendingPlanName(null);
+      setShowLoginNotice(false);
+      startPayment(pendingPlan);
+    }, 0);
   }, [loading, pendingPlanName, plans, startPayment, user]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -161,6 +196,8 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
       onClose();
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -173,9 +210,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
           className="absolute right-2 top-2 z-10 p-2 text-gray-400 hover:text-gray-900 cursor-pointer"
           aria-label="Close modal"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <X size={20} />
         </button>
 
         {error && (
@@ -215,7 +250,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
             {/* Right Column - Cards */}
             <div className="flex-[1.4] w-full grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* BASIC Card */}
-              <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+              <div className="relative bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-[#238B45] hover:text-[#238B45]"
+                  aria-label="View basic plan purchase terms"
+                  title="Plan purchase terms"
+                >
+                  <Info size={16} />
+                </button>
                 <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-center mb-1 text-gray-900">
                   {proStarter?.displayName || "BASIC"}
                 </h3>
@@ -259,7 +303,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
               </div>
 
               {/* ADVANCE Card */}
-              <div className="bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+              <div className="relative bg-white rounded-[24px] shadow-[0_4px_20px_rgb(0,0,0,0.16)] p-6 flex flex-col border border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setTermsOpen(true)}
+                  className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-[#238B45] hover:text-[#238B45]"
+                  aria-label="View advance plan purchase terms"
+                  title="Plan purchase terms"
+                >
+                  <Info size={16} />
+                </button>
                 <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-center mb-1 text-gray-900">
                   {proUltimate?.displayName || "ADVANCE"}
                 </h3>
@@ -305,7 +358,16 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
           </div>
 
           {/* Bottom Dark Card */}
-          <div className="bg-[#111111] rounded-[24px] px-6 md:px-8 py-6 text-white flex flex-col md:flex-row items-center justify-between shadow-xl">
+          <div className="relative bg-[#111111] rounded-[24px] px-6 md:px-8 py-6 text-white flex flex-col md:flex-row items-center justify-between shadow-xl">
+            <button
+              type="button"
+              onClick={() => setTermsOpen(true)}
+              className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              aria-label="View annual plan purchase terms"
+              title="Plan purchase terms"
+            >
+              <Info size={16} />
+            </button>
             <div className="w-full md:w-auto grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 mb-6 md:mb-0">
               {(proAnnual?.features || [
                 "Unlimited components",
@@ -344,6 +406,7 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
           </div>
         </div>
       </div>
+      <PlanTermsModal isOpen={termsOpen} onClose={() => setTermsOpen(false)} />
     </div>
   );
 }

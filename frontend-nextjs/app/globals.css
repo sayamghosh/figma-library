@@ -16,15 +16,15 @@
 }
 
 .font-syne {
-	font-family: "Plus Jakarta Sans", sans-serif !important;
+	font-family: "DM Sans", sans-serif !important;
 }
 
 .font-outfit {
-	font-family: "Outfit", sans-serif !important;
+	font-family: "DM Sans", sans-serif !important;
 }
 
 .font-manrope {
-	font-family: "Plus Jakarta Sans", sans-serif !important;
+	font-family: "DM Sans", sans-serif !important;
 }
 
 .figma-hero {
@@ -199,7 +199,7 @@ html, body {
 	min-height: 100vh;
 	color: var(--ink);
 	background: var(--bg);
-	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
+	font-family: "DM Sans", "Segoe UI", "Trebuchet MS", sans-serif;
 	scrollbar-gutter: stable;
 	overflow-y: visible;
 }
@@ -215,7 +215,7 @@ input,
 textarea,
 select,
 label {
-	font-family: "Plus Jakarta Sans", "Segoe UI", "Trebuchet MS", sans-serif;
+	font-family: "DM Sans", "Segoe UI", "Trebuchet MS", sans-serif;
 }
 
 code,

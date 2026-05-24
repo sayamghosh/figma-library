@@ -64,7 +64,7 @@ export function SectionHowItWorks() {
   });
 
   return (
-    <section className="w-full bg-white px-5 pb-24 sm:px-8 lg:pb-32">
+    <section className="w-full bg-white px-5 pb-12 sm:px-8 lg:pb-16">
       <div className="mx-auto w-full max-w-[1320px]">
         <div className="relative min-h-[440px] overflow-hidden pt-[68px] text-center sm:min-h-[500px]">
           <img

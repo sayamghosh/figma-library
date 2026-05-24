@@ -52,6 +52,16 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    favoriteComponents: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Component",
+        },
+      ],
+      default: [],
+      index: true,
+    },
   },
   {
     timestamps: true,

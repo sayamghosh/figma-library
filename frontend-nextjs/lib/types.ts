@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  profilePicture?: string;
   role: "user" | "admin";
   isProUser?: boolean;
   subscription?: {
@@ -28,6 +29,8 @@ export interface ComponentItem {
     email?: string;
   };
   status?: "pending" | "approved" | "rejected";
+  isFavorite?: boolean;
+  downloadCount?: number;
   createdAt: string;
   updatedAt: string;
 }

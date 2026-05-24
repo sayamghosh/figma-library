@@ -6,6 +6,75 @@ const { Transaction } = require("../models/Transaction");
 const { User } = require("../models/User");
 const { asyncHandler } = require("../utils/asyncHandler");
 
+const getRemainingComponents = (subscription) =>
+  Math.max(subscription.maxComponents - subscription.componentCountUsed, 0);
+
+const createPurchasedSubscription = async ({
+  userId,
+  plan,
+  payment,
+  razorpayPaymentId,
+  razorpayOrderId,
+  razorpaySignature,
+}) => {
+  const activeSubscription = await Subscription.findOne({
+    userId,
+    status: "active",
+    endDate: { $gt: new Date() },
+  }).sort({ createdAt: -1 });
+
+  const carriedForwardComponents = activeSubscription
+    ? getRemainingComponents(activeSubscription)
+    : 0;
+
+  if (activeSubscription) {
+    activeSubscription.status = "cancelled";
+    await activeSubscription.save();
+  }
+
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + plan.durationDays);
+
+  const subscription = await Subscription.create({
+    userId,
+    planId: plan._id,
+    razorpayCustomerId: payment.customer_id || null,
+    status: "active",
+    startDate,
+    endDate,
+    maxComponents: plan.componentLimit + carriedForwardComponents,
+    componentCountUsed: 0,
+  });
+
+  const transaction = await Transaction.create({
+    userId,
+    subscriptionId: subscription._id,
+    planId: plan._id,
+    razorpayPaymentId,
+    razorpayOrderId,
+    amount: payment.amount,
+    currency: payment.currency || "INR",
+    status: "captured",
+    paymentMethod: payment.method,
+    signature: razorpaySignature,
+  });
+
+  subscription.transactions.push(transaction._id);
+  await subscription.save();
+
+  await User.findByIdAndUpdate(userId, {
+    activeSubscription: subscription._id,
+    isProUser: true,
+  });
+
+  return {
+    subscription,
+    transaction,
+    carriedForwardComponents,
+  };
+};
+
 const createOrder = asyncHandler(async (req, res) => {
   console.log("[PAYMENT] createOrder - body:", req.body, "user:", req.user);
 
@@ -42,6 +111,7 @@ const createOrder = asyncHandler(async (req, res) => {
       message: "Invalid plan ID",
     });
   }
+
   if (!plan || !plan.isActive) {
     return res.status(404).json({
       success: false,
@@ -49,23 +119,8 @@ const createOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  const existingSubscription = await Subscription.findOne({
-    userId,
-    status: "active",
-    endDate: { $gt: new Date() },
-  });
-
-  if (existingSubscription) {
-    return res.status(400).json({
-      success: false,
-      message: "SUBSCRIPTION_EXISTS",
-    });
-  }
-
-  const amount = plan.price;
-
   const order = await razorpay.orders.create({
-    amount: amount,
+    amount: plan.price,
     currency: "INR",
     receipt: `rcpt_${userId.toString().slice(-6)}_${Date.now().toString().slice(-8)}`,
     notes: {
@@ -132,41 +187,15 @@ const verifyPayment = asyncHandler(async (req, res) => {
     });
   }
 
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + plan.durationDays);
-
-  const subscription = await Subscription.create({
-    userId,
-    planId: plan._id,
-    razorpayCustomerId: payment.customer_id || null,
-    status: "active",
-    startDate,
-    endDate,
-    maxComponents: plan.componentLimit,
-    componentCountUsed: 0,
-  });
-
-  const transaction = await Transaction.create({
-    userId,
-    subscriptionId: subscription._id,
-    planId: plan._id,
-    razorpayPaymentId,
-    razorpayOrderId,
-    amount: payment.amount,
-    currency: payment.currency || "INR",
-    status: "captured",
-    paymentMethod: payment.method,
-    signature: razorpaySignature,
-  });
-
-  subscription.transactions.push(transaction._id);
-  await subscription.save();
-
-  await User.findByIdAndUpdate(userId, {
-    activeSubscription: subscription._id,
-    isProUser: true,
-  });
+  const { subscription, transaction, carriedForwardComponents } =
+    await createPurchasedSubscription({
+      userId,
+      plan,
+      payment,
+      razorpayPaymentId,
+      razorpayOrderId,
+      razorpaySignature,
+    });
 
   res.status(200).json({
     success: true,
@@ -174,6 +203,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
     data: {
       subscription,
       transaction,
+      carriedForwardComponents,
     },
   });
 });
@@ -264,45 +294,17 @@ const webhook = asyncHandler(async (req, res) => {
       });
     }
 
-    const receipt = paymentEntity.receipt;
     const notes = paymentEntity.notes || {};
 
     if (notes.planId && notes.userId) {
       const plan = await Plan.findById(notes.planId);
       if (plan) {
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + plan.durationDays);
-
-        const subscription = await Subscription.create({
+        await createPurchasedSubscription({
           userId: notes.userId,
-          planId: plan._id,
-          razorpayCustomerId: paymentEntity.customer_id || null,
-          status: "active",
-          startDate,
-          endDate,
-          maxComponents: plan.componentLimit,
-          componentCountUsed: 0,
-        });
-
-        const transaction = await Transaction.create({
-          userId: notes.userId,
-          subscriptionId: subscription._id,
-          planId: plan._id,
+          plan,
+          payment: paymentEntity,
           razorpayPaymentId,
           razorpayOrderId: paymentEntity.order_id,
-          amount: paymentEntity.amount,
-          currency: paymentEntity.currency || "INR",
-          status: "captured",
-          paymentMethod: paymentEntity.method,
-        });
-
-        subscription.transactions.push(transaction._id);
-        await subscription.save();
-
-        await User.findByIdAndUpdate(notes.userId, {
-          activeSubscription: subscription._id,
-          isProUser: true,
         });
       }
     }

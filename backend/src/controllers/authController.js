@@ -143,9 +143,11 @@ const googleAuth = asyncHandler(async (req, res) => {
     if (!user.googleId) {
       user.googleId = googleId;
       user.authProvider = "google";
-      if (!user.profilePicture && picture) {
-        user.profilePicture = picture;
-      }
+      needsSave = true;
+    }
+
+    if (picture && user.profilePicture !== picture) {
+      user.profilePicture = picture;
       needsSave = true;
     }
     

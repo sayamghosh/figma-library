@@ -21,6 +21,40 @@ export interface SubscriptionData {
   remainingComponents: number;
 }
 
+export interface SubscriptionPlan {
+  _id: string;
+  name: string;
+  displayName: string;
+  price: number;
+  durationDays: number;
+  componentLimit: number;
+}
+
+export interface CurrentSubscriptionData extends SubscriptionData {
+  plan?: SubscriptionPlan;
+  startDate?: string;
+}
+
+export interface SubscriptionTransaction {
+  _id: string;
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentMethod?: string | null;
+  createdAt?: string;
+}
+
+export interface PurchasedSubscriptionRecord extends SubscriptionData {
+  _id: string;
+  planId?: SubscriptionPlan;
+  startDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  transactions?: SubscriptionTransaction[];
+}
+
 export interface CheckAccessResponse {
   hasAccess: boolean;
   isProUser: boolean;
@@ -53,8 +87,13 @@ export const paymentsApi = {
     return response.data.data;
   },
 
-  async getCurrentSubscription(): Promise<any> {
+  async getCurrentSubscription(): Promise<CurrentSubscriptionData | null> {
     const response = await apiClient.get("/subscriptions/current");
+    return response.data.data;
+  },
+
+  async getSubscriptionHistory(): Promise<PurchasedSubscriptionRecord[]> {
+    const response = await apiClient.get("/subscriptions/history");
     return response.data.data;
   },
 

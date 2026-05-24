@@ -10,7 +10,7 @@ import { Check, ArrowRight, Crown, Zap, ArrowUpRight, AlignLeft, Wallet, Briefca
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay?: any;
   }
 }
 
@@ -89,7 +89,7 @@ function PlanCard({
   return (
     <div 
       onClick={onClick}
-      className={`relative cursor-pointer transition-all duration-500 overflow-hidden min-h-[380px] ${dark ? "bg-black text-white" : "bg-[#f5f6f8] text-[#111111]"} rounded-[20px] p-10 ${isSelected ? "ring-2 ring-[#9FE870] ring-offset-2" : "hover:scale-[1.02]"}`}
+      className={`relative cursor-pointer transition-all duration-500 overflow-hidden h-full min-h-[380px] ${dark ? "bg-black text-white" : "bg-[#f5f6f8] text-[#111111]"} rounded-[20px] p-10 ${isSelected ? "ring-2 ring-[#9FE870] ring-offset-2" : "hover:scale-[1.02]"}`}
     >
       <div className="flex items-center gap-3">
         <Icon className={dark ? "text-[#f39c12]" : "text-[#5dade2]"} size={22} fill="currentColor" />
@@ -125,9 +125,9 @@ function PlanCard({
       </div>
 
       {isSelected && (
-        <div className={`mt-10 pt-10 border-t lg:absolute lg:right-12 lg:top-10 lg:mt-0 lg:w-[48%] lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0 animate-in fade-in slide-in-from-right-4 duration-500 ${dark ? "border-white/10" : "border-black/10"}`}>
+        <div className={`mt-10 pt-10 border-t lg:absolute lg:right-12 lg:top-1/2 lg:mt-0 lg:w-[48%] lg:-translate-y-1/2 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0 animate-in fade-in slide-in-from-right-4 duration-500 ${dark ? "border-white/10" : "border-black/10"}`}>
           <ul className={`space-y-6 text-[15px] font-medium ${dark ? "text-white/90" : "text-black/80"}`}>
-            {features.map((item) => (
+            {features.slice(0, 6).map((item) => (
               <li key={item} className="flex items-center gap-4">
                 <Check className={dark ? "text-[#9FE870]" : "text-black"} size={18} strokeWidth={3} />
                 {item}
@@ -156,13 +156,11 @@ export function PremiumDesignsSection() {
   const proStarter = plansData?.find((p) => p.name === "pro_starter");
   const proUltimate = plansData?.find((p) => p.name === "pro_ultimate");
 
-  const { data: subscriptionData, refetch: refetchSubscription } = useQuery({
+  const { refetch: refetchSubscription } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: !!user,
   });
-
-  const hasActiveSubscription = subscriptionData?.isProUser && subscriptionData?.subscription;
 
   // Load Razorpay SDK
   useEffect(() => {
@@ -175,13 +173,6 @@ export function PremiumDesignsSection() {
   }, []);
 
   const startPayment = useCallback(async (plan: any) => {
-    if (hasActiveSubscription) {
-      const confirmUpgrade = window.confirm(
-        "You already have an active subscription. Upgrading will replace your current plan. Continue?"
-      );
-      if (!confirmUpgrade) return;
-    }
-
     setError("");
     setCheckoutLoading(true);
 
@@ -233,17 +224,15 @@ export function PremiumDesignsSection() {
       });
     } catch (err: any) {
       let errMsg = "";
-      if (err.message === "SUBSCRIPTION_EXISTS") {
-        errMsg = "You already have an active subscription.";
-      } else {
-        errMsg = err.message || "Failed to create payment. Please try again.";
-      }
+      errMsg = err.message === "SUBSCRIPTION_EXISTS"
+        ? "Failed to create payment. Please try again."
+        : err.message || "Failed to create payment. Please try again.";
       setError(errMsg);
       alert(errMsg);
     } finally {
       setCheckoutLoading(false);
     }
-  }, [hasActiveSubscription, refetchSubscription, user]);
+  }, [refetchSubscription, user]);
 
   const handlePlanSelect = async (planName: string) => {
     const plan = plansData?.find((p) => p.name === planName);
@@ -290,7 +279,7 @@ export function PremiumDesignsSection() {
 
   return (
     <>
-      <section className="w-full bg-[#f3f4f6] px-5 py-24 sm:px-8 lg:py-32">
+      <section className="w-full bg-[#f3f4f6] px-5 pt-12 pb-12 sm:px-8 lg:pt-16 lg:pb-16">
         <div className="mx-auto grid w-full max-w-[1320px] items-center gap-16 lg:grid-cols-2">
           <IntegrationVisual />
           <div>
@@ -340,7 +329,7 @@ export function PremiumDesignsSection() {
         </div>
       </section>
 
-      <section id="pricing" className="w-full bg-white px-5 py-24 sm:px-8 lg:py-32">
+      <section id="pricing" className="w-full bg-white px-5 pt-12 pb-12 sm:px-8 lg:pt-16 lg:pb-16">
         <div className="mx-auto w-full max-w-[1320px]">
           <div className="mx-auto max-w-[780px] text-center">
             <p className="mx-auto inline-flex rounded-full border border-[#d7d7d7] bg-white px-6 py-2 text-sm font-semibold uppercase tracking-wider text-black">
@@ -357,7 +346,7 @@ export function PremiumDesignsSection() {
             </div>
           )}
 
-          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-start ${selectedPlanName === "basic" ? "lg:grid-cols-[2.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_2.1fr]"}`}>
+          <div className={`mt-16 grid gap-8 transition-all duration-500 lg:items-stretch ${selectedPlanName === "basic" ? "lg:grid-cols-[2.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_2.1fr]"}`}>
             <PlanCard 
               title="Basic plan" 
               price={proStarter ? `₹ ${Math.floor(proStarter.price / 100)}` : "₹ 99"}

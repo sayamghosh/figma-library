@@ -26,6 +26,7 @@ function normalizeUser(user: User): User {
     id: user.id,
     name: user.name,
     email: user.email,
+    profilePicture: user.profilePicture,
     role: user.role,
   };
 }

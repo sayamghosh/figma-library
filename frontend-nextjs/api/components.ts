@@ -36,14 +36,32 @@ export const componentsApi = {
     return response.data.data;
   },
 
-  async getTags(): Promise<string[]> {
-    const response = await apiClient.get("/components/tags");
+  async listFavorites(search = ""): Promise<PaginatedComponentResponse> {
+    const response = await apiClient.get("/components/favorites", {
+      params: {
+        q: search || undefined,
+      },
+    });
     return response.data.data;
   },
 
+  async listFavoriteIds(): Promise<string[]> {
+    const response = await apiClient.get("/components/favorites/ids");
+    return response.data.data.ids;
+  },
+
+  async toggleFavorite(id: string): Promise<{ componentId: string; isFavorite: boolean }> {
+    const response = await apiClient.patch(`/components/${id}/favorite`);
+    return response.data.data;
+  },
 
   async getTopCreators(): Promise<{_id: string, name: string, profilePicture?: string, componentCount: number}[]> {
     const response = await apiClient.get("/components/top-creators");
+    return response.data.data;
+  },
+
+  async getTags(): Promise<string[]> {
+    const response = await apiClient.get("/components/tags");
     return response.data.data;
   },
 
@@ -54,6 +72,11 @@ export const componentsApi = {
 
   async getComponentData(id: string): Promise<{ figmaDataBase64: string; remainingComponents?: number }> {
     const response = await apiClient.get(`/components/${id}/data`);
+    return response.data.data;
+  },
+
+  async recordDownload(id: string): Promise<{ componentId: string; downloadCount: number }> {
+    const response = await apiClient.post(`/components/${id}/download`);
     return response.data.data;
   },
 
