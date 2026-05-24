@@ -70,6 +70,11 @@ export const componentsApi = {
     return response.data.data;
   },
 
+  async recordDownload(id: string): Promise<{ componentId: string; downloadCount: number }> {
+    const response = await apiClient.post(`/components/${id}/download`);
+    return response.data.data;
+  },
+
   async create(input: {
     name: string;
     description: string;

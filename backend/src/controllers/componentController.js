@@ -548,6 +548,33 @@ const getComponentData = asyncHandler(async (req, res) => {
 });
 
 // ─── PATCH /api/components/:id ────────────────────────────────────────────────
+// POST /api/components/:id/download
+const recordComponentDownload = asyncHandler(async (req, res) => {
+  const component = await Component.findByIdAndUpdate(
+    req.params.id,
+    { $inc: { downloadCount: 1 } },
+    { new: true, select: "downloadCount" }
+  ).lean();
+
+  if (!component) {
+    res.status(404);
+    throw new Error("Component not found");
+  }
+
+  await Promise.all([
+    cacheInvalidate(componentKey(req.params.id)),
+    bumpListVersion(),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      componentId: req.params.id,
+      downloadCount: component.downloadCount || 0,
+    },
+  });
+});
+
 const updateComponent = asyncHandler(async (req, res) => {
   const component = await Component.findById(req.params.id);
   if (!component) {
@@ -657,6 +684,7 @@ module.exports = {
   createComponent,
   getComponent,
   getComponentData,
+  recordComponentDownload,
   updateComponent,
   deleteComponent,
   listFavoriteComponents,

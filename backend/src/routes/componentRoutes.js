@@ -5,6 +5,7 @@ const {
   createComponent,
   getComponent,
   getComponentData,
+  recordComponentDownload,
   updateComponent,
   deleteComponent,
   listFavoriteComponents,
@@ -24,6 +25,7 @@ router.get("/top-creators", require("../controllers/componentController").getTop
 router.get("/:id", getComponent);
 router.get("/:id/data", optionalProtect, getComponentData);
 router.post("/", protect, createComponent);
+router.post("/:id/download", recordComponentDownload);
 router.patch("/:id", protect, updateComponent);
 router.patch("/:id/favorite", protect, toggleFavoriteComponent);
 router.patch("/:id/status", protect, require("../controllers/componentController").updateComponentStatus);

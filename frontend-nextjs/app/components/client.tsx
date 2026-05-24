@@ -129,6 +129,12 @@ function isProComponent(item: Pick<ComponentItem, "pricingType" | "tags">) {
   return item.pricingType === "Pro" || item.tags.some((t) => /pro/i.test(t));
 }
 
+function formatCompactCount(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}m`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}k`;
+  return String(value);
+}
+
 function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   return (
     <div className="fixed bottom-5 right-5 z-[220]">
@@ -292,6 +298,7 @@ function PreviewModal({
   isFavorite,
   onFavoriteToggle,
   isFavoritePending,
+  onDownloadRecorded,
 }: {
   item: ComponentItem;
   onClose: () => void;
@@ -300,6 +307,7 @@ function PreviewModal({
   isFavorite: boolean;
   onFavoriteToggle: (item: ComponentItem) => void;
   isFavoritePending: boolean;
+  onDownloadRecorded: (item: ComponentItem) => Promise<number | null>;
 }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -309,6 +317,7 @@ function PreviewModal({
     if (success) {
       setIsSuccess(true);
       setTimeout(() => setIsSuccess(false), 2000);
+      void onDownloadRecorded(item);
     }
   }
 
@@ -440,6 +449,7 @@ function ComponentCard({
   item,
   isCopying,
   onCopy,
+  onDownloadRecorded,
   onPreview,
   isFavorite,
   onFavoriteToggle,
@@ -450,6 +460,7 @@ function ComponentCard({
   item: ComponentItem;
   isCopying: boolean;
   onCopy: () => Promise<boolean>;
+  onDownloadRecorded: () => Promise<number | null>;
   onPreview: () => void;
   isFavorite: boolean;
   onFavoriteToggle: () => void;
@@ -460,13 +471,20 @@ function ComponentCard({
   const isPro = isProComponent(item);
   const showLock = isPro && !isProUser;
   const [isSuccess, setIsSuccess] = useState(false);
+  const [downloadCountOverride, setDownloadCountOverride] = useState<number | null>(null);
+  const downloadCount = downloadCountOverride ?? item.downloadCount ?? 0;
 
   async function handleCopy() {
     if (isCopying || isSuccess) return;
     const success = await onCopy();
     if (success) {
+      setDownloadCountOverride(downloadCount + 1);
       setIsSuccess(true);
       setTimeout(() => setIsSuccess(false), 2000);
+      const serverDownloadCount = await onDownloadRecorded();
+      if (typeof serverDownloadCount === "number") {
+        setDownloadCountOverride(serverDownloadCount);
+      }
     }
   }
 
@@ -532,7 +550,7 @@ function ComponentCard({
               {/* <IconHeart /> */}
               <ArrowDownToLine size={16} strokeWidth={1.5} />
             </button>
-            <span className="font-medium">10k</span>
+            <span className="font-medium">{formatCompactCount(downloadCount)}</span>
           </div>
         </div>
       </div>
@@ -888,6 +906,17 @@ export default function ComponentsClient({
     }
   }
 
+  async function recordDownload(item: ComponentItem): Promise<number | null> {
+    try {
+      const result = await componentsApi.recordDownload(item._id);
+      queryClient.invalidateQueries({ queryKey: ["components", "list"] });
+      return result.downloadCount;
+    } catch (error) {
+      console.error("Download count update failed:", error);
+      return null;
+    }
+  }
+
   // How many skeleton cards to show
   const SKELETON_COUNT = PAGE_SIZE;
   const showSkeletons = isLoading;
@@ -1177,6 +1206,7 @@ export default function ComponentsClient({
                   priority={index < 15}
                   isCopying={activeId === item._id}
                   onCopy={() => onCopy(item)}
+                  onDownloadRecorded={() => recordDownload(item)}
                   onPreview={() =>
                     setPreviewItem(item)
                   }
@@ -1219,6 +1249,7 @@ export default function ComponentsClient({
           isFavorite={favoriteIds.has(previewItem._id)}
           onFavoriteToggle={handleFavoriteToggle}
           isFavoritePending={toggleFavoriteMutation.isPending && toggleFavoriteMutation.variables === previewItem._id}
+          onDownloadRecorded={recordDownload}
         />
       )}
 

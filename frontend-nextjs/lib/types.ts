@@ -30,6 +30,7 @@ export interface ComponentItem {
   };
   status?: "pending" | "approved" | "rejected";
   isFavorite?: boolean;
+  downloadCount?: number;
   createdAt: string;
   updatedAt: string;
 }
