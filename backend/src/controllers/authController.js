@@ -6,6 +6,14 @@ const { OAuth2Client } = require("google-auth-library");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const ADMIN_EMAILS = ["a.amitghosh007@gmail.com", "hello.designlabux@gmail.com"];
+
+function isAdminEmail(email) {
+  if (!email) return false;
+  const normalized = email.toLowerCase().trim();
+  return ADMIN_EMAILS.includes(normalized);
+}
+
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -22,12 +30,12 @@ const register = asyncHandler(async (req, res) => {
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const isAdminEmail = email.toLowerCase().trim() === "a.amitghosh007@gmail.com";
+  const shouldBeAdmin = isAdminEmail(email);
   const user = await User.create({
     name: name.trim(),
     email: email.toLowerCase().trim(),
     password: hashedPassword,
-    role: isAdminEmail ? "admin" : "user",
+    role: shouldBeAdmin ? "admin" : "user",
   });
 
   const token = createAccessToken({ userId: user._id.toString(), email: user.email, role: user.role });
@@ -82,7 +90,7 @@ const login = asyncHandler(async (req, res) => {
   }
 
   // Ensure this email is always admin
-  if (email.toLowerCase().trim() === "a.amitghosh007@gmail.com" && user.role !== "admin") {
+  if (isAdminEmail(email) && user.role !== "admin") {
     user.role = "admin";
     await user.save();
   }
@@ -133,7 +141,7 @@ const googleAuth = asyncHandler(async (req, res) => {
 
   const { sub: googleId, email, name, picture } = payload;
   const lowercaseEmail = email.toLowerCase().trim();
-  const isAdminEmail = lowercaseEmail === "a.amitghosh007@gmail.com";
+  const shouldBeAdmin = isAdminEmail(lowercaseEmail);
   
   let user = await User.findOne({ email: lowercaseEmail });
   
@@ -152,7 +160,7 @@ const googleAuth = asyncHandler(async (req, res) => {
     }
     
     // Ensure this email is always admin
-    if (isAdminEmail && user.role !== "admin") {
+    if (shouldBeAdmin && user.role !== "admin") {
       user.role = "admin";
       needsSave = true;
     }
@@ -168,7 +176,7 @@ const googleAuth = asyncHandler(async (req, res) => {
       googleId: googleId,
       authProvider: "google",
       profilePicture: picture || "",
-      role: isAdminEmail ? "admin" : "user",
+      role: shouldBeAdmin ? "admin" : "user",
     });
   }
 
