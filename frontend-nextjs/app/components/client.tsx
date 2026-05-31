@@ -705,7 +705,7 @@ export default function ComponentsClient({
   initialPage: PaginatedComponentResponse | null;
   initialTags?: string[];
 }) {
-  const { user, setLoginModalOpen, setPricingModalOpen } = useAuth();
+  const { user, loading: authLoading, isInitialized, setLoginModalOpen, setPricingModalOpen } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: tags = [] } = useQuery({
@@ -728,6 +728,8 @@ export default function ComponentsClient({
   const [previewItem, setPreviewItem] = useState<null | ComponentItem>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<number | null>(null);
+
+
   const debouncedSearch = useDebouncedValue(search.trim());
   const activeTag = activeCategory === "All" ? "" : activeCategory;
   const isInitialQuery =
@@ -752,7 +754,7 @@ export default function ComponentsClient({
     staleTime: 60 * 1000,
   });
 
-  const activeSubscription = currentSubscription ?? subscriptionData?.subscription ?? null;
+  const activeSubscription = currentSubscription ?? subscriptionData?.subscription ?? user?.subscription ?? null;
 
   const { data: favoriteIdData } = useQuery({
     queryKey: ["favorite-component-ids"],
@@ -988,7 +990,7 @@ export default function ComponentsClient({
 
   // How many skeleton cards to show
   const SKELETON_COUNT = PAGE_SIZE;
-  const showSkeletons = isLoading;
+  const showSkeletons = isLoading || !isInitialized;
   // isFetching (but not initial load) = stale re-fetch in background — keep old data, no skeleton
   const showStaleIndicator = isFetching && !isLoading;
 
@@ -1040,8 +1042,18 @@ export default function ComponentsClient({
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope sticky top-[60px] h-[calc(100dvh-60px)] self-start">
 
-        {/* Unlock Premium+ Block (Fixed at Top) */}
-        {isProUser ? (
+        {/* Plan / Upsell Block — loading animation until auth resolves */}
+        {!isInitialized ? (
+          <div className="mx-4 mb-6 shrink-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+            <div className="flex flex-col items-center justify-center py-3 gap-3">
+              <svg className="animate-spin h-6 w-6 text-[#22C55E]" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M12 2a10 10 0 00-10 10h3a7 7 0 017-7V2z" />
+              </svg>
+              <span className="text-[0.72rem] font-semibold text-slate-400">Loading plan...</span>
+            </div>
+          </div>
+        ) : isProUser ? (
           <ProSubscriptionCard subscription={activeSubscription} />
         ) : (
         <div className="mx-4 mb-6 bg-slate-100 rounded-xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0">
