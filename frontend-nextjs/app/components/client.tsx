@@ -172,16 +172,14 @@ function UsageMeter({
   value: number;
   total: number;
 }) {
-  const isUnlimited = total >= 999999;
-  const progress = isUnlimited || total <= 0 ? 100 : Math.min(100, Math.max(0, (value / total) * 100));
-  const displayTotal = isUnlimited ? "Unlimited" : total;
+  const progress = total <= 0 ? 100 : Math.min(100, Math.max(0, (value / total) * 100));
 
   return (
     <div>
       <div className="mb-1 flex items-end justify-between gap-2">
         <span className="text-[0.72rem] font-bold text-slate-700">{label}</span>
         <span className="text-[0.68rem] font-semibold text-slate-500">
-          {value} / {displayTotal}
+          {value} / {total}
         </span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
@@ -194,10 +192,19 @@ function UsageMeter({
   );
 }
 
+function IconInfinity({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z" />
+    </svg>
+  );
+}
+
 function ProSubscriptionCard({ subscription }: { subscription: SubscriptionSummary | null }) {
   const plan = subscription && "plan" in subscription ? subscription.plan : undefined;
   const planName = plan?.displayName ? `${plan.displayName} Plan` : "Pro Plan";
   const maxComponents = subscription?.maxComponents ?? plan?.componentLimit ?? 0;
+  const isUnlimited = maxComponents >= 999999;
   const downloadsUsed = Math.max(0, subscription?.componentCountUsed ?? 0);
   const durationDays =
     plan?.durationDays ||
@@ -207,6 +214,69 @@ function ProSubscriptionCard({ subscription }: { subscription: SubscriptionSumma
   const daysPassed = Math.max(0, durationDays - daysLeft);
   const expiresSoon = daysLeft <= 7;
 
+  // ── Unlimited / Premium+ card ──────────────────────────────────────────
+  if (isUnlimited) {
+    return (
+      <div className="mx-4 mb-6 shrink-0 rounded-2xl p-[1px] shadow-[0_10px_30px_rgba(15,23,42,0.07)]"
+        style={{ background: "linear-gradient(135deg, #22C55E 0%, #16A34A 40%, #0D9488 100%)" }}>
+        <div className="rounded-[15px] bg-white p-4">
+          {/* Header — stacked to avoid overlap */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg"
+                style={{ background: "linear-gradient(135deg, #22C55E, #0D9488)" }}>
+                <Crown size={14} color="white" strokeWidth={2.5} />
+              </div>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[0.56rem] font-extrabold uppercase tracking-wider flex items-center gap-1 ${
+                expiresSoon
+                  ? "bg-red-50 text-red-600"
+                  : daysLeft > 0
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                    : "bg-red-50 text-red-600"
+              }`}>
+                <span className={`inline-block h-1.5 w-1.5 rounded-full ${
+                  expiresSoon ? "bg-red-500" : daysLeft > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"
+                }`} />
+                {daysLeft > 0 ? "Active" : "Expired"}
+              </span>
+            </div>
+            <p className="text-[0.92rem] font-extrabold text-slate-900 leading-tight">{planName}</p>
+            <p className="text-[0.65rem] font-bold text-[#16A34A] mt-0.5">
+              {formatPlanPrice(plan?.price, plan?.durationDays)}
+            </p>
+          </div>
+
+          {/* Unlimited downloads highlight */}
+          <div className="rounded-xl p-3 mb-3 border border-emerald-100"
+            style={{ background: "linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 50%, #F0FDFA 100%)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[0.72rem] font-bold text-slate-700">Downloads</span>
+              <div className="flex items-center gap-1 text-emerald-600">
+                <IconInfinity className="w-4 h-4" />
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider">Unlimited</span>
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[1.4rem] font-black text-slate-900 tabular-nums leading-none">
+                {downloadsUsed.toLocaleString()}
+              </span>
+              <span className="text-[0.65rem] font-semibold text-slate-400">components copied</span>
+            </div>
+          </div>
+
+          {/* Days remaining — text only, no progress bar */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 flex items-center justify-between">
+            <span className="text-[0.72rem] font-bold text-slate-700">Validity</span>
+            <span className="text-[0.68rem] font-semibold text-slate-500">
+              {daysLeft > 0 ? `${daysLeft} days remaining` : "Plan expired"}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Limited plan card (Basic / Advance) ────────────────────────────────
   return (
     <div className="mx-4 mb-6 shrink-0 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -961,6 +1031,10 @@ export default function ComponentsClient({
         .category-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #94a3b8;
           background-clip: content-box;
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
       `}} />
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
