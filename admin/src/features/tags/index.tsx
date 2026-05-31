@@ -9,7 +9,24 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
-import { Loader2, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
+import { Loader2, Plus, Trash2, GripVertical } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -19,6 +36,59 @@ interface Tag {
   order: number
 }
 
+function SortableTagItem({
+  tag,
+  onDelete,
+}: {
+  tag: Tag
+  onDelete: (id: string) => void
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tag._id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center justify-between p-4 hover:bg-muted/50 bg-background ${
+        isDragging ? 'opacity-50 shadow-md relative' : ''
+      }`}
+    >
+      <div className='flex items-center gap-4'>
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className='cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground'
+        >
+          <GripVertical className='h-5 w-5' />
+        </button>
+        <span className='font-medium'>{tag.name}</span>
+      </div>
+      <Button
+        variant='ghost'
+        size='icon'
+        className='text-destructive hover:bg-destructive/10 hover:text-destructive'
+        onClick={() => onDelete(tag._id)}
+      >
+        <Trash2 className='h-4 w-4' />
+      </Button>
+    </div>
+  )
+}
+
 export function Tags() {
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,11 +96,16 @@ export function Tags() {
   const [adding, setAdding] = useState(false)
   const { auth } = useAuthStore()
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
   const fetchTags = async () => {
     try {
       const res = await axios.get(`${API_URL}/tags`)
-      // API currently returns string array? No, wait. 
-      // The API I wrote for `tagController.js` returns objects with `_id`, `name`, `order`!
       setTags(res.data.data)
     } catch (err) {
       toast.error('Failed to load tags')
@@ -78,34 +153,26 @@ export function Tags() {
     }
   }
 
-  const moveTag = async (index: number, direction: 'up' | 'down') => {
-    if (
-      (direction === 'up' && index === 0) ||
-      (direction === 'down' && index === tags.length - 1)
-    ) {
-      return
-    }
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
 
-    const newTags = [...tags]
-    const swapIndex = direction === 'up' ? index - 1 : index + 1
-    
-    // Swap
-    const temp = newTags[index]
-    newTags[index] = newTags[swapIndex]
-    newTags[swapIndex] = temp
+    if (over && active.id !== over.id) {
+      const oldIndex = tags.findIndex((t) => t._id === active.id)
+      const newIndex = tags.findIndex((t) => t._id === over.id)
 
-    setTags(newTags)
+      const newTags = arrayMove(tags, oldIndex, newIndex)
+      setTags(newTags)
 
-    // Save reorder
-    try {
-      await axios.put(
-        `${API_URL}/tags/reorder`,
-        { orderedIds: newTags.map((t) => t._id) },
-        { headers: { Authorization: `Bearer ${auth.accessToken}` } }
-      )
-    } catch (err) {
-      toast.error('Failed to save order')
-      fetchTags() // revert
+      try {
+        await axios.put(
+          `${API_URL}/tags/reorder`,
+          { orderedIds: newTags.map((t) => t._id) },
+          { headers: { Authorization: `Bearer ${auth.accessToken}` } }
+        )
+      } catch (err) {
+        toast.error('Failed to save order')
+        fetchTags() // revert
+      }
     }
   }
 
@@ -122,7 +189,7 @@ export function Tags() {
           <div>
             <h2 className='text-2xl font-bold tracking-tight'>Tag Management</h2>
             <p className='text-muted-foreground'>
-              Manage the tags used for categorization. Reorder them to change their display order on the main site.
+              Manage the tags used for categorization. Drag and drop to change their display order.
             </p>
           </div>
         </div>
@@ -147,43 +214,22 @@ export function Tags() {
           ) : tags.length === 0 ? (
             <div className='p-8 text-center text-muted-foreground'>No tags found</div>
           ) : (
-            <div className='divide-y'>
-              {tags.map((tag, index) => (
-                <div key={tag._id} className='flex items-center justify-between p-4 hover:bg-muted/50'>
-                  <div className='flex items-center gap-4'>
-                    <div className='flex flex-col'>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-6 w-6'
-                        onClick={() => moveTag(index, 'up')}
-                        disabled={index === 0}
-                      >
-                        <ArrowUp className='h-4 w-4' />
-                      </Button>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-6 w-6'
-                        onClick={() => moveTag(index, 'down')}
-                        disabled={index === tags.length - 1}
-                      >
-                        <ArrowDown className='h-4 w-4' />
-                      </Button>
-                    </div>
-                    <span className='font-medium'>{tag.name}</span>
-                  </div>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    className='text-destructive hover:bg-destructive/10 hover:text-destructive'
-                    onClick={() => handleDeleteTag(tag._id)}
-                  >
-                    <Trash2 className='h-4 w-4' />
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <div className='divide-y flex flex-col'>
+                <SortableContext
+                  items={tags.map(t => t._id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {tags.map((tag) => (
+                    <SortableTagItem key={tag._id} tag={tag} onDelete={handleDeleteTag} />
+                  ))}
+                </SortableContext>
+              </div>
+            </DndContext>
           )}
         </div>
       </Main>

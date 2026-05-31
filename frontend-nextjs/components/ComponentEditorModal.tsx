@@ -103,6 +103,7 @@ export function ComponentEditorModal({
   const [figmaDataBase64, setFigmaDataBase64] = useState(seed.figmaDataBase64);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [designType, setDesignType] = useState<DesignType>(seed.designType);
+  const [pricingType, setPricingType] = useState<PricingType>(seed.pricingType);
   const [platformTag, setPlatformTag] = useState<PlatformTag>(seed.platformTag);
   const [localStatus, setLocalStatus] = useState("");
   const [hasInitialized, setHasInitialized] = useState(false);
