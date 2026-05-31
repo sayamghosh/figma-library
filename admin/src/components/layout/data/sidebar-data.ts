@@ -21,6 +21,7 @@ import {
   AudioWaveform,
   Command,
   GalleryVerticalEnd,
+  Tag,
 } from 'lucide-react'
 import { ClerkLogo } from '@/assets/clerk-logo'
 import { type SidebarData } from '../types'
@@ -82,6 +83,11 @@ export const sidebarData: SidebarData = {
           title: 'Components',
           url: '/components',
           icon: Package,
+        },
+        {
+          title: 'Tags',
+          url: '/tags',
+          icon: Tag,
         },
         {
           title: 'Secured by Clerk',

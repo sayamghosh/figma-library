@@ -7,6 +7,7 @@ import type { User } from "../lib/types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  isInitialized: boolean;
   login: (input: { email: string; password: string }) => Promise<void>;
   register: (input: { name: string; email: string; password: string }) => Promise<void>;
   loginWithGoogle: (idToken: string) => Promise<void>;
@@ -28,6 +29,8 @@ function normalizeUser(user: User): User {
     email: user.email,
     profilePicture: user.profilePicture,
     role: user.role,
+    isProUser: user.isProUser,
+    subscription: user.subscription,
   };
 }
 
@@ -53,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const user = authQuery.data ?? null;
   const loading = isMounted && hasToken ? authQuery.isLoading : false;
+  const isInitialized = isMounted && (hasToken ? !authQuery.isLoading : true);
 
   const login = useCallback(async (input: { email: string; password: string }) => {
     const payload = await authApi.login(input);
@@ -79,8 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen, pricingModalOpen, setPricingModalOpen }),
-    [user, loading, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen, pricingModalOpen, setPricingModalOpen]
+    () => ({ user, loading, isInitialized, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen, pricingModalOpen, setPricingModalOpen }),
+    [user, loading, isInitialized, login, register, loginWithGoogle, logout, registerModalOpen, setRegisterModalOpen, loginModalOpen, setLoginModalOpen, pricingModalOpen, setPricingModalOpen]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

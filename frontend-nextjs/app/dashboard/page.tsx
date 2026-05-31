@@ -137,7 +137,19 @@ function MyComponentsPanel() {
 
   const { data: editingComponent, isLoading: isEditorLoading } = useQuery({
     queryKey: ["components", "editor", editId],
-    queryFn: () => componentsApi.getById(editId || ""),
+    queryFn: async () => {
+      if (!editId) return null;
+      const component = await componentsApi.getById(editId);
+      if (!component.figmaDataBase64) {
+        try {
+          const data = await componentsApi.getComponentData(editId);
+          component.figmaDataBase64 = data.figmaDataBase64;
+        } catch (err) {
+          console.error("Failed to fetch figma component data:", err);
+        }
+      }
+      return component;
+    },
     enabled: !!editId,
   });
 
@@ -481,26 +493,18 @@ function MyComponentsPanel() {
       )}
 
       {editorMode === "edit" && editId && (
-        isEditorLoading || !editingComponent || !editingInitialValues ? (
-          <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-3 rounded-2xl bg-white px-5 py-4 text-sm font-bold text-slate-600 shadow-2xl">
-              <Loader2 className="h-5 w-5 animate-spin text-[#238B45]" />
-              Loading component editor...
-            </div>
-          </div>
-        ) : (
-          <ComponentEditorModal
-            key={editingComponent._id}
-            mode="edit"
-            initialValues={editingInitialValues}
-            currentPreviewImageUrl={editingComponent.previewImageUrl}
-            status={editorStatus}
-            isSubmitting={updateMutation.isPending}
-            allowPro={user?.role === "admin"}
-            onClose={closeEditor}
-            onSubmit={handleEditorSubmit}
-          />
-        )
+        <ComponentEditorModal
+          key={editId}
+          mode="edit"
+          isLoading={isEditorLoading || !editingComponent || !editingInitialValues}
+          initialValues={editingInitialValues}
+          currentPreviewImageUrl={editingComponent?.previewImageUrl}
+          status={editorStatus}
+          isSubmitting={updateMutation.isPending}
+          allowPro={user?.role === "admin"}
+          onClose={closeEditor}
+          onSubmit={handleEditorSubmit}
+        />
       )}
     </div>
   );
@@ -1156,6 +1160,13 @@ function DashboardContent() {
   const componentCountUsed = subscription?.componentCountUsed ?? 0;
   const maxComponents = subscription?.maxComponents ?? 0;
 
+  // Check if Premium+ / unlimited plan
+  const isPremiumPlus = isPro && (
+    subscription?.plan?.name === "premium_plus" ||
+    subscription?.plan?.displayName?.toLowerCase().replace(/\s+/g, '').includes("premium+") ||
+    maxComponents >= 999999
+  );
+
   // Calculations for Days Left
   let daysLeft = 0;
   let durationDays = 0;
@@ -1307,13 +1318,15 @@ function DashboardContent() {
                 </div>
                 
                 {/* Upgrade Button */}
-                <Link 
-                  href="/pricing"
-                  className="flex items-center gap-1 text-xs font-bold text-[#238B45] hover:text-[#2a9d50] hover:underline transition duration-200"
-                >
-                  Upgrade Plan
-                  <ArrowUpRight size={14} />
-                </Link>
+                {!isPremiumPlus && (
+                  <Link 
+                    href="/pricing"
+                    className="flex items-center gap-1 text-xs font-bold text-[#238B45] hover:text-[#2a9d50] hover:underline transition duration-200"
+                  >
+                    Upgrade Plan
+                    <ArrowUpRight size={14} />
+                  </Link>
+                )}
               </div>
 
               <div className="text-xs font-semibold text-gray-400 mt-6 pt-4 border-t border-slate-50">

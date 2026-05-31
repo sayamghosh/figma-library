@@ -19,6 +19,11 @@ const componentSchema = new mongoose.Schema(
       default: [],
       index: true,
     },
+    tagOrder: {
+      type: Number,
+      default: 999999,
+      index: true,
+    },
     previewImageUrl: {
       type: String,
       required: true,

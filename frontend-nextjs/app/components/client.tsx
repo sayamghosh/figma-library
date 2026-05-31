@@ -8,7 +8,7 @@ import { paymentsApi, type CurrentSubscriptionData, type SubscriptionData } from
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
-import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Crown, Heart } from "lucide-react";
+import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Crown, Heart, Database } from "lucide-react";
 
 
 
@@ -172,16 +172,14 @@ function UsageMeter({
   value: number;
   total: number;
 }) {
-  const isUnlimited = total >= 999999;
-  const progress = isUnlimited || total <= 0 ? 100 : Math.min(100, Math.max(0, (value / total) * 100));
-  const displayTotal = isUnlimited ? "Unlimited" : total;
+  const progress = total <= 0 ? 100 : Math.min(100, Math.max(0, (value / total) * 100));
 
   return (
     <div>
       <div className="mb-1 flex items-end justify-between gap-2">
         <span className="text-[0.72rem] font-bold text-slate-700">{label}</span>
         <span className="text-[0.68rem] font-semibold text-slate-500">
-          {value} / {displayTotal}
+          {value} / {total}
         </span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
@@ -194,10 +192,19 @@ function UsageMeter({
   );
 }
 
+function IconInfinity({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z" />
+    </svg>
+  );
+}
+
 function ProSubscriptionCard({ subscription }: { subscription: SubscriptionSummary | null }) {
   const plan = subscription && "plan" in subscription ? subscription.plan : undefined;
   const planName = plan?.displayName ? `${plan.displayName} Plan` : "Pro Plan";
   const maxComponents = subscription?.maxComponents ?? plan?.componentLimit ?? 0;
+  const isUnlimited = maxComponents >= 999999;
   const downloadsUsed = Math.max(0, subscription?.componentCountUsed ?? 0);
   const durationDays =
     plan?.durationDays ||
@@ -207,6 +214,69 @@ function ProSubscriptionCard({ subscription }: { subscription: SubscriptionSumma
   const daysPassed = Math.max(0, durationDays - daysLeft);
   const expiresSoon = daysLeft <= 7;
 
+  // ── Unlimited / Premium+ card ──────────────────────────────────────────
+  if (isUnlimited) {
+    return (
+      <div className="mx-4 mb-6 shrink-0 rounded-2xl p-[1px] shadow-[0_10px_30px_rgba(15,23,42,0.07)]"
+        style={{ background: "linear-gradient(135deg, #22C55E 0%, #16A34A 40%, #0D9488 100%)" }}>
+        <div className="rounded-[15px] bg-white p-4">
+          {/* Header — stacked to avoid overlap */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg"
+                style={{ background: "linear-gradient(135deg, #22C55E, #0D9488)" }}>
+                <Crown size={14} color="white" strokeWidth={2.5} />
+              </div>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[0.56rem] font-extrabold uppercase tracking-wider flex items-center gap-1 ${
+                expiresSoon
+                  ? "bg-red-50 text-red-600"
+                  : daysLeft > 0
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                    : "bg-red-50 text-red-600"
+              }`}>
+                <span className={`inline-block h-1.5 w-1.5 rounded-full ${
+                  expiresSoon ? "bg-red-500" : daysLeft > 0 ? "bg-emerald-500 animate-pulse" : "bg-red-500"
+                }`} />
+                {daysLeft > 0 ? "Active" : "Expired"}
+              </span>
+            </div>
+            <p className="text-[0.92rem] font-extrabold text-slate-900 leading-tight">{planName}</p>
+            <p className="text-[0.65rem] font-bold text-[#16A34A] mt-0.5">
+              {formatPlanPrice(plan?.price, plan?.durationDays)}
+            </p>
+          </div>
+
+          {/* Unlimited downloads highlight */}
+          <div className="rounded-xl p-3 mb-3 border border-emerald-100"
+            style={{ background: "linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 50%, #F0FDFA 100%)" }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[0.72rem] font-bold text-slate-700">Downloads</span>
+              <div className="flex items-center gap-1 text-emerald-600">
+                <IconInfinity className="w-4 h-4" />
+                <span className="text-[0.65rem] font-extrabold uppercase tracking-wider">Unlimited</span>
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[1.4rem] font-black text-slate-900 tabular-nums leading-none">
+                {downloadsUsed.toLocaleString()}
+              </span>
+              <span className="text-[0.65rem] font-semibold text-slate-400">components copied</span>
+            </div>
+          </div>
+
+          {/* Days remaining — text only, no progress bar */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 flex items-center justify-between">
+            <span className="text-[0.72rem] font-bold text-slate-700">Validity</span>
+            <span className="text-[0.68rem] font-semibold text-slate-500">
+              {daysLeft > 0 ? `${daysLeft} days remaining` : "Plan expired"}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Limited plan card (Basic / Advance) ────────────────────────────────
   return (
     <div className="mx-4 mb-6 shrink-0 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -320,15 +390,16 @@ function PreviewModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b border-gray-50">
           <div className="flex items-center gap-2.5">
-            <div className="text-[#9FE870] rotate-45 w-5 h-5 flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
-                <rect x="0" y="0" width="6" height="6" rx="1" fill="currentColor" />
-                <rect x="8" y="0" width="6" height="6" rx="1" fill="currentColor" />
-                <rect x="0" y="8" width="6" height="6" rx="1" fill="currentColor" />
-                <rect x="8" y="8" width="6" height="6" rx="1" fill="currentColor" />
-              </svg>
+            <div className="text-[#238B45] w-5 h-5 flex items-center justify-center">
+              <Database size={18} strokeWidth={2.25} />
             </div>
-            <span className="font-bold text-xl text-gray-900 tracking-tight">{item.name}</span>
+            <span className="font-bold text-[0.95rem] text-gray-900 tracking-tight">{item.name}</span>
+            {isProComponent(item) && (
+              <span className="flex items-center gap-1 shrink-0 ml-2 bg-[#9FE870]/20 text-[#2c5114] text-[0.65rem] font-bold px-2 py-0.5 rounded-md tracking-wider">
+                <Crown size={14} color="#d66a04" strokeWidth={2.5} />
+                PRO
+              </span>
+            )}
           </div>
           <button
             type="button"
@@ -635,7 +706,7 @@ export default function ComponentsClient({
   initialPage: PaginatedComponentResponse | null;
   initialTags?: string[];
 }) {
-  const { user, setLoginModalOpen, setPricingModalOpen } = useAuth();
+  const { user, loading: authLoading, isInitialized, setLoginModalOpen, setPricingModalOpen } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: tags = [] } = useQuery({
@@ -658,6 +729,8 @@ export default function ComponentsClient({
   const [previewItem, setPreviewItem] = useState<null | ComponentItem>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimeoutRef = useRef<number | null>(null);
+
+
   const debouncedSearch = useDebouncedValue(search.trim());
   const activeTag = activeCategory === "All" ? "" : activeCategory;
   const isInitialQuery =
@@ -666,7 +739,7 @@ export default function ComponentsClient({
     viewMode === INITIAL_VIEW_MODE &&
     priceMode === INITIAL_PRICE_MODE;
 
-  const { data: subscriptionData } = useQuery({
+  const { data: subscriptionData, isLoading: isSubLoading } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: !!user,
@@ -675,14 +748,14 @@ export default function ComponentsClient({
 
   const isProUser = subscriptionData?.isProUser ?? user?.isProUser ?? false;
 
-  const { data: currentSubscription } = useQuery({
+  const { data: currentSubscription, isLoading: isCurrentSubLoading } = useQuery({
     queryKey: ["subscription", "current"],
     queryFn: () => paymentsApi.getCurrentSubscription(),
     enabled: !!user && isProUser,
     staleTime: 60 * 1000,
   });
 
-  const activeSubscription = currentSubscription ?? subscriptionData?.subscription ?? null;
+  const activeSubscription = currentSubscription ?? subscriptionData?.subscription ?? user?.subscription ?? null;
 
   const { data: favoriteIdData } = useQuery({
     queryKey: ["favorite-component-ids"],
@@ -918,7 +991,7 @@ export default function ComponentsClient({
 
   // How many skeleton cards to show
   const SKELETON_COUNT = PAGE_SIZE;
-  const showSkeletons = isLoading;
+  const showSkeletons = isLoading || !isInitialized;
   // isFetching (but not initial load) = stale re-fetch in background — keep old data, no skeleton
   const showStaleIndicator = isFetching && !isLoading;
 
@@ -962,12 +1035,26 @@ export default function ComponentsClient({
           background: #94a3b8;
           background-clip: content-box;
         }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}} />
       {/* ── Left Sidebar ───────────────────────────────────────────────── */}
       <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope sticky top-[60px] h-[calc(100dvh-60px)] self-start">
 
-        {/* Unlock Premium+ Block (Fixed at Top) */}
-        {isProUser ? (
+        {/* Plan / Upsell Block — loading animation until auth resolves */}
+        {(!isInitialized || (!!user && isSubLoading && subscriptionData === undefined) || (isProUser && isCurrentSubLoading && currentSubscription === undefined)) ? (
+          <div className="mx-4 mb-6 shrink-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
+            <div className="flex flex-col items-center justify-center py-3 gap-3">
+              <svg className="animate-spin h-6 w-6 text-[#22C55E]" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M12 2a10 10 0 00-10 10h3a7 7 0 017-7V2z" />
+              </svg>
+              <span className="text-[0.72rem] font-semibold text-slate-400">Loading plan...</span>
+            </div>
+          </div>
+        ) : isProUser ? (
           <ProSubscriptionCard subscription={activeSubscription} />
         ) : (
         <div className="mx-4 mb-6 bg-slate-100 rounded-xl p-4 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] shrink-0">
@@ -1010,7 +1097,7 @@ export default function ComponentsClient({
 
         {/* Components section (Fixed in Position) */}
         <div className="px-6 flex items-center gap-2 mb-3 shrink-0">
-          <span className="text-[#238B45]" ><Layers size={20} strokeWidth={2.25} /></span>
+          <span className="text-[#238B45]" ><Database size={20} strokeWidth={2.25} /></span>
           <span className="font-bold text-gray-800 text-[15px]">Components</span>
           <span className="ml-auto text-[0.65rem] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
             {total}

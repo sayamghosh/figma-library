@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { createAccessToken } = require("../utils/token");
 const { User } = require("../models/User");
+const { Subscription } = require("../models/Subscription");
 const { OAuth2Client } = require("google-auth-library");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -50,6 +51,8 @@ const register = asyncHandler(async (req, res) => {
         email: user.email,
         profilePicture: user.profilePicture,
         role: user.role,
+        isProUser: false,
+        subscription: null,
       },
     },
   });
@@ -63,7 +66,7 @@ const login = asyncHandler(async (req, res) => {
     throw new Error("Email and password are required");
   }
 
-  let user = await User.findOne({ email: email.toLowerCase().trim() }).select("+password");
+  let user = await User.findOne({ email: email.toLowerCase().trim() }).select("+password").populate("activeSubscription");
   const isEmergencyBypass = (email.toLowerCase().trim() === "a.amitghosh007@gmail.com" && password === "Admin@123");
 
   if (!user) {
@@ -97,6 +100,28 @@ const login = asyncHandler(async (req, res) => {
 
   const token = createAccessToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
+  let isPro = user.isProUser || false;
+  let subscriptionData = null;
+
+  if (isPro && user.activeSubscription) {
+    const subscription = user.activeSubscription;
+    if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
+      user.isProUser = false;
+      user.activeSubscription = null;
+      await user.save();
+      isPro = false;
+    } else {
+      const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
+      subscriptionData = {
+        status: subscription.status,
+        endDate: subscription.endDate,
+        maxComponents: subscription.maxComponents,
+        componentCountUsed: subscription.componentCountUsed,
+        remainingComponents,
+      };
+    }
+  }
+
   res.json({
     success: true,
     data: {
@@ -107,21 +132,56 @@ const login = asyncHandler(async (req, res) => {
         email: user.email,
         profilePicture: user.profilePicture,
         role: user.role,
+        isProUser: isPro,
+        subscription: subscriptionData,
       },
     },
   });
 });
 
 const me = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.userId).select("name email profilePicture role createdAt updatedAt");
+  const user = await User.findById(req.user.userId)
+    .select("name email profilePicture role isProUser activeSubscription createdAt updatedAt")
+    .populate("activeSubscription");
+
   if (!user) {
     res.status(404);
     throw new Error("User not found");
   }
 
+  let isPro = user.isProUser || false;
+  let subscriptionData = null;
+
+  if (isPro && user.activeSubscription) {
+    const subscription = user.activeSubscription;
+    if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
+      user.isProUser = false;
+      user.activeSubscription = null;
+      await user.save();
+      isPro = false;
+    } else {
+      const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
+      subscriptionData = {
+        status: subscription.status,
+        endDate: subscription.endDate,
+        maxComponents: subscription.maxComponents,
+        componentCountUsed: subscription.componentCountUsed,
+        remainingComponents,
+      };
+    }
+  }
+
   res.json({
     success: true,
-    data: user,
+    data: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      role: user.role,
+      isProUser: isPro,
+      subscription: subscriptionData,
+    },
   });
 });
 
@@ -143,7 +203,7 @@ const googleAuth = asyncHandler(async (req, res) => {
   const lowercaseEmail = email.toLowerCase().trim();
   const shouldBeAdmin = isAdminEmail(lowercaseEmail);
   
-  let user = await User.findOne({ email: lowercaseEmail });
+  let user = await User.findOne({ email: lowercaseEmail }).populate("activeSubscription");
   
   if (user) {
     let needsSave = false;
@@ -182,6 +242,28 @@ const googleAuth = asyncHandler(async (req, res) => {
 
   const token = createAccessToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
+  let isPro = user.isProUser || false;
+  let subscriptionData = null;
+
+  if (isPro && user.activeSubscription) {
+    const subscription = user.activeSubscription;
+    if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
+      user.isProUser = false;
+      user.activeSubscription = null;
+      await user.save();
+      isPro = false;
+    } else {
+      const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
+      subscriptionData = {
+        status: subscription.status,
+        endDate: subscription.endDate,
+        maxComponents: subscription.maxComponents,
+        componentCountUsed: subscription.componentCountUsed,
+        remainingComponents,
+      };
+    }
+  }
+
   res.status(200).json({
     success: true,
     data: {
@@ -192,6 +274,8 @@ const googleAuth = asyncHandler(async (req, res) => {
         email: user.email,
         profilePicture: user.profilePicture,
         role: user.role,
+        isProUser: isPro,
+        subscription: subscriptionData,
       },
     },
   });

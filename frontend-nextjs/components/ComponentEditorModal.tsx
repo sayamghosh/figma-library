@@ -13,8 +13,11 @@ import {
   MonitorSmartphone,
   UploadCloud,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { extractFigmaBase64FromPaste } from "../lib/clipboard";
+import { useQuery } from "@tanstack/react-query";
+import { componentsApi } from "../api/components";
 
 type DesignType = "Wireframe" | "UI Design";
 type PricingType = "Free" | "Pro";
@@ -40,6 +43,7 @@ interface ComponentEditorModalProps {
   allowPro: boolean;
   onClose: () => void;
   onSubmit: (values: ComponentEditorValues) => Promise<void>;
+  isLoading?: boolean;
 }
 
 const defaultValues: ComponentEditorValues = {
@@ -91,18 +95,39 @@ export function ComponentEditorModal({
   allowPro,
   onClose,
   onSubmit,
+  isLoading = false,
 }: ComponentEditorModalProps) {
   const seed = useMemo(() => mergeInitialValues(initialValues), [initialValues]);
   const [name, setName] = useState(seed.name);
   const [description, setDescription] = useState(seed.description);
   const [tags, setTags] = useState<string[]>(seed.tags);
-  const [tagInputValue, setTagInputValue] = useState("");
   const [figmaDataBase64, setFigmaDataBase64] = useState(seed.figmaDataBase64);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [designType, setDesignType] = useState<DesignType>(seed.designType);
   const [pricingType, setPricingType] = useState<PricingType>(seed.pricingType);
   const [platformTag, setPlatformTag] = useState<PlatformTag>(seed.platformTag);
   const [localStatus, setLocalStatus] = useState("");
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
+
+  const { data: availableTags = [] } = useQuery({
+    queryKey: ["components", "tags"],
+    queryFn: componentsApi.getTags,
+  });
+
+  // Sync state values when initialValues / seed resolves
+  useEffect(() => {
+    if (!isLoading && !hasInitialized && (seed.name || seed.figmaDataBase64)) {
+      setName(seed.name);
+      setDescription(seed.description);
+      setTags(seed.tags);
+      setFigmaDataBase64(seed.figmaDataBase64);
+      setDesignType(seed.designType);
+      setPricingType(seed.pricingType);
+      setPlatformTag(seed.platformTag);
+      setHasInitialized(true);
+    }
+  }, [seed, isLoading, hasInitialized]);
 
   const previewUrl = useMemo(() => {
     if (previewFile) return URL.createObjectURL(previewFile);
@@ -150,46 +175,24 @@ export function ComponentEditorModal({
       ? "Package the preview, metadata, and Figma payload in one clean submission."
       : "Refresh the component details while keeping the existing assets intact.";
 
-  function handleTagInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const value = event.target.value;
-    if (!value.includes(",")) {
-      setTagInputValue(value);
-      return;
-    }
-
-    const newTags = value
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
-    setTags((current) => [...current, ...newTags]);
-    setTagInputValue("");
-  }
-
-  function handleTagKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const nextTag = tagInputValue.trim();
-      if (nextTag) {
-        setTags((current) => [...current, nextTag]);
-        setTagInputValue("");
+  function toggleTag(tagToToggle: string) {
+    setTags((current) => {
+      if (current.includes(tagToToggle)) {
+        return current.filter((t) => t !== tagToToggle);
       }
-      return;
-    }
-
-    if (event.key === "Backspace" && !tagInputValue && tags.length > 0) {
-      setTags((current) => current.slice(0, -1));
-    }
-  }
-
-  function removeTag(indexToRemove: number) {
-    setTags((current) => current.filter((_, index) => index !== indexToRemove));
+      if (current.length >= 3) {
+        alert("You can select up to 3 tags maximum.");
+        return current;
+      }
+      return [...current, tagToToggle];
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanTags = Array.from(
       new Set(
-        [...tags, ...tagInputValue.split(",").map((tag) => tag.trim()), platformTag]
+        [...tags, platformTag]
           .filter(Boolean)
           .filter((tag) => !["web", "app"].includes(tag.toLowerCase()) || tag === platformTag)
       )
@@ -263,38 +266,49 @@ export function ComponentEditorModal({
                     />
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className="grid gap-2 relative">
                     <label className="text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500">
                       Tags
                     </label>
-                    <div
-                      className="flex min-h-10 cursor-text flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-[#238B45] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#238B45]/10"
-                      onClick={(event) => (event.currentTarget.lastElementChild as HTMLElement)?.focus()}
-                    >
-                      {tags.map((tag, index) => (
-                        <span
-                          key={`${tag}-${index}`}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[#238B45]/10 px-2.5 py-0.5 text-xs font-bold text-[#176534]"
-                        >
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => removeTag(index)}
-                            className="grid h-4 w-4 place-items-center rounded-full hover:bg-[#238B45]/10"
-                            aria-label={`Remove ${tag}`}
-                          >
-                            <X size={11} />
-                          </button>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setTagsDropdownOpen(!tagsDropdownOpen)}
+                        className="flex min-h-[42px] w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 focus:border-[#238B45] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#238B45]/10"
+                      >
+                        <span className="truncate">
+                          {tags.length === 0 ? "Select Tags" : `${tags.length} tag${tags.length > 1 ? "s" : ""} selected`}
                         </span>
-                      ))}
-                      <input
-                        type="text"
-                        placeholder={tags.length === 0 ? "hero, SaaS, landing" : ""}
-                        value={tagInputValue}
-                        onChange={handleTagInputChange}
-                        onKeyDown={handleTagKeyDown}
-                        className="min-w-[120px] flex-1 bg-transparent px-1 py-1 text-sm font-medium text-slate-950 outline-none placeholder:text-slate-400"
-                      />
+                        <ChevronDown size={16} className={`text-slate-400 transition-transform ${tagsDropdownOpen ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {tagsDropdownOpen && (
+                        <div className="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                          {availableTags.length === 0 ? (
+                            <div className="p-2 text-xs font-medium text-slate-400">Loading tags...</div>
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {availableTags.map((tag) => {
+                                const isSelected = tags.includes(tag);
+                                return (
+                                  <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => toggleTag(tag)}
+                                    className={`rounded-md px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                                      isSelected
+                                        ? "bg-[#238B45]/10 text-[#176534] ring-1 ring-inset ring-[#238B45]/20"
+                                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                                    }`}
+                                  >
+                                    {tag}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -422,7 +436,12 @@ export function ComponentEditorModal({
                     </div>
 
                     <div className="relative min-h-[176px] overflow-hidden rounded-xl border border-white/10 bg-black/35">
-                      {figmaDataBase64 ? (
+                      {isLoading ? (
+                        <div className="flex flex-col items-center justify-center min-h-[176px] gap-2 text-center text-white/70">
+                          <Loader2 className="h-6 w-6 animate-spin text-[#9FE870]" />
+                          <span className="text-xs font-semibold">Loading payload...</span>
+                        </div>
+                      ) : figmaDataBase64 ? (
                         <div className="h-full p-4">
                           <pre className="max-h-[130px] overflow-hidden whitespace-pre-wrap break-all font-mono text-[10px] leading-5 text-[#9FE870]/70">
                             {samplePayload}
