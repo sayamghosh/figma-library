@@ -390,15 +390,10 @@ function PreviewModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b border-gray-50">
           <div className="flex items-center gap-2.5">
-            <div className="text-[#9FE870] rotate-45 w-5 h-5 flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 14 14" fill="none">
-                <rect x="0" y="0" width="6" height="6" rx="1" fill="currentColor" />
-                <rect x="8" y="0" width="6" height="6" rx="1" fill="currentColor" />
-                <rect x="0" y="8" width="6" height="6" rx="1" fill="currentColor" />
-                <rect x="8" y="8" width="6" height="6" rx="1" fill="currentColor" />
-              </svg>
+            <div className="text-[#238B45] w-5 h-5 flex items-center justify-center">
+              <Layers size={18} strokeWidth={2.25} />
             </div>
-            <span className="font-bold text-xl text-gray-900 tracking-tight">{item.name}</span>
+            <span className="font-bold text-lg text-gray-900 tracking-tight">{item.name}</span>
           </div>
           <button
             type="button"
