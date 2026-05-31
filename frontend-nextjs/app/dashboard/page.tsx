@@ -1156,6 +1156,13 @@ function DashboardContent() {
   const componentCountUsed = subscription?.componentCountUsed ?? 0;
   const maxComponents = subscription?.maxComponents ?? 0;
 
+  // Check if Premium+ / unlimited plan
+  const isPremiumPlus = isPro && (
+    subscription?.plan?.name === "premium_plus" ||
+    subscription?.plan?.displayName?.toLowerCase().includes("premium+") ||
+    maxComponents >= 999999
+  );
+
   // Calculations for Days Left
   let daysLeft = 0;
   let durationDays = 0;
@@ -1307,13 +1314,15 @@ function DashboardContent() {
                 </div>
                 
                 {/* Upgrade Button */}
-                <Link 
-                  href="/pricing"
-                  className="flex items-center gap-1 text-xs font-bold text-[#238B45] hover:text-[#2a9d50] hover:underline transition duration-200"
-                >
-                  Upgrade Plan
-                  <ArrowUpRight size={14} />
-                </Link>
+                {!isPremiumPlus && (
+                  <Link 
+                    href="/pricing"
+                    className="flex items-center gap-1 text-xs font-bold text-[#238B45] hover:text-[#2a9d50] hover:underline transition duration-200"
+                  >
+                    Upgrade Plan
+                    <ArrowUpRight size={14} />
+                  </Link>
+                )}
               </div>
 
               <div className="text-xs font-semibold text-gray-400 mt-6 pt-4 border-t border-slate-50">
