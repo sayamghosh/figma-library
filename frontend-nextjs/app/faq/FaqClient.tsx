@@ -11,277 +11,182 @@ interface FaqItem {
 }
 
 const faqs: FaqItem[] = [
+  // General
   {
-    question: "What is FigComponents Figma?",
+    question: "What is Figmacomponents?",
     answer: [
-      "FigComponents is a premium Figma UI kit and design system with pre-designed components, typography styles, color palettes, and website sections that help designers build clean, high-quality interfaces rapidly.",
-    ],
+      "Don't want to waste thousands of hours starting over with every job and putting the same parts back together again and again? Figma Components has everything you need to make websites and apps that look modern and great.",
+      "Join over 1000+ artists from the best companies in the world. Get any project off the ground, save a lot of time, and become a better creator."
+    ]
   },
   {
-    question: "Why do I need a UI kit or component library?",
+    question: "In what way do I require a UI kit or component library?",
     answer: [
-      "It saves hundreds of hours because you do not need to build common elements like buttons, inputs, navigation bars, and modals from scratch.",
-      "It keeps designs consistent with reliable spacing, typography, and UX patterns, and gives you a strong foundation for scalable client or product work.",
-    ],
+      "That is a good question! This was something we always asked. When you first use a good UI kit or component library, you don't know how useful it is. When you buy a good UI kit, you don't have to spend as much time and money making the same parts over and over again. It can speed up your work 10–100 times."
+    ]
   },
   {
-    question: "Does FigComponents include the new Figma features?",
+    question: "Does Figmacomponents include the new Figma features?",
     answer: [
-      "Yes. The kit is updated to support modern Figma features including Variables, Auto Layout 5.0, Component Properties, and Advanced Prototyping.",
-    ],
+      "Yes! We’ve totally refactored Figmacomponents to support Figma’s latest new features, including those released at Framework 2024, Config 2024, and Config 2025. This includes color variables (dark mode), spacing, radius, font, and effects variables, Auto Layout 5.0, min/max widths, Auto Layout wrapping, and much more.",
+      "We’re always working to make Figmacomponents better than ever by adding new Figma features as quickly as possible. All Figmacomponents goods come with free updates for life. After each update, we’ll send you an email with what’s new and post it in our notes.",
+      "Please note we have made the choice not to implement Figma's new Grid feature into Figmacomponents just yet. It is still in beta and missing key features."
+    ]
   },
   {
     question: "What is the difference between the three versions?",
     answer: [
-      "The Free version is a lightweight kit for testing the structure and quality.",
-      "The Pro Individual version includes the complete component and page library for a single user.",
-      "The Team or Enterprise version includes the full library with multi-user licensing for team collaboration.",
-    ],
+      "The Figmacomponents Figma version has been divided into three distinct versions:",
+      "Basic version: 100 Components, Figma variables, Dark mode variables, Component properties, Interactive components, Auto Layout 5.0, Single user license, Design System",
+      "Advance Version: 250 Components, Figma variables, Dark mode variables, Component properties, Interactive components, Auto Layout 5.0, Single user license, Design System",
+      "Premium+ Version: Unlimited Components, Figma variables, Dark mode variables, Component properties, Interactive components, Auto Layout 5.0, Single user license, Design System"
+    ]
   },
   {
-    question: "Is there a dark mode version of the kit?",
+    question: "Is the kit available in dark mode?",
     answer: [
-      "Yes. The Pro version includes dark mode styling integrated through Figma variables or separate page styles so you can switch between light and dark themes.",
-    ],
+      "Use robust and user-friendly color variables to transition to dark mode. Color variables and dark mode, two of Figma's most recent features that were unveiled at Config 2024 and Config 2025, are supported by all version. With only one click, you can change any element, layout, or site to dark mode using variables!",
+      "By visiting the example marketing website and application example pages in Figmacomponents, you can see how this operates."
+    ]
   },
+  // Free version
   {
     question: "Is there a free version available?",
-    answer: ["Yes, there is a free version available so you can try the setup before upgrading."],
+    answer: [
+      "Indeed, Figmacomponents Figma is available for free!",
+      "Although it lacks some of the most recent component property capabilities, variables, and Auto Layout 5.0 features revealed at Config 2023, Framework 2024, Config 2024, and Config 2025, it is a very potent and helpful Figma UI kit on its own.",
+      "This free UI kit can be duplicated and used in any number of applications, including commercial ones."
+    ]
   },
   {
     question: "What does the free version include?",
     answer: [
-      "It includes foundational styles, core components like buttons, alerts, and inputs, plus selected preview landing page sections.",
-    ],
+      "The free edition of Figmacomponents is essentially a slimmed-down version of the full UI kit. It includes global styles, basic components, and a few page samples. Try out the free version!"
+    ]
   },
+  // Account access
   {
-    question: "How do I sign in to my account?",
+    question: "How do I login in to my account?",
     answer: [
-      "Sign in using the account credentials or email address you used during checkout.",
-    ],
+      "The email address you used to buy Figmacomponents can be used to log in."
+    ]
   },
   {
     question: "Why can't I sign in using my email?",
     answer: [
-      "This usually happens if there is a typo in the email used during purchase, or if you are checking a different platform than the one used at checkout.",
-    ],
+      "Please make sure you are using the same email address as you used to purchase Figmacomponents and verify your address for typos.",
+      "We can assist you at support@figmacomponents.site if you become extremely stuck. Despite our limited staff size, we will respond to you as quickly as we can."
+    ]
   },
-  {
-    question: "Why didn't I receive my sign-in email or code (OTP)?",
-    answer: [
-      "Check your Spam, Junk, or Promotions folders.",
-      "Make sure you are checking the exact email address used at checkout.",
-      "Wait a few minutes because email delivery can sometimes be delayed.",
-    ],
-  },
-  {
-    question: "What does lifetime access mean?",
-    answer: [
-      "It means you pay once and get permanent access to the version you purchased, including future updates and improvements to that kit.",
-    ],
-  },
-  {
-    question: "How do I access the files and updates after purchasing?",
-    answer: [
-      "Use your original download link or account library. The latest Figma file or community link will be available there.",
-    ],
-  },
-  {
-    question: "How can I find my receipt email?",
-    answer: [
-      "Search your inbox for keywords like FigComponents, Figma components, Gumroad, Lemon Squeezy, or the email address used at checkout.",
-    ],
-  },
-  {
-    question: "Why don't my PDF links work anymore?",
-    answer: [
-      "Older download PDFs may include expired or deprecated links. Log into your purchase dashboard to access the latest file links.",
-    ],
-  },
+  // Using Figma
   {
     question: "Do I need to know how to use Figma?",
     answer: [
-      "Yes. You should understand Figma basics like layers, components, instances, and styles to use the kit effectively.",
-    ],
+      "The more sophisticated features of Figma, such as nested components, variants, Auto Layout 5.0, interactive components, the new component properties announced at Config 2022, and the new variables and Auto Layout 5.0 features announced at Config 2023, Framework 2024, Config 2024, and Config 2025, are fully utilized by Figmacomponents.",
+      "Check out our free version of Figma to see if it's a good fit if you're new to it or eager to discover best practices. When you're ready, the complete version will always be available. For the finest tutorials on these capabilities, we also suggest visiting Figma's Help Center."
+    ]
   },
   {
     question: "Do I need to use variables?",
     answer: [
-      "No, but it is recommended. Variables make it easier to manage colors, spacing, rounding, and theme switching.",
-    ],
+      "If you don't need or want to utilize variables, you don't have to! We go into greater detail about this subject on the Figmacomponent’s variables documentation page.",
+      "You have complete control over whether or not to use variables. Two versions of Figmacomponents have been released: one that uses radius, color, and spacing variables, and another that uses styles. You may try both and choose which works best for your workflow because they are both included!"
+    ]
   },
+  // Support
   {
     question: "How does support work?",
     answer: [
-      "Support is provided for purchase troubleshooting, license questions, and broken file links. It does not usually include general Figma training or custom design work.",
-    ],
+      "Please email us at support@figmacomponents.site if you have any queries regarding your license or are experiencing difficulties using Figmacomponents. Use the same email address you used to buy Figmacomponents to get in touch with us. Despite our small team size, we will try our best to respond to you as soon as we can.",
+      "Please be aware that we do not provide general Figma help or assistance with utilizing Figma features; we are not Figma support. We advise you to start by visiting our Figma Help Center if you have any questions about Figma. Their paperwork, support materials, and instructional materials are very thorough and beneficial.",
+      "For important features like components, variations, Auto Layout 5.0, interactive components, and component characteristics, Figma also offers excellent tutorials."
+    ]
   },
   {
     question: "Do you provide video tutorials?",
     answer: [
-      "The kit includes documentation inside the Figma file, and video overviews or tips may be shared to help you use the layout system.",
-    ],
+      "We're working on it, but not yet! We've worked hard to make Figmacomponents products as user-friendly as possible in the interim, and we're adding even more notes and component documentation."
+    ]
   },
+  // Education discounts
   {
     question: "Do you provide an education discount?",
     answer: [
-      "Yes. Students, teachers, and academic staff can usually request an education discount with a valid education email or proof of enrollment.",
-    ],
+      "We currently do not offer an education discount. Please keep an eye on our promotions page for future offers and discounts."
+    ]
+  },
+  // Affiliates
+  {
+    question: "Do you have an affiliate program?",
+    answer: [
+      "We currently do not offer an affiliate program. While we appreciate the interest from individuals and organizations looking to partner with us, there are no affiliate opportunities available at this time. Please check back in the future for any updates regarding partnership or referral programs."
+    ]
+  },
+  // Licensing
+  {
+    question: "Can I use Figmacomponents for commercial projects?",
+    answer: [
+      "Indeed! Figmacomponents available for usage in a personal and business projects.",
+      "You can use Figmacomponents as long as you don't resell, redistribute, repackage, or repurpose it to make competing or comparable products—even for different frameworks! Before making a purchase, please see our license agreement.",
+      "Please contact hello@untitledui.com if you have any questions about our license agreement so we can answer them."
+    ]
   },
   {
-    question: "Do I need to pay for Figma if I'm a student?",
+    question: "Can I use Figmacomponents for multiple projects?",
     answer: [
-      "Figma offers its own Education plan for verified students and educators. This is separate from FigComponents.",
-    ],
-  },
-  {
-    question: "Can I use FigComponents for commercial projects?",
-    answer: [
-      "Yes. You can use the kit to build websites, apps, and client projects that generate revenue.",
-    ],
-  },
-  {
-    question: "Can I use FigComponents for multiple projects?",
-    answer: [
-      "Yes. The license allows use across unlimited personal and client projects.",
-    ],
-  },
-  {
-    question: "What is a user?",
-    answer: [
-      "A user is any designer, developer, manager, or team member who can open, edit, or extract assets from the core Figma file.",
-    ],
+      "Of course! With lifetime free updates, you can use Figmacomponents for as many projects as you like. Before making a purchase, please see our license agreement."
+    ]
   },
   {
     question: "Do I need a team license?",
     answer: [
-      "Yes, if more than one person needs access to open, edit, or publish the core library file in your team workspace.",
-    ],
+      "We currently do not offer team licenses. Our services are available through individual subscriptions only. If team or organization licensing options become available in the future, we will share updates on our website and through our official communication channels."
+    ]
   },
-  {
-    question: "Can I use FigComponents with more than 12 users?",
-    answer: [
-      "Yes. Larger teams should use an Enterprise or Custom Team License that matches their seat count.",
-    ],
-  },
-  {
-    question: "Can I upgrade to a team or enterprise license?",
-    answer: [
-      "Yes. You can usually upgrade by paying the price difference through support or the available checkout upgrade path.",
-    ],
-  },
-  {
-    question: "Can I use FigComponents to create a similar product?",
-    answer: [
-      "No. You cannot use the kit to create a competing UI kit, template framework, or stock asset marketplace item for resale.",
-    ],
-  },
+  // Payments & billing
   {
     question: "Is it a one-time purchase?",
-    answer: ["Yes. It is a one-time purchase with no recurring monthly or annual subscription."],
+    answer: [
+      "Every Figmacomponents product requires a single purchase and payment. Purchase once and use it time frame.",
+      "Basic: 90 days (may be change as provide offers!)",
+      "Advance: 90 days (may be change as provide offers!)",
+      "Premium+: 180 days (may be change as provide offers!)",
+      "Any Figmacomponents product that you purchase will grant you free access to all future updates. We'll notify you of any updates and enhancements."
+    ]
   },
   {
     question: "Do I need to pay for Figma?",
     answer: [
-      "No. You can import and use the kit on Figma's free starter plan, though paid Figma plans unlock shared team libraries.",
-    ],
+      "For individuals, Figma's Starter plan is completely free. A Professional plan is required if you need to utilize more sophisticated features like team libraries, dev mode, or multiple variable modes. Find out more about the cost of Figma.",
+      "Figma has kindly declared that all of its paid benefits are completely free for instructors and students! Figma Education has more information."
+    ]
   },
   {
     question: "Are payments secure?",
     answer: [
-      "Yes. Payments are processed through secure checkout providers using industry-standard encryption.",
-    ],
+      "To process payments, we use Razorpay Payment Gateway. You're rather safe because they employ secure 128-bit SSL encrypted payments!"
+    ]
   },
   {
-    question: "Can I purchase via PayPal, Alipay, or WeChat Pay?",
+    question: "Can I purchase via PayPal or Alipay or WeChat Pay?",
     answer: [
-      "PayPal availability depends on the checkout provider. Alipay or WeChat Pay options depend on regional payment settings.",
-    ],
+      "We currently do not support PayPal, Alipay, or WeChat Pay as payment methods. We are continually evaluating additional payment options to better serve our customers, but these payment services are not available at this time. Please refer to our checkout page for the list of supported payment methods."
+    ]
   },
   {
     question: "Can I get an invoice?",
     answer: [
-      "Yes. Your receipt email should include an invoice link where you can add company details, address, and tax information.",
-    ],
+      "Receive instant invoice confirmation directly in your email after every purchase. Keep track of your orders, payments, and transaction details with ease and confidence."
+    ]
   },
   {
     question: "What is your refund policy?",
     answer: [
-      "Because digital files can be downloaded instantly, refunds are generally not granted unless there is a duplicate purchase or payment error. Try the free version first if you are unsure.",
-    ],
-  },
-  {
-    question: "Can I split up the Figma library into smaller files?",
-    answer: [
-      "Yes. You can copy specific page contents into separate files if the full library is too large for your workflow.",
-    ],
-  },
-  {
-    question: "Why isn't the Figma library split up already?",
-    answer: [
-      "It is delivered as one unified file so component dependencies, variables, and cross-references stay intact.",
-    ],
-  },
-  {
-    question: "Is there a version for Framer or Sketch?",
-    answer: [
-      "The kit is built natively for Figma. Related frameworks may exist for platforms like Webflow or Framer, but Sketch is not officially supported.",
-    ],
-  },
-  {
-    question: "Is FigComponents affiliated with Figma or Tailwind?",
-    answer: [
-      "No. FigComponents is an independent product and is not legally affiliated with or endorsed by Figma, Inc. or Tailwind Labs.",
-    ],
-  },
-  {
-    question: "How do I access the Webflow Library?",
-    answer: [
-      "The Webflow version is usually accessed through the connected component platform or account dashboard links.",
-    ],
-  },
-  {
-    question: "Does the Webflow Library include every FigComponents component?",
-    answer: [
-      "It includes most core layout components, sections, and structural elements translated into clean Webflow HTML and CSS.",
-    ],
-  },
-  {
-    question: "What is Relume Library?",
-    answer: [
-      "Relume Library is a Webflow component marketplace for layout sections and reusable website blocks.",
-    ],
-  },
-  {
-    question: "What is Finsweet Client-first?",
-    answer: [
-      "It is a popular Webflow class-naming convention and style guide framework for clean, organized, scalable Webflow projects.",
-    ],
-  },
-  {
-    question: "How does support work for the Webflow Library?",
-    answer: [
-      "Support for code or integration issues is usually handled by the platform hosting the components or the related Webflow documentation channels.",
-    ],
-  },
-  {
-    question: "Can I use it for commercial Webflow projects?",
-    answer: [
-      "Yes. You can build production-ready commercial websites for clients using the Webflow components.",
-    ],
-  },
-  {
-    question: "Can I use this to create and sell a product?",
-    answer: [
-      "You can build and sell a functional product, but you cannot package the components or code as a competing template, theme, or asset kit.",
-    ],
-  },
-  {
-    question: "Is FigComponents affiliated with Webflow?",
-    answer: [
-      "No. It is an independent project designed to integrate with Webflow workflows, but it is not an official Webflow corporate product.",
-    ],
-  },
+      "We no longer provide refunds because our products are digital. We offer 100% free versions of all our goods so you may test them out before making a purchase since we fully support Figmacomponents and know you'll enjoy it too.",
+      "Before making a purchase, please check out the full versions of Figmacomponernts.",
+      "Sadly, there were numerous instances of customers continuing to utilize our items in commercial projects after receiving a refund due to the frequent abuse of our old refund policy. The complete policy is available in our License Agreement."
+    ]
+  }
 ];
 
 const fallbackPlans: Plan[] = [
@@ -464,24 +369,21 @@ export default function FaqClient({ initialPlans }: { initialPlans: Plan[] }) {
             {faqs.map((faq, index) => {
               const open = openIndex === index;
               return (
-                <article
+                <div
                   key={faq.question}
-                  className={`rounded-[11px] transition-all duration-200 ${
+                  onClick={() => setOpenIndex(open ? -1 : index)}
+                  className={`rounded-[11px] transition-all duration-200 cursor-pointer select-none ${
                     open
                       ? "border border-[#6e2ccf] bg-white px-5 py-5 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
                       : "bg-[#f1f1f1] px-5 py-[21px]"
                   }`}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenIndex(open ? -1 : index)}
-                    className="flex w-full items-center justify-between gap-5 text-left"
-                  >
+                  <div className="flex w-full items-center justify-between gap-5 text-left">
                     <span className="text-[14px] font-semibold leading-[1.35] text-black">
                       {faq.question}
                     </span>
                     <FaqIcon open={open} />
-                  </button>
+                  </div>
 
                   {open && (
                     <div className="mt-5 max-w-[760px] space-y-3 pr-9 text-[12px] font-medium leading-[1.75] text-black">
@@ -490,7 +392,7 @@ export default function FaqClient({ initialPlans }: { initialPlans: Plan[] }) {
                       ))}
                     </div>
                   )}
-                </article>
+                </div>
               );
             })}
           </div>
