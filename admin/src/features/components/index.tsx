@@ -24,27 +24,54 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 export function ComponentsModeration() {
   const [components, setComponents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [copyingId, setCopyingId] = useState<string | null>(null)
   const [actions, setActions] = useState<Record<string, string>>({})
   const { accessToken } = useAuthStore.getState().auth
 
-  const fetchComponents = async () => {
+  const fetchComponents = async (pageNum = 1) => {
     try {
-      setLoading(true)
-      const response = await axios.get(`${API_URL}/components/admin`, {
+      if (pageNum === 1) setLoading(true)
+      else setLoadingMore(true)
+      
+      const response = await axios.get(`${API_URL}/components/admin?page=${pageNum}&limit=20`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       })
-      setComponents(response.data.data.items)
+      
+      const fetchedItems = response.data.data.items
+      if (pageNum === 1) {
+        setComponents(fetchedItems)
+      } else {
+        setComponents(prev => [...prev, ...fetchedItems])
+      }
+      setTotalPages(response.data.data.pagination.totalPages)
+      setPage(pageNum)
     } catch (error) {
       toast.error('Failed to fetch components')
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
   }
 
   useEffect(() => {
-    fetchComponents()
+    fetchComponents(1)
   }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Check if user scrolled near the bottom
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+        if (!loading && !loadingMore && page < totalPages) {
+          fetchComponents(page + 1)
+        }
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [page, totalPages, loading, loadingMore])
 
   const handleSaveAction = async (id: string) => {
     const action = actions[id]
@@ -56,14 +83,15 @@ export function ComponentsModeration() {
         await axios.delete(`${API_URL}/components/${id}`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         })
+        setComponents(prev => prev.filter(c => c._id !== id))
         toast.success('Component deleted')
       } else {
         await axios.patch(`${API_URL}/components/${id}/status`, { status: action }, {
           headers: { Authorization: `Bearer ${accessToken}` }
         })
+        setComponents(prev => prev.map(c => c._id === id ? { ...c, status: action } : c))
         toast.success(`Component ${action}`)
       }
-      fetchComponents()
     } catch (error) {
       toast.error('Failed to perform action')
     }
@@ -235,6 +263,12 @@ export function ComponentsModeration() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        
+        {loadingMore && (
+          <div className="flex justify-center py-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         )}
       </Main>
