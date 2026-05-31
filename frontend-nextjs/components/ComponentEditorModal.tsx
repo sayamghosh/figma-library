@@ -13,6 +13,7 @@ import {
   MonitorSmartphone,
   UploadCloud,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { extractFigmaBase64FromPaste } from "../lib/clipboard";
 import { useQuery } from "@tanstack/react-query";
@@ -107,6 +108,7 @@ export function ComponentEditorModal({
   const [platformTag, setPlatformTag] = useState<PlatformTag>(seed.platformTag);
   const [localStatus, setLocalStatus] = useState("");
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
 
   const { data: availableTags = [] } = useQuery({
     queryKey: ["components", "tags"],
@@ -174,11 +176,16 @@ export function ComponentEditorModal({
       : "Refresh the component details while keeping the existing assets intact.";
 
   function toggleTag(tagToToggle: string) {
-    setTags((current) =>
-      current.includes(tagToToggle)
-        ? current.filter((t) => t !== tagToToggle)
-        : [...current, tagToToggle]
-    );
+    setTags((current) => {
+      if (current.includes(tagToToggle)) {
+        return current.filter((t) => t !== tagToToggle);
+      }
+      if (current.length >= 3) {
+        alert("You can select up to 3 tags maximum.");
+        return current;
+      }
+      return [...current, tagToToggle];
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -259,31 +266,48 @@ export function ComponentEditorModal({
                     />
                   </div>
 
-                  <div className="grid gap-2">
+                  <div className="grid gap-2 relative">
                     <label className="text-xs font-extrabold uppercase tracking-[0.16em] text-slate-500">
                       Tags
                     </label>
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
-                      {availableTags.length === 0 ? (
-                        <span className="text-xs font-medium text-slate-400">Loading tags...</span>
-                      ) : (
-                        availableTags.map((tag) => {
-                          const isSelected = tags.includes(tag);
-                          return (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => toggleTag(tag)}
-                              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${
-                                isSelected
-                                  ? "bg-[#238B45] text-white shadow-sm"
-                                  : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-                              }`}
-                            >
-                              {tag}
-                            </button>
-                          );
-                        })
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setTagsDropdownOpen(!tagsDropdownOpen)}
+                        className="flex min-h-[42px] w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 focus:border-[#238B45] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#238B45]/10"
+                      >
+                        <span className="truncate">
+                          {tags.length === 0 ? "Select Tags" : `${tags.length} tag${tags.length > 1 ? "s" : ""} selected`}
+                        </span>
+                        <ChevronDown size={16} className={`text-slate-400 transition-transform ${tagsDropdownOpen ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {tagsDropdownOpen && (
+                        <div className="absolute top-full z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+                          {availableTags.length === 0 ? (
+                            <div className="p-2 text-xs font-medium text-slate-400">Loading tags...</div>
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {availableTags.map((tag) => {
+                                const isSelected = tags.includes(tag);
+                                return (
+                                  <button
+                                    key={tag}
+                                    type="button"
+                                    onClick={() => toggleTag(tag)}
+                                    className={`rounded-md px-2.5 py-1.5 text-xs font-bold transition-colors ${
+                                      isSelected
+                                        ? "bg-[#238B45]/10 text-[#176534] ring-1 ring-inset ring-[#238B45]/20"
+                                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                                    }`}
+                                  >
+                                    {tag}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
