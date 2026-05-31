@@ -632,7 +632,8 @@ const deleteComponent = asyncHandler(async (req, res) => {
     throw new Error("Component not found");
   }
 
-  if (component.createdBy.toString() !== req.user.userId) {
+  const userRole = req.user.role || "user";
+  if (component.createdBy.toString() !== req.user.userId && userRole !== "admin") {
     res.status(403);
     throw new Error("You can only delete your own components");
   }
