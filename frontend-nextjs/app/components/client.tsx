@@ -394,6 +394,11 @@ function PreviewModal({
               <Layers size={18} strokeWidth={2.25} />
             </div>
             <span className="font-bold text-lg text-gray-900 tracking-tight">{item.name}</span>
+            {isProComponent(item) && (
+              <span className="flex items-center gap-1 shrink-0 ml-1">
+                <Crown size={20} color="#d66a04" strokeWidth={2} />
+              </span>
+            )}
           </div>
           <button
             type="button"
