@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { copyToFigma } from '@/lib/clipboard'
-import { Copy, Eye, Check, X } from 'lucide-react'
+import { Copy, Eye } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -25,6 +25,7 @@ export function ComponentsModeration() {
   const [components, setComponents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [copyingId, setCopyingId] = useState<string | null>(null)
+  const [actions, setActions] = useState<Record<string, string>>({})
   const { accessToken } = useAuthStore.getState().auth
 
   const fetchComponents = async () => {
@@ -45,15 +46,26 @@ export function ComponentsModeration() {
     fetchComponents()
   }, [])
 
-  const handleStatusUpdate = async (id: string, status: string) => {
+  const handleSaveAction = async (id: string) => {
+    const action = actions[id]
+    if (!action) return
+
     try {
-      await axios.patch(`${API_URL}/components/${id}/status`, { status }, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      })
-      toast.success(`Component ${status}`)
+      if (action === 'delete') {
+        if (!confirm('Are you sure you want to delete this component permanently?')) return
+        await axios.delete(`${API_URL}/components/${id}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+        toast.success('Component deleted')
+      } else {
+        await axios.patch(`${API_URL}/components/${id}/status`, { status: action }, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        })
+        toast.success(`Component ${action}`)
+      }
       fetchComponents()
     } catch (error) {
-      toast.error('Failed to update status')
+      toast.error('Failed to perform action')
     }
   }
 
@@ -201,28 +213,25 @@ export function ComponentsModeration() {
                   </div>
 
                   {/* Moderation Actions */}
-                  {comp.status === 'pending' && (
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                        onClick={() => handleStatusUpdate(comp._id, 'approved')}
-                      >
-                        <Check className="w-4 h-4 mr-1.5" />
-                        Approve
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => handleStatusUpdate(comp._id, 'rejected')}
-                      >
-                        <X className="w-4 h-4 mr-1.5" />
-                        Reject
-                      </Button>
-                    </div>
-                  )}
+                  <div className="mt-2 flex items-center gap-2 border-t pt-3">
+                    <select
+                      className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={actions[comp._id] || ""}
+                      onChange={(e) => setActions({ ...actions, [comp._id]: e.target.value })}
+                    >
+                      <option value="" disabled>Select Action...</option>
+                      <option value="approved">Approve (Public)</option>
+                      <option value="rejected">Reject (Private)</option>
+                      <option value="delete">Delete (Remove)</option>
+                    </select>
+                    <Button 
+                      size="sm"
+                      onClick={() => handleSaveAction(comp._id)}
+                      disabled={!actions[comp._id] || (actions[comp._id] === comp.status && actions[comp._id] !== 'delete')}
+                    >
+                      Save
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
