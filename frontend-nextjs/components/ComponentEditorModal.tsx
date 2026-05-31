@@ -40,6 +40,7 @@ interface ComponentEditorModalProps {
   allowPro: boolean;
   onClose: () => void;
   onSubmit: (values: ComponentEditorValues) => Promise<void>;
+  isLoading?: boolean;
 }
 
 const defaultValues: ComponentEditorValues = {
@@ -91,6 +92,7 @@ export function ComponentEditorModal({
   allowPro,
   onClose,
   onSubmit,
+  isLoading = false,
 }: ComponentEditorModalProps) {
   const seed = useMemo(() => mergeInitialValues(initialValues), [initialValues]);
   const [name, setName] = useState(seed.name);
@@ -103,6 +105,17 @@ export function ComponentEditorModal({
   const [pricingType, setPricingType] = useState<PricingType>(seed.pricingType);
   const [platformTag, setPlatformTag] = useState<PlatformTag>(seed.platformTag);
   const [localStatus, setLocalStatus] = useState("");
+
+  // Sync state values when initialValues / seed resolves
+  useEffect(() => {
+    setName(seed.name);
+    setDescription(seed.description);
+    setTags(seed.tags);
+    setFigmaDataBase64(seed.figmaDataBase64);
+    setDesignType(seed.designType);
+    setPricingType(seed.pricingType);
+    setPlatformTag(seed.platformTag);
+  }, [seed]);
 
   const previewUrl = useMemo(() => {
     if (previewFile) return URL.createObjectURL(previewFile);
@@ -422,7 +435,12 @@ export function ComponentEditorModal({
                     </div>
 
                     <div className="relative min-h-[176px] overflow-hidden rounded-xl border border-white/10 bg-black/35">
-                      {figmaDataBase64 ? (
+                      {isLoading ? (
+                        <div className="flex flex-col items-center justify-center min-h-[176px] gap-2 text-center text-white/70">
+                          <Loader2 className="h-6 w-6 animate-spin text-[#9FE870]" />
+                          <span className="text-xs font-semibold">Loading payload...</span>
+                        </div>
+                      ) : figmaDataBase64 ? (
                         <div className="h-full p-4">
                           <pre className="max-h-[130px] overflow-hidden whitespace-pre-wrap break-all font-mono text-[10px] leading-5 text-[#9FE870]/70">
                             {samplePayload}
