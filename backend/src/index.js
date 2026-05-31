@@ -20,6 +20,7 @@ const planRoutes = require("./routes/planRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const tagRoutes = require("./routes/tagRoutes");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
@@ -65,6 +66,7 @@ app.use("/api/plans", planRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/contacts", contactRoutes);
+app.use("/api/tags", tagRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -95,5 +97,5 @@ startServer().catch((error) => {
   console.error("Server boot failed", error.message);
   process.exit(1);
 });
-// fix restart
+// fix restart trigger
 

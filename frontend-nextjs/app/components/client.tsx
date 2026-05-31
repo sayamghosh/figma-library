@@ -8,7 +8,7 @@ import { paymentsApi, type CurrentSubscriptionData, type SubscriptionData } from
 import { copyToFigma } from "../../lib/clipboard";
 import type { PaginatedComponentResponse, ComponentItem } from "../../lib/types";
 import { useAuth } from "../../context/AuthContext";
-import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Crown, Heart } from "lucide-react";
+import { Scaling, Frame, Copy, Layers, ArrowDownToLine, Crown, Heart, Database } from "lucide-react";
 
 
 
@@ -391,12 +391,13 @@ function PreviewModal({
         <div className="flex items-center justify-between px-6 py-5 shrink-0 border-b border-gray-50">
           <div className="flex items-center gap-2.5">
             <div className="text-[#238B45] w-5 h-5 flex items-center justify-center">
-              <Layers size={18} strokeWidth={2.25} />
+              <Database size={18} strokeWidth={2.25} />
             </div>
-            <span className="font-bold text-lg text-gray-900 tracking-tight">{item.name}</span>
+            <span className="font-bold text-[0.95rem] text-gray-900 tracking-tight">{item.name}</span>
             {isProComponent(item) && (
-              <span className="flex items-center gap-1 shrink-0 ml-1">
-                <Crown size={20} color="#d66a04" strokeWidth={2} />
+              <span className="flex items-center gap-1 shrink-0 ml-2 bg-[#9FE870]/20 text-[#2c5114] text-[0.65rem] font-bold px-2 py-0.5 rounded-md tracking-wider">
+                <Crown size={14} color="#d66a04" strokeWidth={2.5} />
+                PRO
               </span>
             )}
           </div>
@@ -738,7 +739,7 @@ export default function ComponentsClient({
     viewMode === INITIAL_VIEW_MODE &&
     priceMode === INITIAL_PRICE_MODE;
 
-  const { data: subscriptionData } = useQuery({
+  const { data: subscriptionData, isLoading: isSubLoading } = useQuery({
     queryKey: ["subscription", "checkAccess"],
     queryFn: () => paymentsApi.checkAccess(),
     enabled: !!user,
@@ -747,7 +748,7 @@ export default function ComponentsClient({
 
   const isProUser = subscriptionData?.isProUser ?? user?.isProUser ?? false;
 
-  const { data: currentSubscription } = useQuery({
+  const { data: currentSubscription, isLoading: isCurrentSubLoading } = useQuery({
     queryKey: ["subscription", "current"],
     queryFn: () => paymentsApi.getCurrentSubscription(),
     enabled: !!user && isProUser,
@@ -1043,7 +1044,7 @@ export default function ComponentsClient({
       <aside className="hidden lg:flex flex-col w-[260px] shrink-0 border-r border-gray-100 bg-[#FAFAFA] pt-4 font-manrope sticky top-[60px] h-[calc(100dvh-60px)] self-start">
 
         {/* Plan / Upsell Block — loading animation until auth resolves */}
-        {!isInitialized ? (
+        {(!isInitialized || (!!user && isSubLoading && subscriptionData === undefined) || (isProUser && isCurrentSubLoading && currentSubscription === undefined)) ? (
           <div className="mx-4 mb-6 shrink-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]">
             <div className="flex flex-col items-center justify-center py-3 gap-3">
               <svg className="animate-spin h-6 w-6 text-[#22C55E]" fill="none" viewBox="0 0 24 24">
@@ -1096,7 +1097,7 @@ export default function ComponentsClient({
 
         {/* Components section (Fixed in Position) */}
         <div className="px-6 flex items-center gap-2 mb-3 shrink-0">
-          <span className="text-[#238B45]" ><Layers size={20} strokeWidth={2.25} /></span>
+          <span className="text-[#238B45]" ><Database size={20} strokeWidth={2.25} /></span>
           <span className="font-bold text-gray-800 text-[15px]">Components</span>
           <span className="ml-auto text-[0.65rem] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
             {total}

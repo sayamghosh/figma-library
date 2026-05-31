@@ -2,6 +2,7 @@ const { asyncHandler } = require("../utils/asyncHandler");
 const { Component } = require("../models/Component");
 const { User } = require("../models/User");
 const { Subscription } = require("../models/Subscription");
+const { Tag } = require("../models/Tag");
 const {
   cacheGet,
   cacheSet,
@@ -107,7 +108,7 @@ const listComponents = asyncHandler(async (req, res) => {
 
   const [items, total] = await Promise.all([
     Component.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ tagOrder: 1, createdAt: -1 })
       .skip(skip)
       .limit(perPage)
       .select(select)
@@ -374,10 +375,20 @@ const createComponent = asyncHandler(async (req, res) => {
     }
   }
 
+  let tagOrder = 999999;
+  const activeTags = Array.isArray(tags) ? tags : [];
+  if (activeTags.length > 0) {
+    const matchedTags = await Tag.find({ name: { $in: activeTags } });
+    if (matchedTags.length > 0) {
+      tagOrder = Math.min(...matchedTags.map(t => t.order));
+    }
+  }
+
   const component = await Component.create({
     name,
     description,
-    tags: Array.isArray(tags) ? tags : [],
+    tags: activeTags,
+    tagOrder,
     previewImageUrl,
     figmaDataBase64,
     designType,
@@ -590,12 +601,17 @@ const updateComponent = asyncHandler(async (req, res) => {
   const updates = {
     name: req.body.name ?? component.name,
     description: req.body.description ?? component.description,
-    tags: Array.isArray(req.body.tags) ? req.body.tags : component.tags,
     previewImageUrl: req.body.previewImageUrl ?? component.previewImageUrl,
     figmaDataBase64: req.body.figmaDataBase64 ?? component.figmaDataBase64,
     designType: req.body.designType ?? component.designType,
     pricingType: req.body.pricingType ?? component.pricingType,
   };
+
+  if (req.body.tags !== undefined) {
+    updates.tags = req.body.tags;
+    const matchedTags = await Tag.find({ name: { $in: req.body.tags } });
+    updates.tagOrder = matchedTags.length > 0 ? Math.min(...matchedTags.map(t => t.order)) : 999999;
+  }
 
   const updated = await Component.findByIdAndUpdate(req.params.id, updates, { new: true });
 
@@ -680,40 +696,52 @@ const getTopCreators = asyncHandler(async (req, res) => {
 
 // ─── GET /api/components/tags ─────────────────────────────────────────────────
 const getApprovedTags = asyncHandler(async (req, res) => {
-  const query = {
-    $or: [
-      { status: "approved" },
-      { status: { $exists: false } },
-      { status: null },
-    ],
-  };
+  const tagCount = await Tag.countDocuments();
+  
+  if (tagCount === 0) {
+    const query = {
+      $or: [
+        { status: "approved" },
+        { status: { $exists: false } },
+        { status: null },
+      ],
+    };
 
-  const tags = await Component.distinct("tags", query);
+    const tags = await Component.distinct("tags", query);
 
-  // Format and filter tags
-  const formattedTags = tags
-    .map((tag) => {
-      if (!tag) return "";
-      const trimmed = tag.trim();
-      const lower = trimmed.toLowerCase();
-      if (lower === "cta") return "CTA";
-      if (lower === "faq") return "FAQ";
-      return trimmed
-        .split(/\s+/)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-    })
-    .filter((tag) => tag.length > 0);
+    // Format and filter tags
+    const formattedTags = tags
+      .map((tag) => {
+        if (!tag) return "";
+        const trimmed = tag.trim();
+        const lower = trimmed.toLowerCase();
+        if (lower === "cta") return "CTA";
+        if (lower === "faq") return "FAQ";
+        return trimmed
+          .split(/\s+/)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+      })
+      .filter((tag) => tag.length > 0);
 
-  // De-duplicate using a Set
-  const uniqueTags = Array.from(new Set(formattedTags));
+    // De-duplicate using a Set
+    const uniqueTags = Array.from(new Set(formattedTags));
 
-  // Sort alphabetically (case-insensitive)
-  uniqueTags.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    // Sort alphabetically (case-insensitive)
+    uniqueTags.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+    
+    if (uniqueTags.length > 0) {
+      const tagDocs = uniqueTags.map((name, index) => ({ name, order: index + 1 }));
+      await Tag.insertMany(tagDocs);
+    }
+  }
+
+  const tags = await Tag.find({}).sort({ order: 1 });
+  const tagNames = tags.map(t => t.name);
 
   res.json({
     success: true,
-    data: uniqueTags,
+    data: tagNames,
   });
 });
 

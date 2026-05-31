@@ -1163,7 +1163,7 @@ function DashboardContent() {
   // Check if Premium+ / unlimited plan
   const isPremiumPlus = isPro && (
     subscription?.plan?.name === "premium_plus" ||
-    subscription?.plan?.displayName?.toLowerCase().includes("premium+") ||
+    subscription?.plan?.displayName?.toLowerCase().replace(/\s+/g, '').includes("premium+") ||
     maxComponents >= 999999
   );
 

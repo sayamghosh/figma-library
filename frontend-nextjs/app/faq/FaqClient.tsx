@@ -386,7 +386,10 @@ export default function FaqClient({ initialPlans }: { initialPlans: Plan[] }) {
                   </div>
 
                   {open && (
-                    <div className="mt-5 max-w-[760px] space-y-3 pr-9 text-[12px] font-medium leading-[1.75] text-black">
+                    <div 
+                      className="mt-5 max-w-[760px] space-y-3 pr-9 text-[12px] font-medium leading-[1.75] text-black cursor-auto select-text"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {faq.answer.map((paragraph) => (
                         <p key={paragraph}>{paragraph}</p>
                       ))}
