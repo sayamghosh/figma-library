@@ -11,6 +11,11 @@ export interface CreateOrderResponse {
 export interface PaymentVerificationResponse {
   success: boolean;
   message: string;
+  data?: {
+    isQueued?: boolean;
+    subscription?: PurchasedSubscriptionRecord;
+    transaction?: SubscriptionTransaction;
+  };
 }
 
 export interface SubscriptionData {
@@ -99,5 +104,9 @@ export const paymentsApi = {
 
   async cancelSubscription(): Promise<void> {
     await apiClient.post("/subscriptions/cancel");
+  },
+
+  async activateSubscription(subscriptionId: string): Promise<void> {
+    await apiClient.post(`/subscriptions/activate/${subscriptionId}`);
   },
 };

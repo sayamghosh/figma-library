@@ -938,10 +938,51 @@ function getDaysLeft(endDate?: string) {
 }
 
 function BillingPanel() {
+  const queryClient = useQueryClient();
+  const [activationStatus, setActivationStatus] = useState("");
+
   const { data: purchases = [], isLoading, isError } = useQuery({
     queryKey: ["subscription", "history"],
     queryFn: () => paymentsApi.getSubscriptionHistory(),
   });
+
+  const { data: currentSub } = useQuery({
+    queryKey: ["subscription", "current"],
+    queryFn: () => paymentsApi.getCurrentSubscription(),
+  });
+
+  const isPremiumPlusActive = !!(
+    currentSub?.plan?.displayName?.toLowerCase().replace(/\s+/g, "") === "premium+" ||
+    currentSub?.plan?.name === "pro_annual" ||
+    (currentSub?.maxComponents ?? 0) >= 999999
+  );
+
+  const activePlan = purchases.find((p) => p.status === "active");
+  const queuedPlans = purchases.filter((p) => p.status === "queued");
+  const pastPlans = purchases.filter(
+    (p) => p.status !== "active" && p.status !== "queued"
+  );
+
+  const activateMutation = useMutation({
+    mutationFn: (subscriptionId: string) =>
+      paymentsApi.activateSubscription(subscriptionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      setActivationStatus("Plan activated successfully!");
+    },
+    onError: (error) => {
+      setActivationStatus(
+        error instanceof Error ? error.message : "Activation failed"
+      );
+    },
+  });
+
+  useEffect(() => {
+    if (activationStatus) {
+      const t = setTimeout(() => setActivationStatus(""), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [activationStatus]);
 
   const getPlanName = (purchase: PurchasedSubscriptionRecord) =>
     purchase.planId?.displayName || purchase.planId?.name || "Purchased Plan";
@@ -964,6 +1005,12 @@ function BillingPanel() {
           <ArrowUpRight size={16} strokeWidth={2.5} />
         </Link>
       </div>
+
+      {activationStatus && (
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+          {activationStatus}
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex items-center justify-center rounded-3xl border border-gray-200/80 bg-white py-24 text-sm font-semibold text-gray-400">
@@ -990,114 +1037,241 @@ function BillingPanel() {
       )}
 
       {!isLoading && !isError && purchases.length > 0 && (
-        <div className="space-y-4">
-          {purchases.map((purchase) => {
-            const transaction = purchase.transactions?.[0];
-            const remaining = Math.max(
-              (purchase.maxComponents ?? 0) - (purchase.componentCountUsed ?? 0),
-              0
-            );
-
-            return (
-              <article
-                key={purchase._id}
-                className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
-              >
-                <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-                      Purchased Plan
-                    </span>
-                    <h2 className="mt-1 text-xl font-extrabold text-[#1E293B]">
-                      {getPlanName(purchase)}
-                    </h2>
-                  </div>
-                  <span
-                    className={`w-fit rounded-full px-3 py-1 text-xs font-extrabold uppercase ${
-                      purchase.status === "active"
-                        ? "bg-[#238B45]/10 text-[#238B45]"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {purchase.status}
+        <div className="space-y-8">
+          {/* Queued Plans Section */}
+          {queuedPlans.length > 0 && (
+            <div>
+              <h2 className="mb-4 text-lg font-extrabold text-[#1E293B] flex items-center gap-2">
+                <Package size={20} />
+                Queued Plans
+              </h2>
+              <p className="mb-4 text-sm font-medium text-gray-500">
+                These plans will activate automatically after your current plan expires.
+                {isPremiumPlusActive && (
+                  <span className="block mt-1 text-amber-600">
+                    Premium+ is your active plan, so queued plans cannot be activated until it expires.
                   </span>
-                </div>
+                )}
+              </p>
+              <div className="space-y-4">
+                {queuedPlans.map((purchase) => {
+                  const transaction = purchase.transactions?.[0];
+                  return (
+                    <article
+                      key={purchase._id}
+                      className="rounded-3xl border border-blue-100 bg-blue-50/40 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
+                    >
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                            Queued Plan
+                          </span>
+                          <h2 className="mt-1 text-xl font-extrabold text-[#1E293B]">
+                            {getPlanName(purchase)}
+                          </h2>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => activateMutation.mutate(purchase._id)}
+                          disabled={
+                            activateMutation.isPending ||
+                            isPremiumPlusActive
+                          }
+                          className={`inline-flex h-10 items-center gap-2 rounded-xl px-5 text-sm font-bold shadow-sm transition ${
+                            isPremiumPlusActive
+                              ? "cursor-not-allowed bg-gray-200 text-gray-400"
+                              : "cursor-pointer bg-[#238B45] text-white hover:bg-[#2a9d50] disabled:opacity-60"
+                          }`}
+                          title={
+                            isPremiumPlusActive
+                              ? "Cannot activate while Premium+ is active"
+                              : "Activate this plan now"
+                          }
+                        >
+                          <ArrowUpRight size={16} strokeWidth={2.5} />
+                          {activateMutation.isPending &&
+                          activateMutation.variables === purchase._id
+                            ? "Activating..."
+                            : "Activate Now"}
+                        </button>
+                      </div>
 
-                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      Purchase Date
-                    </span>
-                    <p className="mt-1 text-sm font-bold text-slate-700">
-                      {formatDate(purchase.startDate || purchase.createdAt)}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      Valid Until
-                    </span>
-                    <p className="mt-1 text-sm font-bold text-slate-700">
-                      {formatDate(purchase.endDate)}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      Components
-                    </span>
-                    <p className="mt-1 text-sm font-bold text-slate-700">
-                      {purchase.componentCountUsed} used / {purchase.maxComponents} total
-                    </p>
-                    <p className="mt-0.5 text-xs font-semibold text-gray-400">
-                      {remaining} remaining
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      Plan Price
-                    </span>
-                    <p className="mt-1 text-sm font-bold text-slate-700">
-                      {formatCurrency(purchase.planId?.price)}
-                    </p>
-                    <p className="mt-0.5 text-xs font-semibold text-gray-400">
-                      {purchase.planId?.durationDays ?? 0} days validity
-                    </p>
-                  </div>
-                </div>
+                      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Purchased On
+                          </span>
+                          <p className="mt-1 text-sm font-bold text-slate-700">
+                            {formatDate(purchase.createdAt)}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Plan Details
+                          </span>
+                          <p className="mt-1 text-sm font-bold text-slate-700">
+                            {purchase.planId?.durationDays ?? 0} days &middot;{" "}
+                            {purchase.maxComponents >= 999999
+                              ? "Unlimited"
+                              : `${purchase.maxComponents} components`}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                            Price
+                          </span>
+                          <p className="mt-1 text-sm font-bold text-slate-700">
+                            {formatCurrency(transaction?.amount, transaction?.currency)}
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                <div className="mt-5 rounded-2xl bg-slate-50 p-4">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                        Paid Amount
-                      </span>
-                      <p className="mt-1 text-sm font-bold text-slate-700">
-                        {formatCurrency(transaction?.amount, transaction?.currency)}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                        Payment Method
-                      </span>
-                      <p className="mt-1 text-sm font-bold capitalize text-slate-700">
-                        {transaction?.paymentMethod || "Not available"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                        Payment ID
-                      </span>
-                      <p className="mt-1 truncate text-sm font-bold text-slate-700">
-                        {transaction?.razorpayPaymentId || "Not available"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+          {/* Active Plan Section */}
+          {activePlan && (
+            <div>
+              <h2 className="mb-4 text-lg font-extrabold text-[#1E293B] flex items-center gap-2">
+                <ShieldCheck size={20} />
+                Active Plan
+              </h2>
+              <PlanCard purchase={activePlan} getPlanName={getPlanName} />
+            </div>
+          )}
+
+          {/* Past Plans Section */}
+          {pastPlans.length > 0 && (
+            <div>
+              <h2 className="mb-4 text-lg font-extrabold text-[#1E293B] text-gray-500 flex items-center gap-2">
+                <CreditCard size={20} />
+                Purchase History
+              </h2>
+              <div className="space-y-4">
+                {pastPlans.map((purchase) => (
+                  <PlanCard
+                    key={purchase._id}
+                    purchase={purchase}
+                    getPlanName={getPlanName}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function PlanCard({
+  purchase,
+  getPlanName,
+}: {
+  purchase: PurchasedSubscriptionRecord;
+  getPlanName: (p: PurchasedSubscriptionRecord) => string;
+}) {
+  const transaction = purchase.transactions?.[0];
+  const remaining = Math.max(
+    (purchase.maxComponents ?? 0) - (purchase.componentCountUsed ?? 0),
+    0
+  );
+
+  return (
+    <article className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+      <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+            Purchased Plan
+          </span>
+          <h2 className="mt-1 text-xl font-extrabold text-[#1E293B]">
+            {getPlanName(purchase)}
+          </h2>
+        </div>
+        <span
+          className={`w-fit rounded-full px-3 py-1 text-xs font-extrabold uppercase ${
+            purchase.status === "active"
+              ? "bg-[#238B45]/10 text-[#238B45]"
+              : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          {purchase.status}
+        </span>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            Purchase Date
+          </span>
+          <p className="mt-1 text-sm font-bold text-slate-700">
+            {formatDate(purchase.startDate || purchase.createdAt)}
+          </p>
+        </div>
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            Valid Until
+          </span>
+          <p className="mt-1 text-sm font-bold text-slate-700">
+            {formatDate(purchase.endDate)}
+          </p>
+        </div>
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            Components
+          </span>
+          <p className="mt-1 text-sm font-bold text-slate-700">
+            {purchase.componentCountUsed} used / {purchase.maxComponents} total
+          </p>
+          <p className="mt-0.5 text-xs font-semibold text-gray-400">
+            {remaining} remaining
+          </p>
+        </div>
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            Plan Price
+          </span>
+          <p className="mt-1 text-sm font-bold text-slate-700">
+            {formatCurrency(purchase.planId?.price)}
+          </p>
+          <p className="mt-0.5 text-xs font-semibold text-gray-400">
+            {purchase.planId?.durationDays ?? 0} days validity
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Paid Amount
+            </span>
+            <p className="mt-1 text-sm font-bold text-slate-700">
+              {formatCurrency(transaction?.amount, transaction?.currency)}
+            </p>
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Payment Method
+            </span>
+            <p className="mt-1 text-sm font-bold capitalize text-slate-700">
+              {transaction?.paymentMethod || "Not available"}
+            </p>
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Payment ID
+            </span>
+            <p className="mt-1 truncate text-sm font-bold text-slate-700">
+              {transaction?.razorpayPaymentId || "Not available"}
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -1151,6 +1325,17 @@ function DashboardContent() {
     queryFn: () => paymentsApi.getCurrentSubscription(),
     enabled: !!user,
   });
+
+  // Fetch queued plans count
+  const { data: historyData } = useQuery({
+    queryKey: ["subscription", "history"],
+    queryFn: () => paymentsApi.getSubscriptionHistory(),
+    enabled: !!user,
+    staleTime: 60 * 1000,
+  });
+  const queuedCount = (historyData ?? []).filter(
+    (s) => s.status === "queued"
+  ).length;
 
   // Get active subscription info
   const subscription = subscriptionResponse || null;
@@ -1303,6 +1488,24 @@ function DashboardContent() {
             <ContactPanel />
           ) : (
           <>
+          
+          {/* Queued plans notification */}
+          {queuedCount > 0 && (
+            <div className="mb-6 rounded-3xl border border-blue-100 bg-blue-50 p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm font-semibold text-blue-800">
+                  You have {queuedCount} queued plan{queuedCount > 1 ? "s" : ""} waiting to be activated.
+                  {isPremiumPlus ? " Premium+ is your active plan, so queued plans will activate after it expires." : ""}
+                </p>
+                <Link
+                  href="/dashboard?page=plans-billing"
+                  className="shrink-0 text-xs font-bold text-blue-600 hover:text-blue-800 underline"
+                >
+                  View in Plans & Billing
+                </Link>
+              </div>
+            </div>
+          )}
           
           {/* Top row cards (Figma Design Layout) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">

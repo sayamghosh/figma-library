@@ -3,6 +3,7 @@ const { Component } = require("../models/Component");
 const { User } = require("../models/User");
 const { Subscription } = require("../models/Subscription");
 const { Tag } = require("../models/Tag");
+const { autoActivateNextQueued } = require("./paymentController");
 const {
   cacheGet,
   cacheSet,
@@ -505,6 +506,8 @@ const getComponentData = asyncHandler(async (req, res) => {
     });
   }
 
+  await autoActivateNextQueued(req.user.userId);
+
   const user = await User.findById(req.user.userId);
 
   if (!user || !user.isProUser || !user.activeSubscription) {
@@ -525,11 +528,10 @@ const getComponentData = asyncHandler(async (req, res) => {
 
   // Check if subscription is still valid
   if (new Date(subscription.endDate) < new Date()) {
-    // Update user status
-    await User.findByIdAndUpdate(req.user.userId, {
-      isProUser: false,
-      activeSubscription: null,
-    });
+    subscription.status = "expired";
+    await subscription.save();
+
+    await autoActivateNextQueued(req.user.userId);
 
     return res.status(403).json({
       success: false,

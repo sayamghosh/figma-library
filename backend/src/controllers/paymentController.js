@@ -6,9 +6,6 @@ const { Transaction } = require("../models/Transaction");
 const { User } = require("../models/User");
 const { asyncHandler } = require("../utils/asyncHandler");
 
-const getRemainingComponents = (subscription) =>
-  Math.max(subscription.maxComponents - subscription.componentCountUsed, 0);
-
 const createPurchasedSubscription = async ({
   userId,
   plan,
@@ -23,29 +20,41 @@ const createPurchasedSubscription = async ({
     endDate: { $gt: new Date() },
   }).sort({ createdAt: -1 });
 
-  const carriedForwardComponents = activeSubscription
-    ? getRemainingComponents(activeSubscription)
-    : 0;
+  const hasActivePlan = !!activeSubscription;
 
-  if (activeSubscription) {
-    activeSubscription.status = "cancelled";
-    await activeSubscription.save();
+  let subscription;
+  if (hasActivePlan) {
+    subscription = await Subscription.create({
+      userId,
+      planId: plan._id,
+      razorpayCustomerId: payment.customer_id || null,
+      status: "queued",
+      startDate: null,
+      endDate: null,
+      maxComponents: plan.componentLimit,
+      componentCountUsed: 0,
+    });
+  } else {
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + plan.durationDays);
+
+    subscription = await Subscription.create({
+      userId,
+      planId: plan._id,
+      razorpayCustomerId: payment.customer_id || null,
+      status: "active",
+      startDate,
+      endDate,
+      maxComponents: plan.componentLimit,
+      componentCountUsed: 0,
+    });
+
+    await User.findByIdAndUpdate(userId, {
+      activeSubscription: subscription._id,
+      isProUser: true,
+    });
   }
-
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + plan.durationDays);
-
-  const subscription = await Subscription.create({
-    userId,
-    planId: plan._id,
-    razorpayCustomerId: payment.customer_id || null,
-    status: "active",
-    startDate,
-    endDate,
-    maxComponents: plan.componentLimit + carriedForwardComponents,
-    componentCountUsed: 0,
-  });
 
   const transaction = await Transaction.create({
     userId,
@@ -63,15 +72,10 @@ const createPurchasedSubscription = async ({
   subscription.transactions.push(transaction._id);
   await subscription.save();
 
-  await User.findByIdAndUpdate(userId, {
-    activeSubscription: subscription._id,
-    isProUser: true,
-  });
-
   return {
     subscription,
     transaction,
-    carriedForwardComponents,
+    isQueued: hasActivePlan,
   };
 };
 
@@ -187,7 +191,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
     });
   }
 
-  const { subscription, transaction, carriedForwardComponents } =
+  const { subscription, transaction, isQueued } =
     await createPurchasedSubscription({
       userId,
       plan,
@@ -203,13 +207,80 @@ const verifyPayment = asyncHandler(async (req, res) => {
     data: {
       subscription,
       transaction,
-      carriedForwardComponents,
+      isQueued,
     },
   });
 });
 
+const autoActivateNextQueued = async (userId) => {
+  const activeSub = await Subscription.findOne({
+    userId,
+    status: "active",
+    endDate: { $gt: new Date() },
+  }).sort({ createdAt: -1 });
+
+  if (activeSub) {
+    return null;
+  }
+
+  const expiredActive = await Subscription.findOne({
+    userId,
+    status: "active",
+  }).sort({ createdAt: -1 });
+
+  if (expiredActive) {
+    expiredActive.status = "expired";
+    await expiredActive.save();
+  }
+
+  const nextQueued = await Subscription.findOne({
+    userId,
+    status: "queued",
+  }).sort({ createdAt: 1 });
+
+  if (!nextQueued) {
+    if (expiredActive) {
+      await User.findByIdAndUpdate(userId, {
+        activeSubscription: null,
+        isProUser: false,
+      });
+    }
+    return null;
+  }
+
+  const plan = await Plan.findById(nextQueued.planId);
+  if (!plan) {
+    nextQueued.status = "cancelled";
+    await nextQueued.save();
+    await User.findByIdAndUpdate(userId, {
+      activeSubscription: null,
+      isProUser: false,
+    });
+    return null;
+  }
+
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + plan.durationDays);
+
+  nextQueued.status = "active";
+  nextQueued.startDate = startDate;
+  nextQueued.endDate = endDate;
+  nextQueued.componentCountUsed = 0;
+  await nextQueued.save();
+
+  await User.findByIdAndUpdate(userId, {
+    activeSubscription: nextQueued._id,
+    isProUser: true,
+  });
+
+  return nextQueued;
+};
+
 const checkAccess = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
+
+  await autoActivateNextQueued(userId);
 
   const user = await User.findById(userId).populate("activeSubscription");
 
@@ -321,4 +392,5 @@ module.exports = {
   verifyPayment,
   checkAccess,
   webhook,
+  autoActivateNextQueued,
 };

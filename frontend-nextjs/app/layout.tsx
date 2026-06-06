@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
 import Navbar from "../components/Navbar";
-import { FooterSection } from "../components/FooterSection";
+import { FooterWrapper } from "../components/FooterWrapper";
 
 export const metadata: Metadata = {
   title: "FigComponents",
@@ -27,7 +27,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {children}
-          <FooterSection />
+          <FooterWrapper />
         </Providers>
       </body>
     </html>
