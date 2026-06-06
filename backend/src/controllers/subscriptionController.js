@@ -1,10 +1,14 @@
 const { Subscription } = require("../models/Subscription");
 const { Transaction } = require("../models/Transaction");
+const { Plan } = require("../models/Plan");
 const { User } = require("../models/User");
 const { asyncHandler } = require("../utils/asyncHandler");
+const { autoActivateNextQueued } = require("./paymentController");
 
 const getCurrentSubscription = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
+
+  await autoActivateNextQueued(userId);
 
   const user = await User.findById(userId).populate({
     path: "activeSubscription",
@@ -75,9 +79,7 @@ const cancelSubscription = asyncHandler(async (req, res) => {
   subscription.status = "cancelled";
   await subscription.save();
 
-  user.isProUser = false;
-  user.activeSubscription = null;
-  await user.save();
+  await autoActivateNextQueued(userId);
 
   res.status(200).json({
     success: true,
@@ -85,8 +87,88 @@ const cancelSubscription = asyncHandler(async (req, res) => {
   });
 });
 
+const activateQueuedSubscription = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const { id } = req.params;
+
+  const subscription = await Subscription.findById(id);
+
+  if (!subscription) {
+    return res.status(404).json({
+      success: false,
+      message: "Subscription not found",
+    });
+  }
+
+  if (subscription.userId.toString() !== userId) {
+    return res.status(403).json({
+      success: false,
+      message: "Not authorized to activate this subscription",
+    });
+  }
+
+  if (subscription.status !== "queued") {
+    return res.status(400).json({
+      success: false,
+      message: "Only queued subscriptions can be activated",
+    });
+  }
+
+  const currentActive = await Subscription.findOne({
+    userId,
+    status: "active",
+    endDate: { $gt: new Date() },
+  }).populate("planId");
+
+  if (currentActive) {
+    const activePlan = currentActive.planId;
+    if (activePlan && activePlan.isPremiumPlus) {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot activate another plan while Premium+ is your active plan",
+      });
+    }
+
+    currentActive.status = "cancelled";
+    await currentActive.save();
+  }
+
+  const plan = await Plan.findById(subscription.planId);
+  if (!plan) {
+    return res.status(404).json({
+      success: false,
+      message: "Associated plan not found",
+    });
+  }
+
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + plan.durationDays);
+
+  subscription.status = "active";
+  subscription.startDate = startDate;
+  subscription.endDate = endDate;
+  subscription.componentCountUsed = 0;
+  await subscription.save();
+
+  await User.findByIdAndUpdate(userId, {
+    activeSubscription: subscription._id,
+    isProUser: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Subscription activated successfully",
+    data: {
+      subscription,
+    },
+  });
+});
+
 const useComponent = asyncHandler(async (req, res) => {
   const userId = req.user.userId;
+
+  await autoActivateNextQueued(userId);
 
   const user = await User.findById(userId);
 
@@ -110,9 +192,7 @@ const useComponent = asyncHandler(async (req, res) => {
     subscription.status = "expired";
     await subscription.save();
 
-    user.isProUser = false;
-    user.activeSubscription = null;
-    await user.save();
+    await autoActivateNextQueued(userId);
 
     return res.status(403).json({
       success: false,
@@ -143,5 +223,6 @@ module.exports = {
   getCurrentSubscription,
   getSubscriptionHistory,
   cancelSubscription,
+  activateQueuedSubscription,
   useComponent,
 };

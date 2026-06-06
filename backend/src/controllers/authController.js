@@ -4,6 +4,7 @@ const { createAccessToken } = require("../utils/token");
 const { User } = require("../models/User");
 const { Subscription } = require("../models/Subscription");
 const { OAuth2Client } = require("google-auth-library");
+const { autoActivateNextQueued } = require("./paymentController");
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -104,21 +105,31 @@ const login = asyncHandler(async (req, res) => {
   let subscriptionData = null;
 
   if (isPro && user.activeSubscription) {
-    const subscription = user.activeSubscription;
-    if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
-      user.isProUser = false;
-      user.activeSubscription = null;
-      await user.save();
+    await autoActivateNextQueued(user._id.toString());
+
+    const freshUser = await User.findById(user._id).populate("activeSubscription");
+    user.activeSubscription = freshUser.activeSubscription;
+    user.isProUser = freshUser.isProUser;
+
+    if (!user.activeSubscription || !user.isProUser) {
       isPro = false;
     } else {
-      const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
-      subscriptionData = {
-        status: subscription.status,
-        endDate: subscription.endDate,
-        maxComponents: subscription.maxComponents,
-        componentCountUsed: subscription.componentCountUsed,
-        remainingComponents,
-      };
+      const subscription = user.activeSubscription;
+      if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
+        user.isProUser = false;
+        user.activeSubscription = null;
+        await user.save();
+        isPro = false;
+      } else {
+        const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
+        subscriptionData = {
+          status: subscription.status,
+          endDate: subscription.endDate,
+          maxComponents: subscription.maxComponents,
+          componentCountUsed: subscription.componentCountUsed,
+          remainingComponents,
+        };
+      }
     }
   }
 
@@ -153,21 +164,31 @@ const me = asyncHandler(async (req, res) => {
   let subscriptionData = null;
 
   if (isPro && user.activeSubscription) {
-    const subscription = user.activeSubscription;
-    if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
-      user.isProUser = false;
-      user.activeSubscription = null;
-      await user.save();
+    await autoActivateNextQueued(user._id.toString());
+
+    const freshUser = await User.findById(user._id).populate("activeSubscription");
+    user.activeSubscription = freshUser.activeSubscription;
+    user.isProUser = freshUser.isProUser;
+
+    if (!user.activeSubscription || !user.isProUser) {
       isPro = false;
     } else {
-      const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
-      subscriptionData = {
-        status: subscription.status,
-        endDate: subscription.endDate,
-        maxComponents: subscription.maxComponents,
-        componentCountUsed: subscription.componentCountUsed,
-        remainingComponents,
-      };
+      const subscription = user.activeSubscription;
+      if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
+        user.isProUser = false;
+        user.activeSubscription = null;
+        await user.save();
+        isPro = false;
+      } else {
+        const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
+        subscriptionData = {
+          status: subscription.status,
+          endDate: subscription.endDate,
+          maxComponents: subscription.maxComponents,
+          componentCountUsed: subscription.componentCountUsed,
+          remainingComponents,
+        };
+      }
     }
   }
 
@@ -246,21 +267,31 @@ const googleAuth = asyncHandler(async (req, res) => {
   let subscriptionData = null;
 
   if (isPro && user.activeSubscription) {
-    const subscription = user.activeSubscription;
-    if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
-      user.isProUser = false;
-      user.activeSubscription = null;
-      await user.save();
+    await autoActivateNextQueued(user._id.toString());
+
+    const freshUser = await User.findById(user._id).populate("activeSubscription");
+    user.activeSubscription = freshUser.activeSubscription;
+    user.isProUser = freshUser.isProUser;
+
+    if (!user.activeSubscription || !user.isProUser) {
       isPro = false;
     } else {
-      const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
-      subscriptionData = {
-        status: subscription.status,
-        endDate: subscription.endDate,
-        maxComponents: subscription.maxComponents,
-        componentCountUsed: subscription.componentCountUsed,
-        remainingComponents,
-      };
+      const subscription = user.activeSubscription;
+      if (subscription.status !== "active" || new Date(subscription.endDate) < new Date()) {
+        user.isProUser = false;
+        user.activeSubscription = null;
+        await user.save();
+        isPro = false;
+      } else {
+        const remainingComponents = subscription.maxComponents - subscription.componentCountUsed;
+        subscriptionData = {
+          status: subscription.status,
+          endDate: subscription.endDate,
+          maxComponents: subscription.maxComponents,
+          componentCountUsed: subscription.componentCountUsed,
+          remainingComponents,
+        };
+      }
     }
   }
 

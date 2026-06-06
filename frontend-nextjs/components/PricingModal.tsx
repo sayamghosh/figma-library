@@ -121,14 +121,18 @@ export function PricingModal({ isOpen, onClose }: PricingModalProps) {
         order_id: orderData.orderId,
         handler: async (response: RazorpayPaymentResponse) => {
           try {
-            await paymentsApi.verifyPayment(
+            const result = await paymentsApi.verifyPayment(
               response.razorpay_order_id,
               response.razorpay_payment_id,
               response.razorpay_signature,
               plan._id
             );
             await refetchSubscription();
-            alert("Payment successful! You now have Pro access.");
+            if (result.data?.isQueued) {
+              alert("Plan purchased! It has been queued and will activate after your current plan expires. You can also manually activate it from your Dashboard.");
+            } else {
+              alert("Payment successful! You now have Pro access.");
+            }
             onClose();
           } catch {
             setError("Payment verification failed. Please contact support.");

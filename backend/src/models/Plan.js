@@ -37,6 +37,10 @@ const planSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isPremiumPlus: {
+      type: Boolean,
+      default: false,
+    },
     razorpayPlanId: {
       type: String,
       default: null,

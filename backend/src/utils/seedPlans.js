@@ -51,6 +51,7 @@ const seedPlans = async () => {
       price: 49900,
       durationDays: 365,
       componentLimit: 999999,
+      isPremiumPlus: true,
       features: [
         "Unlimited Components",
         ...commonFeatures,
