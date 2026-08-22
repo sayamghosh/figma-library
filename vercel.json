@@ -1,13 +1,16 @@
 {
   "services": {
-    "frontend": {
-      "entrypoint": "frontend"
+    "admin": {
+      "entrypoint": "admin",
+      "root": "admin"
     },
     "frontend-nextjs": {
-      "entrypoint": "frontend-nextjs"
+      "entrypoint": "frontend-nextjs",
+      "root": "frontend-nextjs"
     },
     "backend": {
-      "entrypoint": "backend"
+      "entrypoint": "backend",
+      "root": "backend"
     }
   }
 }
